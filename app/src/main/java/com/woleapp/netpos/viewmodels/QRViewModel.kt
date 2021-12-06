@@ -8,6 +8,8 @@ import androidx.lifecycle.*
 import androidx.paging.LivePagedListBuilder
 import androidx.paging.PagedList
 import com.google.gson.JsonObject
+import com.netpluspay.netpossdk.NetPosSdk
+import com.netpluspay.netpossdk.utils.DeviceConfig
 import com.woleapp.netpos.model.*
 import com.woleapp.netpos.network.StormApiClient
 import com.woleapp.netpos.network.ZenithQrMCCDataSourceFactory
@@ -141,10 +143,10 @@ class QRViewModel : ViewModel() {
                         Timber.e("message ${it.message()}")
                         Timber.e(it.message ?: "Error")
                     }
-                    //_qrErrorMessage.value = Event("Error: ${error.localizedMessage ?: "Error"}")
-//                    message.value = Event(
-//                        "An error occurred while fetching QR"
-//                    )
+                    _qrErrorMessage.value = Event("Error: ${error.localizedMessage ?: "Error"}")
+                    message.value = Event(
+                        "An error occurred while fetching QR"
+                  )
                 }
             }.disposeWith(disposable)
     }

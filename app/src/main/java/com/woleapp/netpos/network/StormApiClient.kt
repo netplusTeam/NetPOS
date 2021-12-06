@@ -38,6 +38,20 @@ class StormApiClient {
             .addInterceptor(NipInterceptor())
             .build()
 
+        private const val NETPOS_CASH_BASE_URL = "https://netpos.netpluspay.com/api/cash/"
+        private var CASHINSTANCE: NetPOSCashService? = null
+        fun getCashInstance(): NetPOSCashService = CASHINSTANCE ?: synchronized(this){
+            CASHINSTANCE ?: Retrofit.Builder()
+                .baseUrl(NETPOS_CASH_BASE_URL)
+                .client(getOkHttpClient())
+                .addCallAdapterFactory(RxJava2CallAdapterFactory.create())
+                .addConverterFactory(GsonConverterFactory.create())
+                .build().create(NetPOSCashService::class.java)
+                .also {
+                    CASHINSTANCE = it
+                }
+        }
+
         private const val BASE_URL = "https://storm.netpluspay.com/"
         private var INSTANCE: StormApiService? = null
         fun getInstance(): StormApiService = INSTANCE ?: synchronized(this) {

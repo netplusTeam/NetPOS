@@ -18,6 +18,7 @@ import com.pixplicity.easyprefs.library.Prefs
 import com.woleapp.netpos.database.AppDatabase
 import com.woleapp.netpos.model.*
 import com.woleapp.netpos.mqtt.MqttHelper
+import com.woleapp.netpos.network.NetPOSCashService
 import com.woleapp.netpos.network.StormApiClient
 import com.woleapp.netpos.nibss.NetPosTerminalConfig
 import com.woleapp.netpos.util.*
@@ -38,11 +39,13 @@ import java.net.InetSocketAddress
 import java.net.Socket
 import java.net.SocketException
 import java.net.UnknownHostException
+import java.sql.Time
 
 
 class SalesViewModel : ViewModel() {
     private var isVend: Boolean = false
     var cardData: CardData? = null
+    private var netPOSCashService: NetPOSCashService = StormApiClient.getCashInstance()
     private val compositeDisposable: CompositeDisposable by lazy { CompositeDisposable() }
     val transactionState = MutableLiveData(STATE_PAYMENT_STAND_BY)
     private val lastTransactionResponse = MutableLiveData<TransactionResponse>()
@@ -418,7 +421,7 @@ class SalesViewModel : ViewModel() {
         Single.fromCallable {
             Socket().run {
                 soTimeout = 120_000
-                connect(InetSocketAddress("vend.netpluspay.com", 3535))
+                connect(InetSocketAddress(VEND_IP, VEND_PORT))
                 val reader = BufferedReader(InputStreamReader(getInputStream()))
                 Timber.e(reader.readLine())
                 val printWriter = PrintWriter(getOutputStream(), true)
@@ -437,6 +440,36 @@ class SalesViewModel : ViewModel() {
                 }
                 t2?.let {
                     Toast.makeText(context, it.localizedMessage, Toast.LENGTH_SHORT).show()
+                    Timber.e(it)
+                }
+            }.disposeWith(compositeDisposable)
+    }
+
+    private val _cashTransactionCompleted = MutableLiveData<Event<Boolean>>()
+    val cashTransactionCompleted: LiveData<Event<Boolean>> = _cashTransactionCompleted
+
+    fun beginCashPayment() {
+        (amount.value!!.toDoubleOrNull() ?: kotlin.run {
+            _message.value = Event("Enter a valid amount")
+            return
+        })
+        val reqBody = JsonObject().apply {
+            addProperty("amount", amount.value!!.toDouble())
+        }
+        transactionState.value = STATE_PAYMENT_STARTED
+        netPOSCashService.addCashTransaction(reqBody)
+            .subscribeOn(Schedulers.io())
+            .observeOn(AndroidSchedulers.mainThread())
+            .doFinally {
+                transactionState.value = STATE_PAYMENT_STAND_BY
+            }
+            .subscribe { t1, t2 ->
+                t1?.let {
+                    _message.value = Event("Payment completed")
+                    _cashTransactionCompleted.value = Event(true)
+                }
+                t2?.let {
+                    _message.value = Event("payment failed")
                     Timber.e(it)
                 }
             }.disposeWith(compositeDisposable)

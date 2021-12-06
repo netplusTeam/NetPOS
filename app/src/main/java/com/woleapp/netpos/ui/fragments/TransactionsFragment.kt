@@ -13,6 +13,7 @@ import com.woleapp.netpos.adapter.ServiceAdapter
 import com.woleapp.netpos.databinding.FragmentTransactionsBinding
 import com.woleapp.netpos.databinding.LayoutPreauthDialogBinding
 import com.woleapp.netpos.model.Service
+import com.woleapp.netpos.util.HISTORY_ACTION_CASH
 import com.woleapp.netpos.util.HISTORY_ACTION_PREAUTH
 import com.woleapp.netpos.util.HISTORY_ACTION_REFUND
 
@@ -30,7 +31,7 @@ class TransactionsFragment : BaseFragment() {
         adapter = ServiceAdapter {
             val nextFrag: Fragment? = when (it.id) {
                 0 -> SalesFragment.newInstance()
-                1 -> TransactionHistoryFragment.newInstance(action = HISTORY_ACTION_REFUND)
+                1 -> SalesFragment.newInstance(TransactionType.CASH)
                 2 -> {
                     showPreAuthDialog()
                     null
@@ -60,8 +61,8 @@ class TransactionsFragment : BaseFragment() {
     private fun setService() {
         val listOfService = ArrayList<Service>()
             .apply {
-                add(Service(0, "Sales", R.drawable.ic_purchase))
-                //add(Service(1, "Refund", R.drawable.ic_loop))
+                add(Service(0, "Purchase", R.drawable.ic_purchase))
+                add(Service(1, "Cash", R.drawable.ic_baseline_money_24))
                 add(Service(2, "PRE AUTHORIZATION", R.drawable.ic_pre_auth))
                 add(Service(3, "Cash Advance", R.drawable.ic_pay_cash_icon))
                 add(Service(4, "QR", R.drawable.ic_qr_code))

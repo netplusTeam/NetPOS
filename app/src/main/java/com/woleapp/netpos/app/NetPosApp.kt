@@ -4,7 +4,6 @@ import android.app.Application
 import android.content.ContextWrapper
 import com.netpluspay.netpossdk.NetPosSdk
 import com.netpluspay.netpossdk.utils.TerminalParameters
-import com.netpluspay.netpossdk.utils.tlv.HexUtil
 import com.pixplicity.easyprefs.library.Prefs
 import timber.log.Timber
 
