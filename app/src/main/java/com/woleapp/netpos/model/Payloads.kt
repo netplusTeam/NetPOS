@@ -63,3 +63,5 @@ data class SuccessNetworkResponse(var message: String, var data: PayBillResponse
     NetworkResponse()
 
 data class Vend(val amount: Double)
+
+data class AuthError(val success: Boolean, val message: String?)

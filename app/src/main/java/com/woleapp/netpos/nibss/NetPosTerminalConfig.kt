@@ -68,13 +68,13 @@ object NetPosTerminalConfig {
         setTerminalId(configurationData)
         val terminalID = getTerminalId()
         NibssClient.init(
-            "netpos.cert.pem",
-            "private.key.pem",
+            "epms-client.cert.pem",
+            "epms-client.key.pem",
             terminalID,
             NetPosSdk.getDeviceSerial()
         )
         NibssClient.useSSL(true)
-        NibssClient.useTestEnvironment(false)
+        NibssClient.useTestEnvironment(true)
         Timber.e("Terminal ID: $terminalId")
         if (isConfigurationInProcess)
             return
