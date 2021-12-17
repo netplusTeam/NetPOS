@@ -1,8 +1,10 @@
 package com.woleapp.netpos.database.dao
 
 import androidx.lifecycle.LiveData
+import androidx.paging.DataSource
 import androidx.room.Dao
 import androidx.room.Insert
+import androidx.room.OnConflictStrategy.REPLACE
 import androidx.room.Query
 import androidx.room.Update
 import com.netpluspay.nibssclient.models.TransactionResponse
@@ -14,11 +16,14 @@ interface TransactionResponseDao {
     @Insert
     fun insertNewTransaction(transactionResponse: TransactionResponse): Single<Long>
 
+    @Insert(onConflict = REPLACE)
+    fun insertNewTransaction(transactionResponses: List<TransactionResponse>)
+
     @Update
     fun updateTransaction(transactionResponse: TransactionResponse): Single<Int>
 
     @Query("SELECT * FROM transactionresponse WHERE terminalId=:terminalId ORDER BY id DESC")
-    fun getTransactions(terminalId: String): LiveData<List<TransactionResponse>>
+    fun getTransactions(terminalId: String): DataSource.Factory<Int, TransactionResponse>
 
     @Query("SELECT * FROM transactionresponse WHERE transactionTimeInMillis >= :beginningOfDay and transactionTimeInMillis <= :endOfDay and terminalId=:terminalId")
     fun getEndOfDayTransaction(

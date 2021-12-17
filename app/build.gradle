@@ -115,10 +115,10 @@ dependencies {
     implementation "io.reactivex.rxjava2:rxkotlin:2.4.0"
 
     //nibss-client
-    implementation "com.netpluspay.android.nibssclient:nibss-client:1.1.10"
+    implementation "com.netpluspay.android.nibssclient:nibss-client:1.1.11"
 
     //netpos sdk
-    implementation "com.netpluspay.netpossdk:netpossdk:1.0.19"
+    implementation "com.netpluspay.netpossdk:netpossdk:1.0.22"
     //implementation project(path: ':netpossdk')
 
     //Timber

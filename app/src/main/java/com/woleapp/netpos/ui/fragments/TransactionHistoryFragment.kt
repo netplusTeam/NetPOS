@@ -15,6 +15,7 @@ import com.woleapp.netpos.util.HISTORY_ACTION
 import com.woleapp.netpos.util.HISTORY_ACTION_DEFAULT
 import com.woleapp.netpos.util.HISTORY_ACTION_EOD
 import com.woleapp.netpos.util.HISTORY_ACTION_PREAUTH
+import com.woleapp.netpos.viewmodels.TransactionViewmodelFactory
 import com.woleapp.netpos.viewmodels.TransactionsViewModel
 
 class TransactionHistoryFragment : BaseFragment() {
@@ -31,15 +32,16 @@ class TransactionHistoryFragment : BaseFragment() {
 
 
     private lateinit var binding: FragmentTransactionHistoryBinding
-    private val viewModel by activityViewModels<TransactionsViewModel>()
+    private val viewModel by activityViewModels<TransactionsViewModel> {
+        TransactionViewmodelFactory(AppDatabase.getDatabaseInstance(requireContext()))
+    }
     private lateinit var adapter: TransactionsAdapter
     override fun onCreateView(
         inflater: LayoutInflater,
         container: ViewGroup?,
         savedInstanceState: Bundle?
-    ): View? {
+    ): View {
         binding = FragmentTransactionHistoryBinding.inflate(inflater, container, false)
-        viewModel.setAppDatabase(AppDatabase.getDatabaseInstance(requireContext()))
         return binding.root
     }
 
@@ -83,13 +85,13 @@ class TransactionHistoryFragment : BaseFragment() {
             )
         )
         if (action != HISTORY_ACTION_EOD)
-            viewModel.getTransactions().observe(viewLifecycleOwner) {
+            viewModel.pagedTransaction.observe(viewLifecycleOwner) {
                 adapter.submitList(it)
                 adapter.notifyDataSetChanged()
             }
-        else{
+        else {
             val eodList = viewModel.getEodList()
-            adapter.submitList(eodList)
+            //adapter.submitList(eodList)
         }
         setSelectedTab()
     }

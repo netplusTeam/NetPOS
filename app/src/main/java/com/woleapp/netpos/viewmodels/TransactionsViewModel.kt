@@ -3,14 +3,19 @@ package com.woleapp.netpos.viewmodels
 import android.content.Context
 import android.os.Build
 import androidx.lifecycle.*
+import androidx.paging.DataSource
+import androidx.paging.LivePagedListBuilder
+import androidx.paging.PagedList
 import com.google.gson.JsonObject
 import com.netpluspay.netpossdk.printer.PrinterResponse
 import com.netpluspay.nibssclient.models.*
 import com.netpluspay.nibssclient.service.NibssApiWrapper
 import com.pixplicity.easyprefs.library.Prefs
 import com.woleapp.netpos.database.AppDatabase
+import com.woleapp.netpos.database.TransactionBoundaryCallBack
 import com.woleapp.netpos.model.*
 import com.woleapp.netpos.mqtt.MqttHelper
+import com.woleapp.netpos.network.NetPOSGatewayApi
 import com.woleapp.netpos.network.StormApiClient
 import com.woleapp.netpos.nibss.NetPosTerminalConfig
 import com.woleapp.netpos.util.*
@@ -23,11 +28,10 @@ import okhttp3.RequestBody.Companion.toRequestBody
 import retrofit2.HttpException
 import timber.log.Timber
 
-class TransactionsViewModel : ViewModel() {
+class TransactionsViewModel(private val appDatabase: AppDatabase) : ViewModel() {
     private lateinit var endOfDayList: List<TransactionResponse>
     var cardData: CardData? = null
     private val compositeDisposable = CompositeDisposable()
-    private var appDatabase: AppDatabase? = null
     val lastTransactionResponse = MutableLiveData<TransactionResponse>()
     private val _selectedAction = MutableLiveData<String>()
     val inProgress = MutableLiveData(false)
@@ -80,25 +84,45 @@ class TransactionsViewModel : ViewModel() {
         get() = _selectedAction
 
 
+    val pagedTransaction: LiveData<PagedList<TransactionResponse>>
+
+    init {
+        val config = PagedList.Config.Builder()
+            .setPageSize(20)
+            .setEnablePlaceholders(false)
+            .build()
+        val transactionBoundaryCallBack = TransactionBoundaryCallBack(
+            HashMap<String, String>().apply {
+                put("terminalId", NetPosTerminalConfig.getTerminalId())
+            },
+            NetPOSGatewayApi.getInstance(),
+            appDatabase.transactionResponseDao()
+        )
+
+        pagedTransaction = LivePagedListBuilder(
+            appDatabase.transactionResponseDao()
+                .getTransactions(NetPosTerminalConfig.getTerminalId()), config
+        ).setBoundaryCallback(transactionBoundaryCallBack)
+            .build()
+    }
+
     fun setSelectedTransaction(transactionResponse: TransactionResponse) {
 //        Timber.e(gson.toJson(transactionResponse))
 //        Timber.e(gson.toJson(transactionResponse.toNibssResponse()))
         lastTransactionResponse.value = transactionResponse
     }
 
-    fun setAppDatabase(appDatabase: AppDatabase) {
-        this.appDatabase = appDatabase
-    }
 
-    fun getTransactions() =
-        when (_selectedAction.value) {
-            HISTORY_ACTION_PREAUTH -> appDatabase!!.transactionResponseDao()
-                .getTransactionByTransactionType(TransactionType.PRE_AUTHORIZATION)
-            HISTORY_ACTION_REFUND -> appDatabase!!.transactionResponseDao()
-                .getRefundableTransactions()
-            else -> appDatabase!!.transactionResponseDao()
-                .getTransactions(NetPosTerminalConfig.getTerminalId())
-        }
+//    fun getTransactions() =
+//        when (_selectedAction.value) {
+//            HISTORY_ACTION_PREAUTH -> appDatabase!!.transactionResponseDao()
+//                .getTransactionByTransactionType(TransactionType.PRE_AUTHORIZATION)
+//            HISTORY_ACTION_REFUND -> appDatabase!!.transactionResponseDao()
+//                .getRefundableTransactions()
+//            else -> appDatabase!!.transactionResponseDao()
+//                .getTransactions(NetPosTerminalConfig.getTerminalId())
+//        }
+
 
 
     fun setAction(action: String?) {

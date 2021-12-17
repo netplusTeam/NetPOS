@@ -174,8 +174,7 @@ class SalesViewModel : ViewModel() {
                 Timber.e(it.responseMessage)
                 _message.postValue(Event(if (it.responseCode == "00") "Transaction Approved" else "Transaction Not approved"))
                 printReceipt(context)
-                AppDatabase.getDatabaseInstance(context).transactionResponseDao()
-                    .insertNewTransaction(it)
+                Single.just(1)
             }
             .subscribeOn(Schedulers.io())
             .observeOn(AndroidSchedulers.mainThread())

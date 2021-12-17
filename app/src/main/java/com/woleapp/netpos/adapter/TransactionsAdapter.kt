@@ -2,6 +2,7 @@ package com.woleapp.netpos.adapter
 
 import android.view.LayoutInflater
 import android.view.ViewGroup
+import androidx.paging.PagedListAdapter
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
@@ -25,14 +26,14 @@ private object TransactionItemDiffUtil : DiffUtil.ItemCallback<TransactionRespon
 }
 
 class TransactionsAdapter(val listener: TransactionClickListener) :
-    ListAdapter<TransactionResponse, TransactionsViewHolder>(TransactionItemDiffUtil) {
+    PagedListAdapter<TransactionResponse, TransactionsViewHolder>(TransactionItemDiffUtil) {
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int) =
         TransactionsViewHolder.from(parent)
 
     override fun onBindViewHolder(holder: TransactionsViewHolder, position: Int) {
         getItem(position)?.let { transactionResponse ->
             holder.binding.root.setOnClickListener { listener.invoke(transactionResponse) }
-            holder.bind(getItem(position))
+            holder.bind(transactionResponse)
         }
     }
 }
@@ -48,11 +49,15 @@ class TransactionsViewHolder private constructor(val binding: LayoutTransactionI
     fun bind(transactionResponse: TransactionResponse) {
         binding.executePendingBindings()
         val cardDetails =
-            "${transactionResponse.cardLabel} ending with ${transactionResponse.maskedPan.takeLast(4)}"
+            "${if (transactionResponse.cardLabel.isEmpty()) "card" else transactionResponse.cardLabel} ending with ${
+                transactionResponse.maskedPan.takeLast(
+                    4
+                )
+            }"
         binding.cardDetails.text = cardDetails
         binding.transactionStatus.text =
             if (transactionResponse.responseCode == "00") "Approved" else "Declined"
-        binding.holderName.text = transactionResponse.cardHolder
+        binding.holderName.text = if (transactionResponse.cardHolder.isEmpty()) "CUSTOMER" else transactionResponse.cardHolder
         binding.transactionRef.text = transactionResponse.RRN
         binding.transactionAmount.text =
             transactionResponse.amount.div(100).formatCurrencyAmount("\u20A6")

@@ -9,7 +9,7 @@ import com.woleapp.netpos.model.ConfigurationData
 import com.woleapp.netpos.model.NibssResponse
 import com.woleapp.netpos.model.User
 import com.woleapp.netpos.nibss.DEFAULT_TERMINAL_ID
-import java.lang.Exception
+import kotlin.Exception
 
 fun useStormTerminalId() = Prefs.getBoolean(PREF_USE_STORM_TERMINAL_ID, true)
 fun TransactionResponse.toNibssResponse(remark: String? = null): NibssResponse =
@@ -74,3 +74,10 @@ var TransactionResponse.additionalAmount: Long?
     set(value) {
 
     }
+
+sealed class LoadingState
+
+object LoadingMore: LoadingState()
+object LoadingInitial: LoadingState()
+object LoadingDone: LoadingState()
+data class LoadingError(val errorMessage: String, val exception: Throwable): LoadingState()

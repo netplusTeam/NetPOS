@@ -1,6 +1,7 @@
 package com.woleapp.netpos.model
 
 import com.google.gson.annotations.SerializedName
+import com.netpluspay.nibssclient.models.TransactionResponse
 
 
 data class UtilitiesPayload(
@@ -65,3 +66,10 @@ data class SuccessNetworkResponse(var message: String, var data: PayBillResponse
 data class Vend(val amount: Double)
 
 data class AuthError(val success: Boolean, val message: String?)
+
+data class GateWayTransactionResponse(
+    var result: List<TransactionResponse>,
+    val count: Int,
+    val page: Int,
+    val total: Int
+)
