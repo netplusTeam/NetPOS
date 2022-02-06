@@ -8,11 +8,8 @@ import androidx.lifecycle.*
 import androidx.paging.LivePagedListBuilder
 import androidx.paging.PagedList
 import com.google.gson.JsonObject
-import com.netpluspay.netpossdk.NetPosSdk
-import com.netpluspay.netpossdk.utils.DeviceConfig
 import com.woleapp.netpos.model.*
-import com.woleapp.netpos.network.StormApiClient
-import com.woleapp.netpos.network.ZenithQrMCCDataSourceFactory
+import com.woleapp.netpos.network.*
 import com.woleapp.netpos.util.*
 import io.reactivex.Single
 import io.reactivex.android.schedulers.AndroidSchedulers
@@ -25,22 +22,24 @@ import java.text.SimpleDateFormat
 import java.util.*
 import java.util.concurrent.TimeUnit
 
-class QRViewModel : ViewModel() {
+open class QRViewModel(
+    private val masterPassQRService: MasterPassQRService,
+    private val nibssQRService: NibssQRService,
+    private val zenithQRService: ZenithQrService,
+    private val blueCodeService: BlueCodeService
+) : ViewModel() {
     private var retryAttempts = 1
     var stillHasRetryAttempts = true
-    private val masterPassQRService = StormApiClient.getMasterPassQrServiceInstance()
-    private val nibssQRService = StormApiClient.getNibssQRServiceInstance()
-    private val zenithQRService = StormApiClient.getZenithQRServiceInstance()
-    private val disposable = CompositeDisposable()
+    val disposable = CompositeDisposable()
     private val _masterPassQrBitmap = MutableLiveData<Event<Bitmap>>()
     val masterPassQrBitmap: LiveData<Event<Bitmap>>
         get() = _masterPassQrBitmap
 
     val message = MediatorLiveData<Event<String>>()
 
-    private val _qrErrorMessage = MutableLiveData<Event<String>>()
+    val qrErrorMessageMutableLiveData = MutableLiveData<Event<String>>()
     val qrErrorMessage: LiveData<Event<String>>
-        get() = _qrErrorMessage
+        get() = qrErrorMessageMutableLiveData
 
     private val lastNibssOrderNumber = MutableLiveData<String>()
 
@@ -143,10 +142,10 @@ class QRViewModel : ViewModel() {
                         Timber.e("message ${it.message()}")
                         Timber.e(it.message ?: "Error")
                     }
-                    _qrErrorMessage.value = Event("Error: ${error.localizedMessage ?: "Error"}")
+                    qrErrorMessageMutableLiveData.value = Event("Error}")
                     message.value = Event(
                         "An error occurred while fetching QR"
-                  )
+                    )
                 }
             }.disposeWith(disposable)
     }
@@ -182,7 +181,7 @@ class QRViewModel : ViewModel() {
                     runHandler()
                 }
                 t2?.let {
-                    message.value = Event("Error ${it.localizedMessage}")
+                    message.value = Event("Error")
                 }
             }
             .disposeWith(disposable)
@@ -292,10 +291,10 @@ class QRViewModel : ViewModel() {
         Timber.e(createZenithMerchantPayload.value.toString())
     }
 
-    private lateinit var dataSourceFactory: ZenithQrMCCDataSourceFactory
+    private lateinit var dataSourceFactory: MCCDataSourceFactory
 
-    fun getZenithMCC(zenithMCCDto: ZenithMCCDto) {
-        dataSourceFactory = ZenithQrMCCDataSourceFactory(zenithMCCDto, disposable)
+    fun getMCC(MCCDto: MCCDto, mccService: MCCService) {
+        dataSourceFactory = MCCDataSourceFactory(MCCDto, disposable, mccService, zenithQRService, blueCodeService)
         val networkResourceLiveData: LiveData<Event<NetworkResource>> = Transformations.switchMap(
             dataSourceFactory.itemLiveDataSource
         ) {
@@ -308,7 +307,7 @@ class QRViewModel : ViewModel() {
             it.emptyResultLiveData
         }
 
-        val data: LiveData<PagedList<ZenithMerchantCategory>> =
+        val data: LiveData<PagedList<MerchantCategory>> =
             LivePagedListBuilder(dataSourceFactory, config).build()
         _paginationHelper.postValue(
             PaginationHelper(
@@ -321,14 +320,14 @@ class QRViewModel : ViewModel() {
 
     fun textChanged(filter: String) = subject.onNext(filter)
 
-    fun initSearchFilter() {
+    fun initSearchFilter(mccService: MCCService) {
         subject
             .debounce(1, TimeUnit.SECONDS)
             .filter { it.isEmpty().not() }
             .distinctUntilChanged()
             .subscribe {
                 Timber.e(it)
-                getZenithMCC(ZenithMCCDto(it))
+                getMCC(MCCDto(it), mccService)
             }.disposeWith(disposable)
     }
 
@@ -341,7 +340,7 @@ class QRViewModel : ViewModel() {
         subject.onComplete()
     }
 
-    fun setSelectedMerchantCategory(it: ZenithMerchantCategory) {
+    open fun setSelectedMerchantCategory(it: MerchantCategory) {
         createZenithMerchantPayload.value = createZenithMerchantPayload.value?.apply {
             this.merchantCategoryCode = it.merchantCategoryCode
             this.merchantCategoryDescription = it.merchantCategoryDescription

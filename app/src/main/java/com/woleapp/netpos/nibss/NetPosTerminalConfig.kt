@@ -47,7 +47,7 @@ object NetPosTerminalConfig {
     private fun setTerminalId(configurationData: ConfigurationData) {
         Timber.e("use storm TID ${useStormTerminalId()}")
         terminalId =
-            if (useStormTerminalId()) Singletons.getCurrentlyLoggedInUser()?.terminal_id else configurationData.terminalId
+            "2101JJ41"
     }
 
     private var keyHolder: KeyHolder? = null
@@ -68,13 +68,13 @@ object NetPosTerminalConfig {
         setTerminalId(configurationData)
         val terminalID = getTerminalId()
         NibssClient.init(
-            "epms-client.cert.pem",
-            "epms-client.key.pem",
+            "netpos.cert.pem",
+            "private.key.pem",
             terminalID,
             NetPosSdk.getDeviceSerial()
         )
         NibssClient.useSSL(true)
-        NibssClient.useTestEnvironment(true)
+        NibssClient.useTestEnvironment(false)
         Timber.e("Terminal ID: $terminalId")
         if (isConfigurationInProcess)
             return
@@ -128,7 +128,7 @@ object NetPosTerminalConfig {
                     }
                     Toast.makeText(
                         context,
-                        it.message ?: "Configuration Error",
+                        "Terminal Configuration Failed",
                         Toast.LENGTH_SHORT
                     ).show()
                     configurationStatus = -1

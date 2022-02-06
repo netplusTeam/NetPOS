@@ -12,11 +12,12 @@ import androidx.appcompat.widget.SearchView
 import androidx.fragment.app.viewModels
 import androidx.recyclerview.widget.DividerItemDecoration
 import com.woleapp.netpos.R
-import com.woleapp.netpos.adapter.ZenithQrMCCAdapter
-import com.woleapp.netpos.databinding.DialogFragmentZenithMccBinding
+import com.woleapp.netpos.adapter.MCCAdapter
+import com.woleapp.netpos.databinding.DialogFragmentMccBinding
 import com.woleapp.netpos.databinding.FragmentCreateZenithMerchantBinding
 import com.woleapp.netpos.model.LoadingState
-import com.woleapp.netpos.model.ZenithMCCDto
+import com.woleapp.netpos.model.MCCDto
+import com.woleapp.netpos.network.MCCService
 import com.woleapp.netpos.viewmodels.QRViewModel
 
 import timber.log.Timber
@@ -25,8 +26,8 @@ class QrRegistrationFragment : BaseFragment() {
 
     private val viewModel by viewModels<QRViewModel>()
     private lateinit var mccAlertDialog: AlertDialog
-    private lateinit var mccDialogBinding: DialogFragmentZenithMccBinding
-    private lateinit var adapter: ZenithQrMCCAdapter
+    private lateinit var mccDialogBinding: DialogFragmentMccBinding
+    private lateinit var adapter: MCCAdapter
 
     companion object {
         fun newInstance() = QrRegistrationFragment()
@@ -46,11 +47,11 @@ class QrRegistrationFragment : BaseFragment() {
                 this.viewmodel = this@QrRegistrationFragment.viewModel
             }
         mccDialogBinding =
-            DialogFragmentZenithMccBinding.inflate(inflater, container, false).apply {
+            DialogFragmentMccBinding.inflate(inflater, container, false).apply {
                 lifecycleOwner = viewLifecycleOwner
                 executePendingBindings()
             }
-        adapter = ZenithQrMCCAdapter {
+        adapter = MCCAdapter {
             mccAlertDialog.cancel()
             binding.getMCC.text = it.merchantCategoryDescription
             viewModel.setSelectedMerchantCategory(it)
@@ -119,7 +120,7 @@ class QrRegistrationFragment : BaseFragment() {
             .create()
         binding.getMCC.setOnClickListener {
             mccAlertDialog.show()
-            viewModel.getZenithMCC(ZenithMCCDto())
+            viewModel.getMCC(MCCDto(), MCCService.ZENITH)
         }
         viewModel.loadingStateLiveData.observe(viewLifecycleOwner) { event ->
             event.getContentIfNotHandled()?.let {
@@ -147,7 +148,7 @@ class QrRegistrationFragment : BaseFragment() {
             Timber.e("list in fragment: ${it.size}")
             adapter.submitList(it)
         }
-        viewModel.initSearchFilter()
+        viewModel.initSearchFilter(MCCService.ZENITH)
         mccDialogBinding.search.setOnQueryTextListener(object : SearchView.OnQueryTextListener {
             override fun onQueryTextSubmit(query: String?): Boolean {
                 viewModel.textChangeComplete()

@@ -1,13 +1,12 @@
 package com.woleapp.netpos.model
 
 import androidx.lifecycle.LiveData
-import androidx.paging.LivePagedListBuilder
 import androidx.paging.PagedList
 import com.woleapp.netpos.util.Event
 
 data class ZenithQr(val qrCode: String)
-data class ZenithMerchantCategoryList(val merchantCategoryList: List<ZenithMerchantCategory>)
-data class ZenithMerchantCategory(
+data class MerchantCategoryList(val merchantCategoryList: List<MerchantCategory>)
+data class MerchantCategory(
     val merchantCategoryCode: String,
     val merchantCategoryDescription: String
 )
@@ -30,7 +29,7 @@ data class ZenithCity(
     val regionName: String
 )
 
-data class ZenithMCCDto(val filter: String? = null)
+data class MCCDto(val filter: String? = null)
 
 class NetworkResource {
     var loadingState: LoadingState
@@ -49,11 +48,11 @@ class NetworkResource {
 class PaginationHelper {
     var eventLiveData: LiveData<Event<NetworkResource>>? = null
     var emptyResultLiveData: LiveData<Event<Boolean>>? = null
-    var data: LiveData<PagedList<ZenithMerchantCategory>>? = null
+    var data: LiveData<PagedList<MerchantCategory>>? = null
 
     constructor(
         networkResourceLiveData: LiveData<Event<NetworkResource>>,
-        data:LiveData<PagedList<ZenithMerchantCategory>>?
+        data:LiveData<PagedList<MerchantCategory>>?
     ) {
         eventLiveData = networkResourceLiveData
         this.data = data
@@ -62,7 +61,7 @@ class PaginationHelper {
     constructor(
         networkResourceLiveData: LiveData<Event<NetworkResource>>,
         emptyResultLiveData: LiveData<Event<Boolean>>,
-        data: LiveData<PagedList<ZenithMerchantCategory>>?
+        data: LiveData<PagedList<MerchantCategory>>?
     ) {
         this.eventLiveData = networkResourceLiveData
         this.emptyResultLiveData = emptyResultLiveData

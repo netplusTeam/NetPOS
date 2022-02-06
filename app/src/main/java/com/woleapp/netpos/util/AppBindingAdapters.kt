@@ -49,3 +49,10 @@ fun ProgressBar.progressBarInProgress(boolean: Boolean) {
         View.VISIBLE
     else View.GONE
 }
+
+@BindingAdapter("widgetVisibility")
+fun View.widgetVisibility(boolean: Boolean) {
+    visibility = if (boolean)
+        View.VISIBLE
+    else View.GONE
+}

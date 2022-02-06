@@ -147,7 +147,7 @@ class SalesViewModel : ViewModel() {
                         addProperty("amount", it.amount)
                         addProperty("responseCode", it.responseCode)
                         addProperty("RRN", it.RRN)
-                        addProperty("serial_number", NetPosSdk.getDeviceSerial())
+                        addProperty("serial_number", "1142016190000418")
                     }
                     sendVendResponse(context, j.toString())
                 }
@@ -192,7 +192,7 @@ class SalesViewModel : ViewModel() {
                     when (it) {
                         is UnknownHostException, is SocketException -> {
                             _message.value =
-                                Event("Connection Error::${it.localizedMessage}")
+                                Event("Connection Error")
                             Timber.e(it.localizedMessage)
                         }
                         is NibssClientException -> {
@@ -203,11 +203,11 @@ class SalesViewModel : ViewModel() {
                                     Prefs.remove(PREF_KEYHOLDER)
                                     _shouldRefreshNibssKeys.value = Event(true)
                                 }
-                                _message.value = Event(nibssError.error ?: "Error")
+                                _message.value = Event(nibssError.error ?: "Network Error")
                             }
                         }
                         else -> {
-                            _message.value = Event(it.localizedMessage ?: "Unknown exception")
+                            _message.value = Event("Network Error")
                             Timber.e(it)
                         }
                     }
@@ -420,7 +420,7 @@ class SalesViewModel : ViewModel() {
         Single.fromCallable {
             Socket().run {
                 soTimeout = 120_000
-                connect(InetSocketAddress(VEND_IP, VEND_PORT))
+                connect(InetSocketAddress(VEND_PROD_IP, VEND_PROD_PORT))
                 val reader = BufferedReader(InputStreamReader(getInputStream()))
                 Timber.e(reader.readLine())
                 val printWriter = PrintWriter(getOutputStream(), true)

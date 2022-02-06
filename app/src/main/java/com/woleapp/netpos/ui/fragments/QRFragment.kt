@@ -20,13 +20,16 @@ import com.woleapp.netpos.databinding.FragmentTransactionsBinding
 import com.woleapp.netpos.databinding.QrAmoutDialogBinding
 import com.woleapp.netpos.databinding.QrBottomSheetDialogBinding
 import com.woleapp.netpos.model.Service
+import com.woleapp.netpos.viewmodels.NetPosViewModelFactories
 import com.woleapp.netpos.viewmodels.QRViewModel
 
 class QRFragment : BaseFragment() {
 
     private lateinit var adapter: ServiceAdapter
     private lateinit var binding: FragmentTransactionsBinding
-    private val viewModel by viewModels<QRViewModel>()
+    private val viewModel by viewModels<QRViewModel> {
+        NetPosViewModelFactories()
+    }
     private lateinit var masterpassQrBottomSheetDialogBinding: QrBottomSheetDialogBinding
     private lateinit var masterPassQrBottomSheetDialog: BottomSheetDialog
     private lateinit var nibssQrBottomSheetDialogBinding: QrBottomSheetDialogBinding
@@ -43,10 +46,19 @@ class QRFragment : BaseFragment() {
         binding = FragmentTransactionsBinding.inflate(inflater, container, false)
         binding.rvTransactionsHeader.text = getString(R.string.qr_payment)
         adapter = ServiceAdapter {
-            if (it.id == 2)
-                showZenithQrDialog()
-            else
-                showAmountDialog(it.id)
+
+            when (it.id) {
+                0, 1 -> showAmountDialog(it.id)
+                2 -> addFragmentWithoutRemove(
+                    BlueCodeFragment(),
+                    fragmentName = BlueCodeFragment::class.java.simpleName
+                )
+            }
+
+//            if (it.id == 2)
+//                showZenithQrDialog()
+//            else
+//                showAmountDialog(it.id)
         }
         masterpassQrBottomSheetDialogBinding =
             QrBottomSheetDialogBinding.inflate(
@@ -200,6 +212,7 @@ class QRFragment : BaseFragment() {
             .apply {
                 add(Service(0, "MasterPass QR", R.drawable.masterpass))
                 add(Service(1, "NIBSS QR", R.drawable.ic_qr_code))
+                add(Service(2, "BlueCode", R.drawable.ic_bluecode_logo))
                 //add(Service(2, "Zenith QR", R.drawable.ic_zenith_logo))
             }
         adapter.submitList(listOfService)

@@ -73,3 +73,28 @@ data class GateWayTransactionResponse(
     val page: Int,
     val total: Int
 )
+
+data class CreateBlueCodeMerchant(
+    var city: String,
+    var addr: String,
+    var zip: String,
+    var mcc: String,
+    var bankCode: String,
+    var acctNumber: String,
+    var acctName: String
+) {
+    constructor() : this("", "", "", "", "", "", "")
+}
+
+data class BlueCodeResponse(val message: String, val errors: BlueCodeError?, val data: Any?)
+data class BlueCodeError(val property: String, val reason: String)
+data class BlueCodeQrResponse(val qr: String, val transactionId: String)
+data class BlueCodeTransactionStatus(
+    val state: String,
+    @SerializedName("merchant_tx_id") val merchantTxId: String,
+    val amount: String,
+    val terminalId: String,
+    val merchant_uniqueId: String,
+    val partnerId: String,
+    @SerializedName("acquirer_tx_id") val acquirerTxId: String
+)

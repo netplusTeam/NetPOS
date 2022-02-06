@@ -176,14 +176,14 @@ class TransactionsViewModel(private val appDatabase: AppDatabase) : ViewModel() 
             //MqttHelper.sendPayload(MqttTopics.TRANSACTIONS, transactionEvent)
             it.id = transactionResponse.id
             lastTransactionResponse.postValue(it)
-            appDatabase!!.transactionResponseDao().updateTransaction(it)
+            appDatabase.transactionResponseDao().updateTransaction(it)
         }
             .subscribeOn(Schedulers.io())
             .observeOn(AndroidSchedulers.mainThread())
             .subscribe { response, error ->
                 error?.let {
                     inProgress.value = false
-                    _message.value = Event(it.localizedMessage ?: "Error")
+                    _message.value = Event("Network Error")
                     Timber.e(it)
                     it.printStackTrace()
                 }

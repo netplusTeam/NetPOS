@@ -357,7 +357,7 @@ class SalesFragment : BaseFragment() {
             var reader: BufferedReader? = null
             Observable.fromCallable {
                 socket.soTimeout = 120_000
-                socket.connect(InetSocketAddress(VEND_IP, VEND_PORT))
+                socket.connect(InetSocketAddress(VEND_PROD_IP, VEND_PROD_PORT))
                 printWriter = PrintWriter(socket.getOutputStream(), true)
                 reader = BufferedReader(InputStreamReader(socket.getInputStream()))
                 val firstData = reader?.readLine()
@@ -366,7 +366,7 @@ class SalesFragment : BaseFragment() {
                 Observable.interval(0, 5, TimeUnit.SECONDS)
             }.flatMap {
                 val out = JsonObject().apply {
-                    addProperty("serial_number", NetPosSdk.getDeviceSerial())
+                    addProperty("serial_number", "1142016190000418")
                     addProperty("status", "")
                 }.toString()
                 printWriter?.println(out)

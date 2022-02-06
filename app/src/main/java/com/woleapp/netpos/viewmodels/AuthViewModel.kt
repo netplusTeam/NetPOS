@@ -110,6 +110,7 @@ class AuthViewModel : ViewModel() {
                             "partnerId"
                         ).asString() else null
                 }
+                Timber.e(user.terminal_id)
                 Single.just(user)
             }.subscribeOn(Schedulers.io())
             .doFinally { authInProgress.postValue(false) }

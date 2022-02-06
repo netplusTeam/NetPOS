@@ -15,7 +15,7 @@ import com.woleapp.netpos.util.HISTORY_ACTION
 import com.woleapp.netpos.util.HISTORY_ACTION_DEFAULT
 import com.woleapp.netpos.util.HISTORY_ACTION_EOD
 import com.woleapp.netpos.util.HISTORY_ACTION_PREAUTH
-import com.woleapp.netpos.viewmodels.TransactionViewmodelFactory
+import com.woleapp.netpos.viewmodels.NetPosViewModelFactories
 import com.woleapp.netpos.viewmodels.TransactionsViewModel
 
 class TransactionHistoryFragment : BaseFragment() {
@@ -33,7 +33,7 @@ class TransactionHistoryFragment : BaseFragment() {
 
     private lateinit var binding: FragmentTransactionHistoryBinding
     private val viewModel by activityViewModels<TransactionsViewModel> {
-        TransactionViewmodelFactory(AppDatabase.getDatabaseInstance(requireContext()))
+        NetPosViewModelFactories(AppDatabase.getDatabaseInstance(requireContext()))
     }
     private lateinit var adapter: TransactionsAdapter
     override fun onCreateView(

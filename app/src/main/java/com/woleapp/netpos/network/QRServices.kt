@@ -27,13 +27,13 @@ interface ZenithQrService {
     fun getZenithQr(): Single<ZenithQr>
 
     @GET("getMCC/{pagination}")
-    fun getMerchantCategoryList(@Path("pagination") pagination: String): Single<ZenithMerchantCategoryList>
+    fun getMerchantCategoryList(@Path("pagination") pagination: String): Single<MerchantCategoryList>
 
     @GET("getMCC/{filter}/{pagination}")
     fun getMerchantCategoryListWithFilter(
         @Path("filter") filter: String,
         @Path("pagination") pagination: String
-    ): Single<ZenithMerchantCategoryList>
+    ): Single<MerchantCategoryList>
 
     @POST("createMerchant")
     fun createZenithQRMerchant(@Body createZenithMerchantPayload: CreateZenithMerchantPayload): Single<CreateZenithMerchantResponse>

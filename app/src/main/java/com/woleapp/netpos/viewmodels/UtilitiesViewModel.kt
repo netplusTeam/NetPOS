@@ -285,11 +285,11 @@ class UtilitiesViewModel : ViewModel() {
                     errorResponse =
                         if (it.isHttpException()) {
                             _message.value =
-                                Event("${utilitiesPayload.billType} request failed, reversing transaction 😂")
+                                Event("${utilitiesPayload.billType} request failed, reversing transaction")
                             val error = it.getResponseBody()
                             gson.fromJson(error, ErrorNetworkResponse::class.java)
                         } else
-                            ErrorNetworkResponse(it.localizedMessage ?: "")
+                            ErrorNetworkResponse("Failed")
 
                     remark.plus("\n${utilitiesPayload.billType} Payment Failed")
                     Timber.e(it.toString())
@@ -374,7 +374,7 @@ class UtilitiesViewModel : ViewModel() {
 
                 }
                 throwable?.let {
-                    _message.value = Event(it.localizedMessage ?: "")
+                    _message.value = Event("Failed")
                     _showProgressMutableLiveData.value = Event(false)
                     _result.value = Event(ErrorNetworkResponse("Could Not Make Payment"))
                 }

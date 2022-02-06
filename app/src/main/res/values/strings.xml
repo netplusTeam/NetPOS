@@ -120,4 +120,10 @@
     <string name="merchant">Merchant</string>
     <string name="customer">Customer</string>
     <string name="select_receipt_format">Select receipt format</string>
+    <string name="bluecode">BlueCode</string>
+    <string name="bluecode_registration">BlueCode Registration</string>
+    <string name="account_number">Account Number</string>
+    <string name="select_bank">Select Bank</string>
+    <string name="address">Address</string>
+    <string name="error_loading_states_tap_to_try_again">Error loading states, Tap to try again!</string>
 </resources>

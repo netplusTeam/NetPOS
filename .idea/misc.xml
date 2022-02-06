@@ -5,7 +5,12 @@
       <map>
         <entry key="../../../../layout/custom_preview.xml" value="0.22395833333333334" />
         <entry key="app/src/main/res/drawable/ic_baseline_money_24.xml" value="0.38125" />
+        <entry key="app/src/main/res/layout/dialog_fragment_mcc.xml" value="0.3651041666666667" />
+        <entry key="app/src/main/res/layout/dialog_fragment_zenith_mcc.xml" value="0.3594871794871795" />
+        <entry key="app/src/main/res/layout/fragment_create_bluecode_merchant.xml" value="0.3594871794871795" />
+        <entry key="app/src/main/res/layout/fragment_transaction_details.xml" value="0.215625" />
         <entry key="app/src/main/res/layout/fragment_transaction_history.xml" value="0.3651041666666667" />
+        <entry key="app/src/main/res/layout/qr_bottom_sheet_dialog.xml" value="0.21666666666666667" />
         <entry key="app/src/main/res/mipmap-anydpi-v26/ic_launcher_round.xml" value="0.37538461538461537" />
       </map>
     </option>

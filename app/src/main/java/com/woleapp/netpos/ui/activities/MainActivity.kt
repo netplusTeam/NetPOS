@@ -18,10 +18,6 @@ import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.databinding.DataBindingUtil
 import androidx.fragment.app.Fragment
-import com.netpluspay.nibssclient.models.CardData
-import com.netpluspay.nibssclient.models.IsoAccountType
-import com.netpluspay.nibssclient.models.MakePaymentParams
-import com.netpluspay.nibssclient.service.NibssApiWrapper
 import com.pixplicity.easyprefs.library.Prefs
 import com.woleapp.netpos.R
 import com.woleapp.netpos.databinding.ActivityMainBinding
@@ -34,8 +30,6 @@ import com.woleapp.netpos.receivers.BatteryReceiver
 import com.woleapp.netpos.ui.fragments.DashboardFragment
 import com.woleapp.netpos.util.*
 import com.woleapp.netpos.util.Singletons.gson
-import io.reactivex.android.schedulers.AndroidSchedulers
-import io.reactivex.schedulers.Schedulers
 import pub.devrel.easypermissions.EasyPermissions
 import timber.log.Timber
 

@@ -209,7 +209,7 @@ object MqttHelper {
         if (mqttLocalDao == null) mqttLocalDao =
             AppDatabase.getDatabaseInstance(context).mqttLocalDao()
         mqttLocalDao?.apply {
-            getLocalEvents().flatMap {
+            val subscribe = getLocalEvents().flatMap {
                 //NetPosWork.createNotification(context, "Failed Events", "Found ${it.size} failed events", null)
                 deleteAllEvents().toSingleDefault(it)
             }.subscribeOn(Schedulers.io())

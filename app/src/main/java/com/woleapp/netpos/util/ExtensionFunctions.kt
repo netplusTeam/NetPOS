@@ -17,6 +17,7 @@ import com.pos.sdk.emvcore.PosEmvAid
 import com.pos.sdk.emvcore.PosEmvCapk
 import com.pos.sdk.utils.PosUtils
 import com.woleapp.netpos.R
+import io.reactivex.Single
 import io.reactivex.disposables.CompositeDisposable
 import io.reactivex.disposables.Disposable
 import okhttp3.ResponseBody
@@ -161,4 +162,12 @@ fun encodeAsBitmap(source: String, width: Int, height: Int): Bitmap? {
 fun String.decodeBase64ToBitmap(): Bitmap? {
     val decodedString: ByteArray = Base64.decode(this, Base64.DEFAULT)
     return BitmapFactory.decodeByteArray(decodedString, 0, decodedString.size)
+}
+
+fun String.decodeBase64ToBitmapSingle(): Single<Bitmap> = Single.create {
+    try {
+        it.onSuccess(this.decodeBase64ToBitmap()!!)
+    }catch (e: Exception){
+        it.onError(e)
+    }
 }
