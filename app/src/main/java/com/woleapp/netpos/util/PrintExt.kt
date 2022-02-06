@@ -55,7 +55,7 @@ fun List<TransactionResponse>.printEndOfDay(
     bitmapPrintLine.type = PrintLine.BITMAP
     bitmapPrintLine.position = PrintLine.CENTER
     val bitmap: Bitmap =
-        BitmapFactory.decodeResource(context.resources, R.drawable.ic_netpos_new)
+        BitmapFactory.decodeResource(context.resources, R.drawable.ic_print_logo)
     bitmapPrintLine.bitmap = Bitmap.createScaledBitmap(bitmap, 180, 120, false)
     printerManager.addPrintLine(bitmapPrintLine)
 
@@ -246,7 +246,7 @@ fun TransactionResponse.buildReceipt(
         builder.appendLogo(
             BitmapFactory.decodeResource(
                 context.resources,
-                R.drawable.ic_netpos_new
+                R.drawable.ic_print_logo
             )
         )
         builder.appendAID(AID)
@@ -297,7 +297,7 @@ fun NipNotification.buildNipReceipt(context: Context): ReceiptBuilder =
         setPrintGray(2000)
         setLineSpace(1)
     }).apply {
-        appendLogo(BitmapFactory.decodeResource(context.resources, R.drawable.ic_netpos_new))
+        appendLogo(BitmapFactory.decodeResource(context.resources, R.drawable.ic_print_logo))
         appendTextEntityFontSixteenCenter("BANK TRANSFER")
         appendTextEntity("\nBeneficiary Account Number: $beneficiaryAccountNumber")
         appendTextEntity("Source Name: $sourceName")

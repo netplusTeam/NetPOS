@@ -30,7 +30,11 @@ class QrRegistrationFragment : BaseFragment() {
     private lateinit var adapter: MCCAdapter
 
     companion object {
-        fun newInstance() = QrRegistrationFragment()
+        fun newInstance(type: String) = QrRegistrationFragment().apply {
+            arguments = Bundle().apply {
+                this.putString("type", type)
+            }
+        }
     }
 
     private lateinit var binding: FragmentCreateZenithMerchantBinding
@@ -46,6 +50,7 @@ class QrRegistrationFragment : BaseFragment() {
                 executePendingBindings()
                 this.viewmodel = this@QrRegistrationFragment.viewModel
             }
+        viewModel.setType(arguments?.getString("type") ?: "Masterpass")
         mccDialogBinding =
             DialogFragmentMccBinding.inflate(inflater, container, false).apply {
                 lifecycleOwner = viewLifecycleOwner

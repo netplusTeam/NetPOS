@@ -23,8 +23,8 @@ interface NibssQRService {
 }
 
 interface ZenithQrService {
-    @GET("getQR")
-    fun getZenithQr(): Single<ZenithQr>
+    @GET("getQR/{type}")
+    fun getZenithQr(@Path("type") type: String): Single<ZenithQr>
 
     @GET("getMCC/{pagination}")
     fun getMerchantCategoryList(@Path("pagination") pagination: String): Single<MerchantCategoryList>
@@ -40,4 +40,7 @@ interface ZenithQrService {
 
     @GET("getCity/{state}")
     fun getCity(@Path("state") state: String): Single<ZenithCityList>
+
+    @GET("getDynamicQR/{type}/{amount}")
+    fun getDynamicQr(@Path("type") type: String, @Path("amount") amount: String): Single<ZenithQr>
 }

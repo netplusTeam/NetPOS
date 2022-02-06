@@ -2,6 +2,7 @@
 
 package com.woleapp.netpos.ui.fragments
 
+import android.app.Activity
 import android.app.ProgressDialog
 import android.content.DialogInterface
 import android.os.Bundle
@@ -16,12 +17,11 @@ import androidx.recyclerview.widget.GridLayoutManager
 import com.google.android.material.bottomsheet.BottomSheetDialog
 import com.woleapp.netpos.R
 import com.woleapp.netpos.adapter.ServiceAdapter
-import com.woleapp.netpos.databinding.FragmentTransactionsBinding
-import com.woleapp.netpos.databinding.QrAmoutDialogBinding
-import com.woleapp.netpos.databinding.QrBottomSheetDialogBinding
+import com.woleapp.netpos.databinding.*
 import com.woleapp.netpos.model.Service
 import com.woleapp.netpos.viewmodels.NetPosViewModelFactories
 import com.woleapp.netpos.viewmodels.QRViewModel
+import timber.log.Timber
 
 class QRFragment : BaseFragment() {
 
@@ -46,19 +46,10 @@ class QRFragment : BaseFragment() {
         binding = FragmentTransactionsBinding.inflate(inflater, container, false)
         binding.rvTransactionsHeader.text = getString(R.string.qr_payment)
         adapter = ServiceAdapter {
-
-            when (it.id) {
-                0, 1 -> showAmountDialog(it.id)
-                2 -> addFragmentWithoutRemove(
-                    BlueCodeFragment(),
-                    fragmentName = BlueCodeFragment::class.java.simpleName
-                )
-            }
-
-//            if (it.id == 2)
-//                showZenithQrDialog()
-//            else
-//                showAmountDialog(it.id)
+            if (it.id == 0)
+                showSelectQRTypeDialog()
+            else
+                showAmountDialog(it.id)
         }
         masterpassQrBottomSheetDialogBinding =
             QrBottomSheetDialogBinding.inflate(
@@ -136,8 +127,8 @@ class QRFragment : BaseFragment() {
         viewModel.createZenithMerchant.observe(viewLifecycleOwner) { event ->
             event.getContentIfNotHandled()?.let {
                 zenithQRProgressDialog.cancel()
-                if (it) {
-                    addFragmentWithoutRemove(QrRegistrationFragment.newInstance())
+                if (it.isEmpty().not()) {
+                    addFragmentWithoutRemove(QrRegistrationFragment.newInstance(it))
                 }
             }
         }
@@ -154,7 +145,7 @@ class QRFragment : BaseFragment() {
         return binding.root
     }
 
-    private fun showZenithQrDialog() {
+    private fun showZenithQrDialog(qrType: String, amount: Double = 0.0) {
         if (::zenithQRProgressDialog.isInitialized.not())
             zenithQRProgressDialog = ProgressDialog(requireContext())
                 .apply {
@@ -167,7 +158,7 @@ class QRFragment : BaseFragment() {
                     }
                 }
         zenithQRProgressDialog.show()
-        viewModel.getZenithQR()
+        viewModel.getZenithQR(qrType, amount)
     }
 
     private fun startNibssReQueryTimer() {
@@ -192,10 +183,12 @@ class QRFragment : BaseFragment() {
             val amountDouble = qrAmoutDialogBinding.amount.text.toString().toDoubleOrNull()
             amountDouble?.let {
                 qrAmountDialog.cancel()
-                when (serviceId) {
-                    0 -> showMasterPassQRBottomSheetDialog(it)
-                    1 -> showNibssQRBottomSheet(it)
-                }
+                showSelectQRTypeDialog(amount = it)
+//                when (serviceId) {
+//                    0 -> showMasterPassQRBottomSheetDialog(it)
+//                    1 -> showNibssQRBottomSheet(it)
+//                    3 -> showZenithQrDialog(it)
+//                }
             }
         }
     }
@@ -210,10 +203,10 @@ class QRFragment : BaseFragment() {
     private fun setService() {
         val listOfService = ArrayList<Service>()
             .apply {
-                add(Service(0, "MasterPass QR", R.drawable.masterpass))
-                add(Service(1, "NIBSS QR", R.drawable.ic_qr_code))
-                add(Service(2, "BlueCode", R.drawable.ic_bluecode_logo))
-                //add(Service(2, "Zenith QR", R.drawable.ic_zenith_logo))
+                //add(Service(0, "MasterPass QR", R.drawable.masterpass))
+                //add(Service(1, "NIBSS QR", R.drawable.ic_qr_code))
+                add(Service(0, "Zenith Static QR", R.drawable.ic_zenith_logo))
+                add(Service(1, "Zenith Dynamic QR", R.drawable.ic_zenith_logo))
             }
         adapter.submitList(listOfService)
     }
@@ -232,5 +225,37 @@ class QRFragment : BaseFragment() {
         nibssQrBottomSheetDialogBinding.qr.setImageBitmap(null)
         nibssQrBottomSheetDialog.show()
         viewModel.getNibssQR(amount)
+    }
+
+    private fun showSelectQRTypeDialog(amount: Double = 0.0) {
+        var dialogSelectQrTypeBinding: DialogSelectQrTypeDialogBinding
+        val dialog = android.app.AlertDialog.Builder(context)
+            .apply {
+                dialogSelectQrTypeBinding =
+                    DialogSelectQrTypeDialogBinding.inflate(
+                        LayoutInflater.from(context),
+                        null,
+                        false
+                    )
+                        .apply {
+                            executePendingBindings()
+                        }
+                setView(dialogSelectQrTypeBinding.root)
+                setCancelable(false)
+            }.create()
+        dialogSelectQrTypeBinding.qrTypes.setOnCheckedChangeListener { _, checkedId ->
+            val qrType = when (checkedId) {
+                R.id.masterpass_qr_ -> "Masterpass"
+                R.id.mvisa_qr_ -> "mVisa"
+                else -> "Nibss"
+            }
+            dialog.dismiss()
+            Timber.e("$checkedId")
+            showZenithQrDialog(qrType = qrType, amount = amount)
+        }
+        dialogSelectQrTypeBinding.cancelButton.setOnClickListener {
+            dialog.dismiss()
+        }
+        dialog.show()
     }
 }

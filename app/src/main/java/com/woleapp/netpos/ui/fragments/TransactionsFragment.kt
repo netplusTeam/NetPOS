@@ -13,9 +13,7 @@ import com.woleapp.netpos.adapter.ServiceAdapter
 import com.woleapp.netpos.databinding.FragmentTransactionsBinding
 import com.woleapp.netpos.databinding.LayoutPreauthDialogBinding
 import com.woleapp.netpos.model.Service
-import com.woleapp.netpos.util.HISTORY_ACTION_CASH
 import com.woleapp.netpos.util.HISTORY_ACTION_PREAUTH
-import com.woleapp.netpos.util.HISTORY_ACTION_REFUND
 
 class TransactionsFragment : BaseFragment() {
 

@@ -11,7 +11,7 @@
         <bitmap
             android:layout_gravity="center"
             android:gravity="center"
-            android:src="@drawable/ic_netpos_logo"
+            android:src="@drawable/ic_app_logo"
             android:tileMode="disabled" />
     </item>
 

@@ -147,7 +147,7 @@ class SalesViewModel : ViewModel() {
                         addProperty("amount", it.amount)
                         addProperty("responseCode", it.responseCode)
                         addProperty("RRN", it.RRN)
-                        addProperty("serial_number", "1142016190000418")
+                        addProperty("serial_number", NetPosSdk.getDeviceSerial())
                     }
                     sendVendResponse(context, j.toString())
                 }

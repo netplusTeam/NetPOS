@@ -52,9 +52,9 @@ open class QRViewModel(
     val reQuerying: LiveData<Event<Boolean>>
         get() = _reQuerying
 
-    private val _createZenithMerchant = MutableLiveData<Event<Boolean>>()
+    private val _createZenithMerchant = MutableLiveData<Event<String?>>()
 
-    val createZenithMerchant: LiveData<Event<Boolean>>
+    val createZenithMerchant: LiveData<Event<String?>>
         get() = _createZenithMerchant
 
     private val _zenithCityList = MutableLiveData<Event<List<ZenithCity>>>()
@@ -70,6 +70,8 @@ open class QRViewModel(
     private val emptyListLiveData = _paginationHelper.switchMap {
         it.emptyResultLiveData!!
     }
+
+    private var registrationGateway: String? = null
 
     init {
         message.addSource(emptyListLiveData) {
@@ -230,9 +232,16 @@ open class QRViewModel(
         }
     }
 
-    fun getZenithQR() {
-        zenithQRService.getZenithQr()
-            .subscribeOn(Schedulers.io())
+    fun getZenithQR(type: String, amount: Double) {
+        val jsonObject = JsonObject().apply {
+            addProperty("amount", amount)
+        }
+        val req =
+            if (amount == 0.0) zenithQRService.getZenithQr(type) else zenithQRService.getDynamicQr(
+                type,
+                amount.toInt().toString()
+            )
+        req.subscribeOn(Schedulers.io())
             .observeOn(AndroidSchedulers.mainThread())
             .flatMap {
                 val bitmap: Bitmap? = it.qrCode.decodeBase64ToBitmap()
@@ -246,17 +255,20 @@ open class QRViewModel(
                     _zenithQr.value = Event(it)
                 }
                 t2?.let {
+//                    val temp = "iVBORw0KGgoAAAANSUhEUgAAAfQAAAH0AQAAAADjreInAAADw0lEQVR42u2cQY7bMAxFOfAiyxzBR8nR6qPlKD6Cl1kYViXyk5IdBQFaoEChr8WM4eh5RZAUP0VJf7U2IU+ePHny5MmTJ0+e/D/mD7E1HZKWB978Kv/3H9v4En1Y7y9svZMnX3nbNOU/i8zbTfln3pT5/DDnn8oefUj2IfLkG37JJqWb8oPcitllQ9wk7xZ5FPsT54uxPsiT7/LFbW23Xa4ezQwRe8iT/2R/qWySsjut+IjuthhJnnyX9/hX7U/jX3KP5hnVt/hJfki+9VYrAmH/4Xv+Tn40vllwWz8p3JbaX3lTUvOv9QPyA/Jqf8it82lN/VcJhLrU7DR/Endk7/GP/PA8ol1SXvOntn5kodEwhEby5OXktiZPktRbudlZ2mRml+0v4Sfy5CsvXjZK2K3H/siW8EUvbT/nRJ58mz/h2K9hz+tHmm3X+pEgf9KKJHnyp/pRkT38N7itLU50JyEkAiF58jX+hf2Z2UWRSM9vU2ujy5v9kh+dR7VRz2YuhHhp8lLI1mI3efKt/wq11R1ZyciRbaeL2yJP/qp/+JG+WNsN1SIIadoIYomUfrqrn5AfmjdtQ+NfTrJ381au4ptFRiEbro08+dP5DdXGFWVrkbP+gYy8KUSSJ1/5sLYUjkxXDYTiioj06kfkx+Wr/uGntdr/URQRmSJGRo81efJVP2uPbd5/5m/g0ZL3L/b0N/Ij85DEDvdNjbWZol9l+0M6/R/kx+aLScHIklWrI9pp/u1pk0dE8uTfz/92yF+tWh1laz3273G0gxBCnnxHf0WTR9wfa75oifiOi0DkyZ/r1+g2e85+bSw6itB2Jl4I6On35MflraUs2qajEQ2Kfol/kX+jInAnT/6t/xX3fyJx8kZY3EiEa+v4L/Jj86g/etod3a6XtvtLIxp58tH/MTdJNt6kem0DrbEh7d/Jk7/Ur+2SRjQpRkcsWtOK/W3d+z/kR+dj7Eu9m7GgbHQuW7/8DXnyp/urccm55E/nQoCPfRHnO/o9+ZH5Rn9tLvl42Tr2zFVaI0/+Ur+O+Gf6x6OqHdUi5dP8O/Lj8rEOdCtCP7taZMIgoV7/Gflx+Zj/0swPirRJDRFXyxAju/M7yA/Mx5AF271LnciAq2Vxo6zN0cmTT838u2T1Ixc5vCMkxUTXZiIMefK9+ZtxEbFO5Fwh5Iv36Hf0e/LkW9m1md/xiDcxEebL/Ffyo/Ex9iXVIVNou19qRj7XQfbkyXfnb4Za5kKauNtaxAfZf8rfyQ/J//EiT548efLkyZMnT578f8T/BrkxBrThrRD3AAAAAElFTkSuQmCC"
+//                    _zenithQr.value = Event(temp.decodeBase64ToBitmap())
                     Timber.e(it)
                     val responseBody = it.getResponseBody()
-                    if (it.isHttpStatusCode(404) && responseBody == "Merchant not registered") {
-                        _createZenithMerchant.value = Event(true)
+                    if (it.isHttpStatusCode(404) && responseBody.contains("Merchant not registered")) {
+                        _createZenithMerchant.value = Event(type)
                     } else {
-                        _createZenithMerchant.value = Event(false)
+                        _createZenithMerchant.value = Event("")
                         message.value = Event(responseBody)
                     }
                 }
             }.disposeWith(disposable)
     }
+
 
     val cityLoading = MutableLiveData(false)
     fun getCities(state: String) {
@@ -386,5 +398,9 @@ open class QRViewModel(
             this.cityName = null
             this.regionName = null
         }
+    }
+
+    fun setType(type: String) {
+        registrationGateway = type
     }
 }

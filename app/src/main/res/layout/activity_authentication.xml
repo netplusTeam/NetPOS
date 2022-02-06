@@ -21,7 +21,7 @@
             android:contentDescription="@string/netpos_logo"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent"
-            app:srcCompat="@drawable/ic_netpos_logo" />
+            app:srcCompat="@drawable/ic_app_logo" />
 
         <FrameLayout
             android:id="@+id/auth_container"

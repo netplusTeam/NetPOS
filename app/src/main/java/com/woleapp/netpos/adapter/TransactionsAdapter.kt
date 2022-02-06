@@ -4,7 +4,6 @@ import android.view.LayoutInflater
 import android.view.ViewGroup
 import androidx.paging.PagedListAdapter
 import androidx.recyclerview.widget.DiffUtil
-import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
 import com.netpluspay.nibssclient.models.TransactionResponse
 import com.netpluspay.nibssclient.util.formatCurrencyAmount
@@ -57,7 +56,7 @@ class TransactionsViewHolder private constructor(val binding: LayoutTransactionI
         binding.cardDetails.text = cardDetails
         binding.transactionStatus.text =
             if (transactionResponse.responseCode == "00") "Approved" else "Declined"
-        binding.holderName.text = if (transactionResponse.cardHolder.isEmpty()) "CUSTOMER" else transactionResponse.cardHolder
+        binding.holderName.text = transactionResponse.cardHolder.ifEmpty { "CUSTOMER" }
         binding.transactionRef.text = transactionResponse.RRN
         binding.transactionAmount.text =
             transactionResponse.amount.div(100).formatCurrencyAmount("\u20A6")
