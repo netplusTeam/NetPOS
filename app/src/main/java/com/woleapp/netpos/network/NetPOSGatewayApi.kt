@@ -42,7 +42,7 @@ interface GatewayService {
     @GET("partner-api/operator/pos-transactions")
     @Headers(
         "X-CLIENT-ID: b7c4fc42-4e1a-4493-bb4e-bf798d9ce8a1",
-        "X-ACCESS-CODE: 9837a93abecc10faf7a36145401c1d9aabdc60d7d88cfba411a5b2dcd4423709"
+        "X-ACCESSCODE: 9837a93abecc10faf7a36145401c1d9aabdc60d7d88cfba411a5b2dcd4423709"
     )
     fun getTransactions(@QueryMap queryParams: Map<String, String>): Single<GateWayTransactionResponse>
 }

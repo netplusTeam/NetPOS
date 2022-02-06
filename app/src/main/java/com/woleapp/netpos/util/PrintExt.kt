@@ -185,8 +185,13 @@ fun TransactionResponse.print(
     buildReceipt(context, isMerchantCopy).print(printerListener)
 }
 
-fun TransactionResponse.print(context: Context, remark: String? = null, isMerchantCopy: Boolean = false) =
-    buildReceipt(remark = remark, context = context, isMerchantCopy = isMerchantCopy).print()
+fun TransactionResponse.print(
+    context: Context,
+    remark: String? = null,
+    isMerchantCopy: Boolean = false,
+    isReprint: Boolean = false
+) =
+    buildReceipt(remark = remark, context = context, isMerchantCopy = isMerchantCopy, isReprint = isReprint).print()
 
 fun TransactionResponse.builder() = StringBuilder().apply {
     append("Merchant Name: ").append(Singletons.getCurrentlyLoggedInUser()!!.business_name)
@@ -236,7 +241,8 @@ fun TransactionResponse.buildSMSText(s: String? = null): StringBuilder = StringB
 fun TransactionResponse.buildReceipt(
     context: Context,
     isMerchantCopy: Boolean = false,
-    remark: String? = null
+    remark: String? = null,
+    isReprint: Boolean = false
 ) =
     ReceiptBuilder(NetPosSdk.getPrinterManager(context).apply {
         cleanCache()
@@ -278,6 +284,7 @@ fun TransactionResponse.buildReceipt(
                 }
             }"
         )
+        builder.isReprint = isReprint
         if (isMerchantCopy)
             builder.isMerchantCopy
         else builder.isCustomerCopy

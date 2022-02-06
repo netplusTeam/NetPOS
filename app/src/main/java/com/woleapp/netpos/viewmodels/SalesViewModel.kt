@@ -15,7 +15,7 @@ import com.netpluspay.nibssclient.exception.NibssClientException
 import com.netpluspay.nibssclient.models.*
 import com.netpluspay.nibssclient.service.NibssApiWrapper
 import com.pixplicity.easyprefs.library.Prefs
-import com.woleapp.netpos.database.AppDatabase
+import com.woleapp.netpos.BuildConfig
 import com.woleapp.netpos.model.*
 import com.woleapp.netpos.mqtt.MqttHelper
 import com.woleapp.netpos.network.NetPOSCashService
@@ -26,7 +26,6 @@ import io.reactivex.Single
 import io.reactivex.android.schedulers.AndroidSchedulers
 import io.reactivex.disposables.CompositeDisposable
 import io.reactivex.schedulers.Schedulers
-
 import okhttp3.MediaType.Companion.toMediaTypeOrNull
 import okhttp3.RequestBody
 import okhttp3.RequestBody.Companion.toRequestBody
@@ -39,7 +38,6 @@ import java.net.InetSocketAddress
 import java.net.Socket
 import java.net.SocketException
 import java.net.UnknownHostException
-import java.sql.Time
 
 
 class SalesViewModel : ViewModel() {
@@ -104,6 +102,10 @@ class SalesViewModel : ViewModel() {
             _message.value = Event("Enter a valid amount")
             return
         }) * 100
+        if (BuildConfig.FLAVOR == "konga" && (remark.value.isNullOrEmpty() || remark.value!!.length < 10)) {
+            _message.value = Event("Remark too short")
+            return
+        }
         this.amountLong = amountDbl.toLong()
         _getCardData.value = Event(true)
     }
@@ -111,8 +113,6 @@ class SalesViewModel : ViewModel() {
     fun makePayment(context: Context, transactionType: TransactionType = TransactionType.PURCHASE) {
         Timber.e(cardData.toString())
         Timber.e("terminal id for transaction ${NetPosTerminalConfig.getTerminalId()}")
-        //IsoAccountType.
-        Timber.e(transactionType.toString())
         val requestData = MakePaymentParams(
             amountLong,
             0L,

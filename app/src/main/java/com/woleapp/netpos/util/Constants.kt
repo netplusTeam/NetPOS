@@ -32,3 +32,4 @@ const val VEND_PORT = 3535
 const val VEND_PROD_IP = "vend.netpluspay.com"
 const val VEND_PROD_PORT = 3535
 const val TRANSACTION_LAST_LOADED_PAGE = "transaction_last_loaded_page"
+const val PREF_REPRINT_PASSWORD = "reprint_password"

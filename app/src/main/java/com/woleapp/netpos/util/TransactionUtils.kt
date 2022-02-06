@@ -1,12 +1,20 @@
 package com.woleapp.netpos.util
 
+import android.content.Context
+import android.view.LayoutInflater
+import android.widget.Toast
+import com.google.android.material.bottomsheet.BottomSheetDialog
 import com.google.gson.JsonObject
 import com.netpluspay.nibssclient.models.IsoAccountType
 import com.netpluspay.nibssclient.models.TransactionResponse
 import com.netpluspay.nibssclient.models.TransactionType
 import com.netpluspay.nibssclient.models.responseMessage
+import com.pixplicity.easyprefs.library.Prefs
+import com.woleapp.netpos.R
+import com.woleapp.netpos.databinding.LayoutPayWithTransferBinding
 import com.woleapp.netpos.model.MerchantCategory
 import com.woleapp.netpos.model.MerchantCategoryList
+import com.woleapp.netpos.model.User
 import timber.log.Timber
 
 
@@ -93,4 +101,65 @@ fun JsonObject.toMerchantCategoryList(): MerchantCategoryList {
         list.add(MerchantCategory(it.value.asString, it.key))
     }
     return MerchantCategoryList(list)
+}
+
+fun showPayWithTransferDialog(context: Context) {
+    val bankDetailsBinding: LayoutPayWithTransferBinding = LayoutPayWithTransferBinding.inflate(
+        LayoutInflater.from(context), null, false
+    )
+    val bottomSheetDialog = BottomSheetDialog(context, R.style.SheetDialog)
+    bottomSheetDialog.setCancelable(false)
+    bottomSheetDialog.setContentView(bankDetailsBinding.root)
+    val user = Singletons.gson.fromJson(Prefs.getString(PREF_USER, ""), User::class.java)
+    val bank = "Zenith Bank"
+    val accountNumber = "0123456789"
+    val accountName = user.business_name ?: ""
+//        val bank ="GTB"
+//        val accountNumber = "0239952959"
+//        val accountName = "EasyPOS"
+    //val accountNumber2 = "2684362099"
+    //val bank2 = "FCMB"
+    val accountNumber2 = ""
+    val bank2 = ""
+//            bankDetailsBinding.accountNumber2.text = accountNumber2
+//            bankDetailsBinding.bank2.text = bank2
+    bankDetailsBinding.accountNumber.text = accountNumber
+    bankDetailsBinding.bank.text = bank
+    bankDetailsBinding.accountName.text = accountName
+//            val ref = "Please use the code $code as a reference during transfer or payment"
+//            bankDetailsBinding.reference.text = ref
+    bankDetailsBinding.accountNumber.setOnClickListener {
+        copyTextToClipboard(
+            context,
+            "Account Number",
+            accountNumber
+        )
+        Toast.makeText(
+            context,
+            "Account number copied to clipboard",
+            Toast.LENGTH_SHORT
+        )
+            .show()
+    }
+//            bankDetailsBinding.accountNumber2.setOnClickListener {
+//                copyTextToClipboard(
+//                    requireContext(),
+//                    "Account Number",
+//                    accountNumber2
+//                )
+//                Toast.makeText(
+//                    requireContext(),
+//                    "Account number copied to clipboard",
+//                    Toast.LENGTH_SHORT
+//                ).show()
+//            }
+//            bankDetailsBinding.tap.setOnClickListener {
+//                copyTextToClipboard(requireContext(), "Reference", "" + ref)
+//                Toast.makeText(requireContext(), "Reference copied to clipboard", Toast.LENGTH_SHORT)
+//                    .show()
+//            }
+    bankDetailsBinding.btnDone.setOnClickListener {
+        if (bottomSheetDialog.isShowing) bottomSheetDialog.cancel()
+    }
+    bottomSheetDialog.show()
 }

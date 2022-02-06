@@ -98,10 +98,23 @@ android {
             dimension "whiteLabels"
             applicationIdSuffix ".providus"
         }
+        konga {
+            dimension "whiteLabels"
+            applicationIdSuffix ".konga"
+        }
     }
 
     sourceSets {
+        wema {
+            java.srcDirs('src/defaults/java')
+        }
         netpos {
+            java.srcDirs('src/defaults/java')
+        }
+        konga {
+            java.srcDirs('src/defaults/java')
+        }
+        providus {
             java.srcDirs('src/defaults/java')
         }
     }

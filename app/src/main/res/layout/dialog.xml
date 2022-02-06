@@ -45,7 +45,7 @@
                 <!--android:layout_alignParentRight="true"-->
                 <!--android:layout_width="32dp"-->
                 <!--android:layout_height="32dp"-->
-                <!--android:src="@drawable/cross_icon"/>-->
+                <!--android:res="@drawable/cross_icon"/>-->
                 <!--android:tint="@color/black_dark"-->
 
                 <!--<RelativeLayout-->
@@ -74,7 +74,7 @@
                 <!--android:layout_width="14dp"-->
                 <!--android:layout_height="14dp"-->
                 <!--android:scaleType="centerInside"-->
-                <!--android:src="@drawable/cancel_white"-->
+                <!--android:res="@drawable/cancel_white"-->
                 <!--android:layout_centerVertical="true"-->
                 <!--android:layout_marginLeft="3dp"-->
                 <!--android:layout_marginStart="3dp"-->

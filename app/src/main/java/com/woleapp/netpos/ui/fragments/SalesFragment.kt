@@ -283,40 +283,6 @@ class SalesFragment : BaseFragment() {
         return binding.root
     }
 
-    /*private fun quickPay() {
-        viewModel.setAccountType(IsoAccountType.SAVINGS)
-        viewModel.cardData = CardData(
-            track2Data = "5199110748591994D2012221000013772F",
-            nibssIccSubset = "9F26087BCB3647E84652A29F2701809F10120110A040002A0400000000000000000000FF9F370451271F779F360201E3950500802480009A032009179C01009F02060000000010005F2A020566820239009F1A0205669F34034203009F3303E0F9C89F3501229F1E0831323334353637388407A00000000410109F090200009F03060000000000005F340100",
-            panSequenceNumber = "000",
-            posEntryMode = "051"
-        ).apply {
-            pinBlock = TripleDES.encrypt(
-                "0425A8EF8B7A6E66",
-                NetPosTerminalConfig.getKeyHolder()!!.clearPinKey
-            )
-        }
-        viewModel.makePayment(requireContext(), transactionType)
-    }*/
-
-    /*private fun quickPay() {
-        viewModel.setAccountType(IsoAccountType.SAVINGS)
-        viewModel.setCardScheme("Master Card")
-        viewModel.setCustomerName("SUBAIR/BABATUNDE")
-        viewModel.cardData = CardData(
-            track2Data = "5399834599607066D22032210014182625",
-            nibssIccSubset = "9F2608F564EF96AC6AFE8F9F2701809F10120110A04003220000000000000000000000FF9F3704BAD5E42A9F3602030A950500000480009A032012039C01009F02060000000010005F2A020566820239009F1A0205669F34034203009F3303E068C89F3501229F1E0842313739314531588407A00000000410109F090200029F03060000000000005F340101",
-            panSequenceNumber = "001",
-            posEntryMode = "051"
-        ).apply {
-            pinBlock = TripleDES.encrypt(
-                "0420BDCBA669F8F9",
-                NetPosTerminalConfig.getKeyHolder()!!.clearPinKey
-            )
-        }
-        viewModel.makePayment(requireContext(), transactionType)
-    }*/
-
     private fun showSnackBar(message: String) {
         if (message == "Transaction not approved") {
             AlertDialog.Builder(requireContext())
@@ -366,7 +332,7 @@ class SalesFragment : BaseFragment() {
                 Observable.interval(0, 5, TimeUnit.SECONDS)
             }.flatMap {
                 val out = JsonObject().apply {
-                    addProperty("serial_number", "1142016190000418")
+                    addProperty("serial_number", NetPosSdk.getDeviceSerial())
                     addProperty("status", "")
                 }.toString()
                 printWriter?.println(out)
@@ -410,43 +376,6 @@ class SalesFragment : BaseFragment() {
                     Timber.e("Error: ${it.localizedMessage}")
                     requireActivity().onBackPressed()
                 }).disposeWith(compositeDisposable)
-
-            /*Single.fromCallable {
-                Socket().run {
-                    connect(InetSocketAddress("vend.netpluspay.com", 3535), 30_000)
-                    soTimeout = 30_000
-                    val reader = BufferedReader(InputStreamReader(getInputStream()))
-                    val firstData = reader.readLine()
-                    Timber.e(firstData)
-                    val printWriter = PrintWriter(getOutputStream(), true)
-                    val out = JsonObject().apply {
-                        addProperty("serial_number", NetPosSdk.getDeviceSerial())
-                        addProperty("status", "")
-                    }.toString()
-                    printWriter.println(out)
-                    reader.readLine()
-                }
-            }.subscribeOn(Schedulers.io())
-                .observeOn(AndroidSchedulers.mainThread())
-                .doFinally {
-                    progressBar.dismiss()
-                }.flatMap {
-                    Timber.e(it)
-                    Single.just(Singletons.gson.fromJson(it, Vend::class.java))
-                }
-                .subscribe { t1, t2 ->
-                    t1?.let {
-                        Timber.e(it.toString())
-                        Toast.makeText(context, "received", Toast.LENGTH_SHORT).show()
-                        Toast.makeText(context, it.amount.toString(), Toast.LENGTH_LONG).show()
-                        binding.priceTextbox.setText(it.amount.toLong().toString())
-
-                    }
-                    t2?.let {
-                        Toast.makeText(context, it.localizedMessage, Toast.LENGTH_SHORT).show()
-                        Timber.e(it)
-                    }
-                }.disposeWith(compositeDisposable)*/
         }
     }
 

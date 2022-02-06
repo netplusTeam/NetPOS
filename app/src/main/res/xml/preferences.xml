@@ -11,4 +11,10 @@
         android:title="Printer Print Settings"
         app:useSimpleSummaryProvider="true" />
 
+    <Preference
+        android:enabled="true"
+        android:icon="@drawable/ic_lock"
+        android:key="reprint_password"
+        android:title="Reprint Password" />
+
 </PreferenceScreen>

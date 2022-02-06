@@ -124,7 +124,6 @@ class TransactionsViewModel(private val appDatabase: AppDatabase) : ViewModel() 
 //        }
 
 
-
     fun setAction(action: String?) {
         _selectedAction.value = action!!
     }
@@ -265,7 +264,7 @@ class TransactionsViewModel(private val appDatabase: AppDatabase) : ViewModel() 
             this.cardExpiry = ""
             //this.cardHolder = this
         }
-        transactionResponse?.print(context, isMerchantCopy = isMerchantCopy)
+        transactionResponse?.print(context, isMerchantCopy = isMerchantCopy, isReprint = true)
             ?.subscribeOn(Schedulers.io())
             ?.observeOn(AndroidSchedulers.mainThread())
             ?.subscribe { t1, t2 ->

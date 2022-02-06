@@ -17,6 +17,7 @@ import com.netpluspay.nibssclient.models.*
 import com.netpluspay.nibssclient.service.NibssApiWrapper
 import com.netpluspay.nibssclient.util.formatCurrencyAmount
 import com.pixplicity.easyprefs.library.Prefs
+import com.woleapp.netpos.BuildConfig
 import com.woleapp.netpos.R
 import com.woleapp.netpos.adapter.ServiceAdapter
 import com.woleapp.netpos.database.AppDatabase
@@ -48,11 +49,46 @@ class DashboardFragment : BaseFragment() {
         savedInstanceState: Bundle?
     ): View {
         binding = FragmentDashboardBinding.inflate(inflater, container, false)
+        progressDialog = ProgressDialog(requireContext())
+        return binding.root
+    }
+
+    private fun setupKongaAdapter() {
         adapter = ServiceAdapter {
             when (it.id) {
                 0 -> addFragmentWithoutRemove(TransactionsFragment())
                 1 -> getBalance()
                 2 -> addFragmentWithoutRemove(NipNotificationFragment.newInstance())
+                3 -> addFragmentWithoutRemove(BillsFragment())
+                4 -> showCalendarDialog()
+                else -> {
+                    sendPayload()
+                }
+            }
+            //addFragmentWithoutRemove(nextFrag)
+        }
+        val listOfServices = ArrayList<Service>()
+            .apply {
+                add(Service(0, "Transaction", R.drawable.ic_trans))
+                add(Service(1, "Balance Inquiry", R.drawable.ic_write))
+                add(Service(2, "Bank Transfer", R.drawable.ic_lending))
+                //add(Service(3, "Pay Bills", R.drawable.ic_bill))
+                add(Service(4, "View End Of Day Transactions", R.drawable.ic_print))
+            }
+        adapter.submitList(listOfServices)
+    }
+
+    private fun setUpDefaultAdapter() {
+        adapter = ServiceAdapter {
+            when (it.id) {
+                0 -> addFragmentWithoutRemove(TransactionsFragment())
+                1 -> getBalance()
+                2 -> {
+                    if (BuildConfig.FLAVOR == "zenith")
+                        showPayWithTransferDialog(requireContext())
+                    else
+                        addFragmentWithoutRemove(NipNotificationFragment.newInstance())
+                }
                 3 -> addFragmentWithoutRemove(BillsFragment())
                 4 -> showCalendarDialog()
                 5 -> {
@@ -67,8 +103,22 @@ class DashboardFragment : BaseFragment() {
             }
             //addFragmentWithoutRemove(nextFrag)
         }
-        progressDialog = ProgressDialog(requireContext())
-        return binding.root
+        val listOfServices = ArrayList<Service>()
+            .apply {
+                add(Service(0, "Transaction", R.drawable.ic_trans))
+                add(Service(1, "Balance Inquiry", R.drawable.ic_write))
+                add(
+                    Service(
+                        2,
+                        if (BuildConfig.FLAVOR == "zenith") "Pay With Transfer" else "Bank Transfer",
+                        R.drawable.ic_lending
+                    )
+                )
+                add(Service(3, "Pay Bills", R.drawable.ic_bill))
+                add(Service(4, "View End Of Day Transactions", R.drawable.ic_print))
+                add(Service(5, "Settings", R.drawable.ic_baseline_settings))
+            }
+        adapter.submitList(listOfServices)
     }
 
     private fun getBalance() {
@@ -251,21 +301,11 @@ class DashboardFragment : BaseFragment() {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-        setServices()
+        when (BuildConfig.FLAVOR) {
+            "konga" -> setupKongaAdapter()
+            else -> setUpDefaultAdapter()
+        }
         binding.rvDashboard.layoutManager = GridLayoutManager(context, 2)
         binding.rvDashboard.adapter = adapter
-    }
-
-    private fun setServices() {
-        val listOfServices = ArrayList<Service>()
-            .apply {
-                add(Service(0, "Transaction", R.drawable.ic_trans))
-                add(Service(1, "Balance Inquiry", R.drawable.ic_write))
-                add(Service(2, "Bank Transfer", R.drawable.ic_lending))
-                add(Service(3, "Pay Bills", R.drawable.ic_bill))
-                add(Service(4, "View End Of Day Transactions", R.drawable.ic_print))
-                add(Service(5, "Settings", R.drawable.ic_baseline_settings))
-            }
-        adapter.submitList(listOfServices)
     }
 }
