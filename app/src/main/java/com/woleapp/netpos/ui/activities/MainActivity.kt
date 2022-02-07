@@ -20,6 +20,7 @@ import androidx.databinding.DataBindingUtil
 import androidx.fragment.app.Fragment
 import com.pixplicity.easyprefs.library.Prefs
 import com.woleapp.netpos.R
+import com.woleapp.netpos.database.AppDatabase
 import com.woleapp.netpos.databinding.ActivityMainBinding
 import com.woleapp.netpos.model.User
 import com.woleapp.netpos.mqtt.MqttHelper
@@ -30,6 +31,8 @@ import com.woleapp.netpos.receivers.BatteryReceiver
 import com.woleapp.netpos.ui.fragments.DashboardFragment
 import com.woleapp.netpos.util.*
 import com.woleapp.netpos.util.Singletons.gson
+import io.reactivex.android.schedulers.AndroidSchedulers
+import io.reactivex.schedulers.Schedulers
 import pub.devrel.easypermissions.EasyPermissions
 import timber.log.Timber
 
@@ -103,17 +106,20 @@ class MainActivity : AppCompatActivity(), EasyPermissions.PermissionCallbacks {
     }
 
     private fun logout() {
-        Prefs.remove(PREF_USER_TOKEN)
-        Prefs.remove(PREF_AUTHENTICATED)
-        Prefs.remove(PREF_KEYHOLDER)
-        Prefs.remove(PREF_CONFIG_DATA)
-        Prefs.remove(PREF_USER)
-        MqttHelper.disconnect()
-        val intent = Intent(this, AuthenticationActivity::class.java)
-        intent.flags =
-            Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
-        startActivity(intent)
-        finish()
+        val subscribe = AppDatabase.getDatabaseInstance(this)
+            .transactionResponseDao()
+            .nukeAllTransactions().subscribeOn(Schedulers.io())
+            .observeOn(AndroidSchedulers.mainThread())
+            .subscribe {
+                NetPosTerminalConfig.disposeDisposables()
+                Prefs.clear()
+                MqttHelper.disconnect()
+                val intent = Intent(this, AuthenticationActivity::class.java)
+                intent.flags =
+                    Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+                startActivity(intent)
+                finish()
+            }
     }
 
     private fun checkTokenExpiry() {

@@ -23,6 +23,7 @@ import com.woleapp.netpos.util.Singletons.gson
 import io.reactivex.Single
 import io.reactivex.android.schedulers.AndroidSchedulers
 import io.reactivex.disposables.CompositeDisposable
+import io.reactivex.disposables.Disposable
 import io.reactivex.schedulers.Schedulers
 import timber.log.Timber
 
@@ -42,12 +43,13 @@ object NetPosTerminalConfig {
     private val sendIntent = Intent(CONFIGURATION_ACTION)
     private lateinit var localBroadcastManager: LocalBroadcastManager
     private var configureSilently: Boolean = false
+    private var configDisposable: Disposable? = null
 
     fun getTerminalId() = terminalId ?: ""
     private fun setTerminalId(configurationData: ConfigurationData) {
         Timber.e("use storm TID ${useStormTerminalId()}")
         terminalId =
-            "2101JJ41"
+            if (useStormTerminalId()) Singletons.getCurrentlyLoggedInUser()?.terminal_id else configurationData.terminalId
     }
 
     private var keyHolder: KeyHolder? = null
@@ -98,7 +100,7 @@ object NetPosTerminalConfig {
             }
             else -> configureTerminal(context)
         }
-        req.subscribeOn(Schedulers.io())
+        configDisposable = req.subscribeOn(Schedulers.io())
             .observeOn(AndroidSchedulers.mainThread())
             .doFinally {
                 isConfigurationInProcess = false
@@ -140,7 +142,9 @@ object NetPosTerminalConfig {
                     localBroadcastManager.sendBroadcast(sendIntent)
                     Timber.e(it)
                 }
-            }.disposeWith(disposables)
+            }
+        configDisposable?.disposeWith(disposables)
+
     }
 
     private fun configureTerminal(context: Context): Single<KeyHolder> {
@@ -163,7 +167,11 @@ object NetPosTerminalConfig {
     private val KeyHolder.configureTerminal
         get() = this.clearPinKey.isNullOrEmpty().not()
 
-    private fun disposeDisposables() {
+    fun disposeDisposables() {
+        configDisposable?.let {
+            if (it.isDisposed.not())
+                it.dispose()
+        }
         disposables.clear()
     }
 }

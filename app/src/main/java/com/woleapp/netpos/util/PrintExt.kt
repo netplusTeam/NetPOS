@@ -25,6 +25,8 @@ import io.reactivex.Single
 import io.reactivex.SingleEmitter
 import timber.log.Timber
 import java.lang.StringBuilder
+import java.text.SimpleDateFormat
+import java.util.*
 
 
 fun List<TransactionResponse>.printEndOfDay(
@@ -60,6 +62,30 @@ fun List<TransactionResponse>.printEndOfDay(
     printerManager.addPrintLine(bitmapPrintLine)
 
     var emitter: SingleEmitter<PrinterResponse>? = null
+
+    textPrintLine.apply {
+        isBold = false
+        content = "EOD FOR: ${SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(this@printEndOfDay.first().transactionTimeInMillis)}"
+    }
+    printerManager.appendTextEntity(textPrintLine)
+
+    textPrintLine.apply {
+        isBold = false
+        content = "Terminal ID: ${this@printEndOfDay.first().terminalId}"
+    }
+    printerManager.appendTextEntity(textPrintLine)
+
+    textPrintLine.apply {
+        isBold = false
+        content = "MID: ${this@printEndOfDay.first().merchantId}"
+    }
+    printerManager.appendTextEntity(textPrintLine)
+
+    textPrintLine.apply {
+        content = "-----------------------------------------------"
+    }
+    printerManager.appendTextEntity(textPrintLine)
+
     forEach {
         if (it.responseCode == "00") {
             amountApproved = amountApproved.plus(it.amount)
@@ -78,6 +104,10 @@ fun List<TransactionResponse>.printEndOfDay(
         printerManager.appendTextEntity(textPrintLine)
         textPrintLine.apply {
             content = "RRN: ${it.RRN}"
+        }
+        printerManager.appendTextEntity(textPrintLine)
+        textPrintLine.apply {
+            content = "Date: ${it.transactionTimeInMillis.formatDate()}"
         }
         printerManager.appendTextEntity(textPrintLine)
         textPrintLine.apply {

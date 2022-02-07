@@ -12,3 +12,10 @@
 /captures
 .externalNativeBuild
 .cxx
+app/netpos
+app/release
+app/releaseAdmin
+app/providus
+app/wema
+app/konga
+app/zenith

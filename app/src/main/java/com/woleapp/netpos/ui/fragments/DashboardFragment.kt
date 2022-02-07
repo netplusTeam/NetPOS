@@ -5,6 +5,7 @@ package com.woleapp.netpos.ui.fragments
 import android.app.AlertDialog
 import android.app.DatePickerDialog
 import android.app.ProgressDialog
+import android.content.DialogInterface
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
@@ -25,15 +26,22 @@ import com.woleapp.netpos.databinding.FragmentDashboardBinding
 import com.woleapp.netpos.databinding.LayoutPrintEndOfDayBinding
 import com.woleapp.netpos.model.*
 import com.woleapp.netpos.mqtt.MqttHelper
+import com.woleapp.netpos.network.NetPOSGatewayApi
+import com.woleapp.netpos.network.StormApiClient
 import com.woleapp.netpos.nibss.NetPosTerminalConfig
 import com.woleapp.netpos.util.*
+import com.woleapp.netpos.viewmodels.NetPosViewModelFactories
 import com.woleapp.netpos.viewmodels.TransactionsViewModel
 import io.reactivex.android.schedulers.AndroidSchedulers
 import io.reactivex.disposables.CompositeDisposable
 import io.reactivex.schedulers.Schedulers
 import timber.log.Timber
+import java.sql.Timestamp
+import java.text.SimpleDateFormat
+import java.time.Instant
 import java.util.*
 import kotlin.collections.ArrayList
+import kotlin.collections.HashMap
 
 
 class DashboardFragment : BaseFragment() {
@@ -42,7 +50,11 @@ class DashboardFragment : BaseFragment() {
     private lateinit var binding: FragmentDashboardBinding
     private lateinit var adapter: ServiceAdapter
     private var compositeDisposable = CompositeDisposable()
-    private val transactionViewModel by activityViewModels<TransactionsViewModel>()
+    private val gateWayService = NetPOSGatewayApi.getInstance()
+    private lateinit var endOfDayProgressDialog: ProgressDialog
+    private val transactionViewModel by activityViewModels<TransactionsViewModel>{
+        NetPosViewModelFactories(AppDatabase.getDatabaseInstance(requireContext()))
+    }
     override fun onCreateView(
         inflater: LayoutInflater,
         container: ViewGroup?,
@@ -50,6 +62,14 @@ class DashboardFragment : BaseFragment() {
     ): View {
         binding = FragmentDashboardBinding.inflate(inflater, container, false)
         progressDialog = ProgressDialog(requireContext())
+        endOfDayProgressDialog = ProgressDialog(requireContext()).apply {
+            this.setCancelable(false)
+            this.setMessage("Please wait...")
+            this.setButton(DialogInterface.BUTTON_POSITIVE, "Cancel") { dialog, _ ->
+                compositeDisposable.clear()
+                dialog.cancel()
+            }
+        }
         return binding.root
     }
 
@@ -217,12 +237,14 @@ class DashboardFragment : BaseFragment() {
                     R.id.print_declined -> declinedList
                     else -> transactions
                 }.apply {
-                    if (isEmpty())
+                    if (isEmpty()){
                         Toast.makeText(
                             requireContext(),
                             "No transactions to print",
                             Toast.LENGTH_SHORT
                         ).show()
+                        return@setOnClickListener
+                    }
                 }.printEndOfDay(requireContext())
                     .subscribeOn(Schedulers.io())
                     .observeOn(AndroidSchedulers.mainThread())
@@ -252,19 +274,63 @@ class DashboardFragment : BaseFragment() {
         }
     }
 
+
     private fun getEndOfDayTransactions(timestamp: Long? = null) {
-        Toast.makeText(requireContext(), "Please wait", Toast.LENGTH_LONG).show()
-        val livedata = AppDatabase.getDatabaseInstance(requireContext())
-            .transactionResponseDao()
-            .getEndOfDayTransaction(
-                getBeginningOfDay(timestamp),
-                getEndOfDayTimeStamp(timestamp),
-                NetPosTerminalConfig.getTerminalId()
-            )
-        livedata.observe(viewLifecycleOwner) {
-            showEndOfDayBottomSheetDialog(it)
-            livedata.removeObservers(viewLifecycleOwner)
+        endOfDayProgressDialog.show()
+        val be = getBeginningOfDay(timestamp)
+        val be1 = Timestamp.from(Instant.ofEpochMilli(be).plusSeconds(86400)).time
+        val df = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
+        Timber.e(df.format(be))
+        Timber.e(df.format(be1))
+
+        val data = HashMap<String, String>().apply {
+            put("terminalId", NetPosTerminalConfig.getTerminalId())
+            put("count", "1000")
+            put("from", df.format(be))
+            put("to", df.format(be1))
         }
+        gateWayService.getTransactions(data)
+            .subscribeOn(Schedulers.io())
+            .observeOn(AndroidSchedulers.mainThread())
+            .doFinally {
+                endOfDayProgressDialog.dismiss()
+            }
+            .subscribe { t1, t2 ->
+                t1?.let {
+                    it.result = it.result.map { transaction ->
+                        transaction.amount = transaction.amount.times(100)
+                        val dateFormat =
+                            SimpleDateFormat("dd-MM-yyyy hh:mm:ss", Locale.getDefault())
+                        val parsedDate: Date = dateFormat.parse(
+                            transaction.transactionTime.replace("T", " ").replace("Z", "")
+                        ) ?: Date()
+                        Timber.e(transaction.transactionTime)
+                        Timber.e(parsedDate.time.toString())
+                        transaction.transactionTimeInMillis = parsedDate.time
+                        transaction
+                    }
+                    Timber.e(it.count.toString())
+                    showEndOfDayBottomSheetDialog(it.result)
+                }
+                t2?.let {
+                    Toast.makeText(
+                        requireContext(),
+                        "An error occurred while fetching end of day, try again",
+                        Toast.LENGTH_LONG
+                    ).show()
+                }
+            }.disposeWith(compositeDisposable)
+//        val livedata = AppDatabase.getDatabaseInstance(requireContext())
+//            .transactionResponseDao()
+//            .getEndOfDayTransaction(
+//                getBeginningOfDay(timestamp),
+//                getEndOfDayTimeStamp(timestamp),
+//                NetPosTerminalConfig.getTerminalId()
+//            )
+//        livedata.observe(viewLifecycleOwner) {
+//            showEndOfDayBottomSheetDialog(it)
+//            livedata.removeObservers(viewLifecycleOwner)
+//        }
     }
 
     private fun showCalendarDialog() {

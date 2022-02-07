@@ -27,13 +27,12 @@ android {
     buildFeatures.dataBinding = true
     ndkVersion "21.3.6528147"
     defaultConfig {
-        resValue "string", "app_name", "NetPOS"
         vectorDrawables.useSupportLibrary = true
         applicationId "com.woleapp.netpos"
         minSdkVersion 21
         targetSdkVersion 30
-        versionCode 63
-        versionName "1.1.63"
+        versionCode 64
+        versionName "1.1.64"
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         def environmentPath
         if (appModeProd == "true")
@@ -57,12 +56,10 @@ android {
                 abiFilters "armeabi-v7a", "x86"
             }
             applicationIdSuffix ".debug"
-            resValue "string", "app_name", "NetPOS Debug"
         }
         release {
             signingConfig signingConfigs.netpos_signing_config
             buildConfigField "String", "BUILD_VARIANT", "\"release\""
-            resValue "string", "app_name", "NetPOS"
             debuggable false
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'

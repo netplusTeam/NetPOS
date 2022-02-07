@@ -1,2 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<resources><string name="remark_optional">Remark (Required)</string></resources>
+<resources>
+    <string name="app_name">KongaPay NetPOS</string>
+    <string name="remark_optional">Remark (Required)</string>
+</resources>

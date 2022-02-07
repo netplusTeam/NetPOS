@@ -5,6 +5,7 @@ import android.content.ContextWrapper
 import com.netpluspay.netpossdk.NetPosSdk
 import com.netpluspay.netpossdk.utils.TerminalParameters
 import com.pixplicity.easyprefs.library.Prefs
+import io.reactivex.plugins.RxJavaPlugins
 import timber.log.Timber
 
 class NetPosApp : Application() {
@@ -20,9 +21,9 @@ class NetPosApp : Application() {
             .setUseDefaultSharedPreference(true)
             .build()
         //TimeZone.setDefault(TimeZone.getTimeZone("GMT+8"));
-//        RxJavaPlugins.setErrorHandler {
-//            Timber.e("Error: ${it.localizedMessage}")
-//        }
+        RxJavaPlugins.setErrorHandler {
+            Timber.e("Error: ${it.localizedMessage}")
+        }
         /*Thread.setDefaultUncaughtExceptionHandler { _, e ->
             Timber.e("LMAOOOOO, e wan crash")
             Timber.e(e)

@@ -63,7 +63,7 @@ class TransactionBoundaryCallBack(
                 Timber.e(it.result.size.toString())
                 it.result = it.result.map { transaction ->
                     transaction.amount = transaction.amount.times(100)
-                    val dateFormat = SimpleDateFormat("yyyy-MM-dd hh:mm:ss", Locale.getDefault())
+                    val dateFormat = SimpleDateFormat("dd-MM-yyyy hh:mm:ss", Locale.getDefault())
                     val parsedDate: Date = dateFormat.parse(
                         transaction.transactionTime.replace("T", " ").replace("Z", "")
                     ) ?: Date()
