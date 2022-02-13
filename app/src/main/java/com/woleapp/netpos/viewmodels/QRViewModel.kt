@@ -263,7 +263,10 @@ open class QRViewModel(
                         _createZenithMerchant.value = Event(type)
                     } else {
                         _createZenithMerchant.value = Event("")
-                        message.value = Event(responseBody)
+                        if (responseBody.contains("html", true))
+                            message.value = Event("Server Error")
+                        else
+                            message.value = Event(responseBody)
                     }
                 }
             }.disposeWith(disposable)
@@ -306,7 +309,8 @@ open class QRViewModel(
     private lateinit var dataSourceFactory: MCCDataSourceFactory
 
     fun getMCC(MCCDto: MCCDto, mccService: MCCService) {
-        dataSourceFactory = MCCDataSourceFactory(MCCDto, disposable, mccService, zenithQRService, blueCodeService)
+        dataSourceFactory =
+            MCCDataSourceFactory(MCCDto, disposable, mccService, zenithQRService, blueCodeService)
         val networkResourceLiveData: LiveData<Event<NetworkResource>> = Transformations.switchMap(
             dataSourceFactory.itemLiveDataSource
         ) {

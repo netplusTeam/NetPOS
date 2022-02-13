@@ -8,9 +8,7 @@ import okhttp3.logging.HttpLoggingInterceptor
 import retrofit2.Retrofit
 import retrofit2.adapter.rxjava2.RxJava2CallAdapterFactory
 import retrofit2.converter.gson.GsonConverterFactory
-import retrofit2.http.GET
-import retrofit2.http.Headers
-import retrofit2.http.QueryMap
+import retrofit2.http.*
 
 object NetPOSGatewayApi {
 
@@ -40,9 +38,12 @@ object NetPOSGatewayApi {
 
 interface GatewayService {
     @GET("partner-api/operator/pos-transactions")
-    @Headers(
-        "X-CLIENT-ID: b7c4fc42-4e1a-4493-bb4e-bf798d9ce8a1",
-        "X-ACCESSCODE: 9837a93abecc10faf7a36145401c1d9aabdc60d7d88cfba411a5b2dcd4423709"
-    )
-    fun getTransactions(@QueryMap queryParams: Map<String, String>): Single<GateWayTransactionResponse>
+//    @Headers(
+//        "X-CLIENT-ID: b7c4fc42-4e1a-4493-bb4e-bf798d9ce8a1",
+//        "X-ACCESSCODE: 9837a93abecc10faf7a36145401c1d9aabdc60d7d88cfba411a5b2dcd4423709"
+//    )
+    fun getTransactions(
+        @QueryMap queryParams: Map<String, String>,
+        @HeaderMap headers: Map<String, String>
+    ): Single<GateWayTransactionResponse>
 }

@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="colorPrimary">#9c4e87</color>
+    <color name="colorPrimaryDark">#8c2d73</color>
+    <color name="colorPrimaryLight">#b376a2</color>
+    <color name="colorAccent">#9c8a4e</color>
+    <color name="pinTextColor">#000</color>
+</resources>

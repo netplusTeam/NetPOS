@@ -52,9 +52,10 @@ class DashboardFragment : BaseFragment() {
     private var compositeDisposable = CompositeDisposable()
     private val gateWayService = NetPOSGatewayApi.getInstance()
     private lateinit var endOfDayProgressDialog: ProgressDialog
-    private val transactionViewModel by activityViewModels<TransactionsViewModel>{
+    private val transactionViewModel by activityViewModels<TransactionsViewModel> {
         NetPosViewModelFactories(AppDatabase.getDatabaseInstance(requireContext()))
     }
+
     override fun onCreateView(
         inflater: LayoutInflater,
         container: ViewGroup?,
@@ -127,13 +128,14 @@ class DashboardFragment : BaseFragment() {
             .apply {
                 add(Service(0, "Transaction", R.drawable.ic_trans))
                 add(Service(1, "Balance Inquiry", R.drawable.ic_write))
-                add(
-                    Service(
-                        2,
-                        if (BuildConfig.FLAVOR == "zenith") "Pay With Transfer" else "Bank Transfer",
-                        R.drawable.ic_lending
+                if (BuildConfig.FLAVOR.equals("wemacashout", true).not())
+                    add(
+                        Service(
+                            2,
+                            if (BuildConfig.FLAVOR == "zenith") "Pay With Transfer" else "Bank Transfer",
+                            R.drawable.ic_lending
+                        )
                     )
-                )
                 add(Service(3, "Pay Bills", R.drawable.ic_bill))
                 add(Service(4, "View End Of Day Transactions", R.drawable.ic_print))
                 add(Service(5, "Settings", R.drawable.ic_baseline_settings))
@@ -237,7 +239,7 @@ class DashboardFragment : BaseFragment() {
                     R.id.print_declined -> declinedList
                     else -> transactions
                 }.apply {
-                    if (isEmpty()){
+                    if (isEmpty()) {
                         Toast.makeText(
                             requireContext(),
                             "No transactions to print",
@@ -289,7 +291,7 @@ class DashboardFragment : BaseFragment() {
             put("from", df.format(be))
             put("to", df.format(be1))
         }
-        gateWayService.getTransactions(data)
+        gateWayService.getTransactions(data, GATEWAY_MAP)
             .subscribeOn(Schedulers.io())
             .observeOn(AndroidSchedulers.mainThread())
             .doFinally {

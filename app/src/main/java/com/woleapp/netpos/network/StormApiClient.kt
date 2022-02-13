@@ -125,7 +125,7 @@ class StormApiClient {
         fun getZenithQRServiceInstance(): ZenithQrService =
             zenithQrServiceInstance ?: synchronized(this) {
                 zenithQrServiceInstance ?: Retrofit.Builder()
-                    .baseUrl("http://zenith-qr.test.netpluspay.com/api/")
+                    .baseUrl("https://api.zenith.netpluspay.com/qr/")
                     .client(getOkHttpClient())
                     .addCallAdapterFactory(RxJava2CallAdapterFactory.create())
                     .addConverterFactory(GsonConverterFactory.create())

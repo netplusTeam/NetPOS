@@ -30,7 +30,7 @@ class TransactionBoundaryCallBack(
     private var loadingState = MutableLiveData<Event<LoadingState>>()
 
     override fun onZeroItemsLoaded() {
-         queryParams.apply {
+        queryParams.apply {
             put("count", "20")
             put("page", "1")
         }
@@ -55,7 +55,7 @@ class TransactionBoundaryCallBack(
         if (dataLoadedFinished || isLoadInProgress)
             return
         isLoadInProgress = true
-        gatewayService.getTransactions(queryParams)
+        gatewayService.getTransactions(queryParams, GATEWAY_MAP)
             .retry(3)
             .flatMap {
                 if (it.result.isEmpty())

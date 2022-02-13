@@ -31,8 +31,8 @@ android {
         applicationId "com.woleapp.netpos"
         minSdkVersion 21
         targetSdkVersion 30
-        versionCode 64
-        versionName "1.1.64"
+        versionCode 66
+        versionName "1.1.66"
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         def environmentPath
         if (appModeProd == "true")
@@ -99,6 +99,10 @@ android {
             dimension "whiteLabels"
             applicationIdSuffix ".konga"
         }
+        wemacashout {
+            dimension "whiteLabels"
+            applicationIdSuffix ".wemaagent"
+        }
     }
 
     sourceSets {
@@ -112,6 +116,9 @@ android {
             java.srcDirs('src/defaults/java')
         }
         providus {
+            java.srcDirs('src/defaults/java')
+        }
+        wemacashout{
             java.srcDirs('src/defaults/java')
         }
     }
