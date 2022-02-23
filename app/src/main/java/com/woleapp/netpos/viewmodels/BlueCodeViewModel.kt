@@ -110,7 +110,7 @@ class BlueCodeViewModel(
                     Timber.e(it)
                     val responseBody =
                         (it as? HttpException)?.getResponseBody() ?: "Something went wrong"
-                    if (responseBody.contains("merchant not registered")) {
+                    if (responseBody.contains("Invalid Terminal Id")) {
                         Timber.e("start registration process")
                         message.value = Event("merchant not registered")
                         _registerNewBlueCodeMerchant.value = Event(true)

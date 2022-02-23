@@ -2,9 +2,17 @@ package com.woleapp.netpos.app
 
 import android.app.Application
 import android.content.ContextWrapper
+import android.util.Log
+import android.widget.Toast
+import com.google.firebase.FirebaseApp
+import com.google.firebase.ktx.Firebase
+import com.google.firebase.ktx.app
+import com.google.firebase.messaging.ktx.messaging
 import com.netpluspay.netpossdk.NetPosSdk
 import com.netpluspay.netpossdk.utils.TerminalParameters
 import com.pixplicity.easyprefs.library.Prefs
+import com.woleapp.netpos.BuildConfig
+import com.woleapp.netpos.R
 import io.reactivex.plugins.RxJavaPlugins
 import timber.log.Timber
 
@@ -14,6 +22,7 @@ class NetPosApp : Application() {
     override fun onCreate() {
         super.onCreate()
         Timber.plant(Timber.DebugTree())
+        FirebaseApp.initializeApp(this)
         Prefs.Builder()
             .setContext(this)
             .setMode(ContextWrapper.MODE_PRIVATE)
@@ -43,6 +52,20 @@ class NetPosApp : Application() {
                     }
             )
             Prefs.putBoolean("load_provided", true)
+        }
+
+        if (Prefs.contains("notification_campaign").not() && BuildConfig.FLAVOR.equals("netpos", true)) {
+            Firebase.messaging.subscribeToTopic("netpos_campaign")
+                .addOnCompleteListener { task ->
+                    var msg = "subscribed"
+                    if (!task.isSuccessful) {
+                        msg = "subscription failed"
+                    } else {
+                        Prefs.putBoolean("notification_campaign", true)
+                    }
+                    Timber.e(msg)
+                    Toast.makeText(baseContext, msg, Toast.LENGTH_SHORT).show()
+                }
         }
     }
 }

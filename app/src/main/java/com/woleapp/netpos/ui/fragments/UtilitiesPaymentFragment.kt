@@ -60,7 +60,7 @@ class UtilitiesPaymentFragment : BaseFragment() {
         container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View {
-        if (checkBillsPaymentToken().not()) getBillsToken(StormApiClient.getInstance())
+        if (checkBillsPaymentToken().not()) getBillsToken(StormApiClient.getBillsInstance())
         val dialogUtilitiesBinding = DialogBinding.inflate(inflater, null, false)
             .apply {
                 tvYes.text = getString(R.string.lbl_continue)
@@ -89,7 +89,7 @@ class UtilitiesPaymentFragment : BaseFragment() {
             verifyBillDialog!!.dismiss()
             if (checkBillsPaymentToken().not()) {
                 showProgressBar()
-                getBillsToken(StormApiClient.getInstance()).observe(viewLifecycleOwner) { event ->
+                getBillsToken(StormApiClient.getBillsInstance()).observe(viewLifecycleOwner) { event ->
                     event.getContentIfNotHandled()?.let {
                         if (it) {
                             progressDialog?.setMessage("Processing")

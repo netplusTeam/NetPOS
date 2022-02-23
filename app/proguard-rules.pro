@@ -14,8 +14,13 @@
 
 # Uncomment this to preserve the line number information for
 # debugging stack traces.
-#-keepattributes SourceFile,LineNumberTable
+-keepattributes SourceFile,LineNumberTable
 
 # If you keep the line number information, uncomment this to
 # hide the original source file name.
 #-renamesourcefileattribute SourceFile
+-keep class * extends androidx.fragment.app.Fragment{}
+#-keep class * extends android.support.v4.app.Fragment{}
+-keep class com.woleapp.netpos.model.** { *; }
+#-keepnames class androidx.lifecycle.ViewModel
+-keepclassmembers public class * extends androidx.lifecycle.ViewModel { public <init>(...); }

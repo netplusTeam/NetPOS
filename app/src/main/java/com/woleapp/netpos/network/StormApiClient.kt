@@ -66,7 +66,22 @@ class StormApiClient {
                 }
         }
 
-        private const val NIP_BASE_URL = "https://netpos.netpluspay.com/"
+        private const val BASE_URL_BILLS = "https://storm.netpluspay.com/"
+        private var BILLS_INSTANCE: StormApiService? = null
+        fun getBillsInstance(): StormApiService = BILLS_INSTANCE ?: synchronized(this) {
+            BILLS_INSTANCE ?: Retrofit.Builder()
+                .baseUrl(BASE_URL_BILLS)
+                .client(getOkHttpClient())
+                .addCallAdapterFactory(RxJava2CallAdapterFactory.create())
+                .addConverterFactory(GsonConverterFactory.create())
+                .build()
+                .create(StormApiService::class.java)
+                .also {
+                    BILLS_INSTANCE = it
+                }
+        }
+
+        private const val NIP_BASE_URL = "https://storm.netpluspay.com/"
         private var NIPINSTANCE: NipService? = null
         fun getNipInstance(): NipService = NIPINSTANCE ?: synchronized(this) {
             NIPINSTANCE ?: Retrofit.Builder()
@@ -140,10 +155,11 @@ class StormApiClient {
         fun getBlueCodeService(): BlueCodeService =
             blueCodeService ?: synchronized(this) {
                 blueCodeService ?: Retrofit.Builder()
-                    .baseUrl("http://storm.test.netpluspay.com/api/")
-                    .client(OkHttpClient.Builder().apply {
-                        addInterceptor(BlueCodeInterceptor())
-                    }.build())
+                    .baseUrl("http://bluecode.netpluspay.com:7777/api/")
+//                    .client(OkHttpClient.Builder().apply {
+//                        addInterceptor(BlueCodeInterceptor())
+                //    }.build())
+                    .client(getOkHttpClient())
                     .addCallAdapterFactory(RxJava2CallAdapterFactory.create())
                     .addConverterFactory(GsonConverterFactory.create())
                     .build()

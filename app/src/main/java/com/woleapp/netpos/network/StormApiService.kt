@@ -47,7 +47,4 @@ interface StormApiService {
         @Header("X-CLIENT-ID") clientId: String,
         @Header("X-ACCESSCODE") accessCode: String
     ): Single<List<NipNotification>>
-
-    @GET("api/sessionCode")
-    fun getSessionCode(): Single<SessionCode>
 }

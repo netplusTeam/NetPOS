@@ -251,7 +251,7 @@ class TransactionsViewModel(private val appDatabase: AppDatabase) : ViewModel() 
             this.data = PrinterEventData(lastTransactionResponse.value?.RRN ?: "", it.message)
             this.status = it.message
         }
-        MqttHelper.sendPayload(MqttTopics.PRINTING_RECEIPT, printerEvent)
+        //MqttHelper.sendPayload(MqttTopics.PRINTING_RECEIPT, printerEvent)
     }
 
     fun startPrintingReceipt(
@@ -302,7 +302,7 @@ class TransactionsViewModel(private val appDatabase: AppDatabase) : ViewModel() 
                         this.status = it.message
                     }
                 }
-                MqttHelper.sendPayload(MqttTopics.PRINTING_RECEIPT, printerEvent)
+                //MqttHelper.sendPayload(MqttTopics.PRINTING_RECEIPT, printerEvent)
             }?.disposeWith(compositeDisposable)
     }
 
@@ -445,7 +445,7 @@ class TransactionsViewModel(private val appDatabase: AppDatabase) : ViewModel() 
                         code = "200"
                         data = SMSEvent("+234${number.substring(1)}", "Success", it.toString())
                     }
-                    MqttHelper.sendPayload(MqttTopics.SMS_EVENTS, smsEvent)
+                    //MqttHelper.sendPayload(MqttTopics.SMS_EVENTS, smsEvent)
                     Timber.e("Data $it")
                 }
                 t2?.let {
@@ -469,7 +469,7 @@ class TransactionsViewModel(private val appDatabase: AppDatabase) : ViewModel() 
                             }
                         }
                     }
-                    MqttHelper.sendPayload(MqttTopics.SMS_EVENTS, smsEvent)
+                    //MqttHelper.sendPayload(MqttTopics.SMS_EVENTS, smsEvent)
                     _smsSent.value = Event(false)
                     _toastMessage.value = Event("Error: ${it.localizedMessage}")
                 }

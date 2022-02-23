@@ -95,7 +95,7 @@ class LoginFragment : BaseFragment() {
                             )
                             this.status = "SUCCESS"
                         }
-                        MqttHelper.init(applicationContext, event, MqttTopics.AUTHENTICATION)
+                        //MqttHelper.init(applicationContext, event, MqttTopics.AUTHENTICATION)
                         finish()
                     }
                 }

@@ -46,7 +46,7 @@ class BatteryReceiver : BroadcastReceiver() {
             }
             event?.apply {
                 data = batteryData
-                MqttHelper.sendPayload(MqttTopics.BATTERY_EVENTS, this)
+                //MqttHelper.sendPayload(MqttTopics.BATTERY_EVENTS, this)
             }
         }
     }

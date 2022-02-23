@@ -205,7 +205,7 @@ fun sendCardEvent(s: String, s1: String, cardReaderMqttEvent: CardReaderMqttEven
         timestamp = System.currentTimeMillis()
         this.code = s1
     }
-    MqttHelper.sendPayload(MqttTopics.CARD_READER_EVENTS, event)
+    //MqttHelper.sendPayload(MqttTopics.CARD_READER_EVENTS, event)
 }
 private fun showSelectAccountTypeDialog(
     context: Activity,

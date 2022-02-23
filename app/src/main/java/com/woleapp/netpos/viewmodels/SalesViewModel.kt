@@ -120,7 +120,13 @@ class SalesViewModel : ViewModel() {
             transactionType,
             isoAccountType ?: IsoAccountType.DEFAULT_UNSPECIFIED
         ).apply {
-            remark = this@SalesViewModel.remark.value
+            remark = if (BuildConfig.FLAVOR.equals("wemacashout", true)) {
+                val echoData = JsonObject().apply {
+                    addProperty("remark", this@SalesViewModel.remark.value)
+                    addProperty("deviceSerial", NetPosSdk.getDeviceSerial())
+                }
+                echoData.toString()
+            } else this@SalesViewModel.remark.value
         }
         transactionState.value = STATE_PAYMENT_STARTED
         Timber.e(Gson().toJson(requestData))
@@ -326,7 +332,7 @@ class SalesViewModel : ViewModel() {
                         )
                         this.status = it.message
                     }
-                    MqttHelper.sendPayload(MqttTopics.PRINTING_RECEIPT, printerEvent)
+                    //MqttHelper.sendPayload(MqttTopics.PRINTING_RECEIPT, printerEvent)
                     _showPrinterError.value = Event(it.localizedMessage ?: "Unknown printer error")
                     _message.value = Event("Error: ${it.localizedMessage}")
                     Timber.e(it)
@@ -350,7 +356,7 @@ class SalesViewModel : ViewModel() {
             )
             this.status = it.message
         }
-        MqttHelper.sendPayload(MqttTopics.PRINTING_RECEIPT, printerEvent)
+        //MqttHelper.sendPayload(MqttTopics.PRINTING_RECEIPT, printerEvent)
     }
 
 
@@ -381,7 +387,7 @@ class SalesViewModel : ViewModel() {
                         code = "200"
                         data = SMSEvent("+234${number.substring(1)}", "Success", it.toString())
                     }
-                    MqttHelper.sendPayload(MqttTopics.SMS_EVENTS, smsEvent)
+                    //MqttHelper.sendPayload(MqttTopics.SMS_EVENTS, smsEvent)
                     Timber.e("Data $it")
                 }
                 t2?.let {
@@ -404,7 +410,7 @@ class SalesViewModel : ViewModel() {
                             }
                         }
                     }
-                    MqttHelper.sendPayload(MqttTopics.SMS_EVENTS, smsEvent)
+                    //MqttHelper.sendPayload(MqttTopics.SMS_EVENTS, smsEvent)
                     _smsSent.value = Event(false)
                     _toastMessage.value = Event("Error: ${it.localizedMessage}")
                 }

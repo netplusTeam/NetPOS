@@ -40,7 +40,7 @@ class NipNotificationSearch : BaseFragment() {
         binding.searchButton.setOnClickListener {
             if (binding.sessionCode.text.toString().isEmpty())
                 return@setOnClickListener
-            StormApiClient.getNipInstance().getNotificationByReference(
+            val subscribe = StormApiClient.getNipInstance().getNotificationByReference(
                 binding.sessionCode.text.toString()
             ).subscribeOn(Schedulers.io())
                 .observeOn(AndroidSchedulers.mainThread())
@@ -56,27 +56,33 @@ class NipNotificationSearch : BaseFragment() {
                             this.timestamp = System.currentTimeMillis()
                             this.status = MqttStatus.SUCCESS.name
                         }
-                        MqttHelper.sendPayload(MqttTopics.NIP_SEARCH, event)
+                        //MqttHelper.sendPayload(MqttTopics.NIP_SEARCH, event)
                         if (it.isNotEmpty()) {
                             binding.nip.nip = it.first()
                             binding.nip.root.visibility = View.VISIBLE
                             binding.nip.print.setOnClickListener { _ ->
                                 Timber.e("print nip")
-                                it.first().print(requireContext(), object : POIPrinterManage.IPrinterListener{
-                                    override fun onError(p0: Int, p1: String?) {
-                                        Timber.e("printer error")
-                                        Toast.makeText(requireContext(), "Printer Error", Toast.LENGTH_SHORT).show()
-                                    }
+                                it.first().print(
+                                    requireContext(),
+                                    object : POIPrinterManage.IPrinterListener {
+                                        override fun onError(p0: Int, p1: String?) {
+                                            Timber.e("printer error")
+                                            Toast.makeText(
+                                                requireContext(),
+                                                "Printer Error",
+                                                Toast.LENGTH_SHORT
+                                            ).show()
+                                        }
 
-                                    override fun onFinish() {
-                                        Timber.e("on finish")
-                                    }
+                                        override fun onFinish() {
+                                            Timber.e("on finish")
+                                        }
 
-                                    override fun onStart() {
-                                        Timber.e("on start")
-                                    }
+                                        override fun onStart() {
+                                            Timber.e("on start")
+                                        }
 
-                                })
+                                    })
                             }
                         } else
                             Toast.makeText(
@@ -92,7 +98,7 @@ class NipNotificationSearch : BaseFragment() {
                             this.timestamp = System.currentTimeMillis()
                             this.status = MqttStatus.ERROR.name
                         }
-                        MqttHelper.sendPayload(MqttTopics.NIP_SEARCH, event)
+                        //MqttHelper.sendPayload(MqttTopics.NIP_SEARCH, event)
                         Timber.e("Nip Error: ${it.localizedMessage}")
                         Toast.makeText(
                             requireContext(),

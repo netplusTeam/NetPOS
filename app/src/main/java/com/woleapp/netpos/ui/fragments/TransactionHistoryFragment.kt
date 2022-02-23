@@ -6,9 +6,16 @@ import android.view.View
 import android.view.ViewGroup
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.activityViewModels
+import androidx.paging.PagedListAdapter
 import androidx.recyclerview.widget.DividerItemDecoration
+import androidx.recyclerview.widget.ListAdapter
+import androidx.recyclerview.widget.RecyclerView
+import com.netpluspay.nibssclient.models.TransactionResponse
 import com.woleapp.netpos.R
+import com.woleapp.netpos.adapter.EODAdapter
+import com.woleapp.netpos.adapter.TransactionClickListener
 import com.woleapp.netpos.adapter.TransactionsAdapter
+import com.woleapp.netpos.adapter.TransactionsViewHolder
 import com.woleapp.netpos.database.AppDatabase
 import com.woleapp.netpos.databinding.FragmentTransactionHistoryBinding
 import com.woleapp.netpos.util.HISTORY_ACTION
@@ -35,7 +42,7 @@ class TransactionHistoryFragment : BaseFragment() {
     private val viewModel by activityViewModels<TransactionsViewModel> {
         NetPosViewModelFactories(AppDatabase.getDatabaseInstance(requireContext()))
     }
-    private lateinit var adapter: TransactionsAdapter
+    private lateinit var adapter: RecyclerView.Adapter<TransactionsViewHolder>
     override fun onCreateView(
         inflater: LayoutInflater,
         container: ViewGroup?,
@@ -45,6 +52,7 @@ class TransactionHistoryFragment : BaseFragment() {
         return binding.root
     }
 
+    @Suppress("UNCHECKED_CAST")
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         val action = requireArguments().getString(HISTORY_ACTION, HISTORY_ACTION_DEFAULT)
@@ -52,6 +60,12 @@ class TransactionHistoryFragment : BaseFragment() {
             binding.historyHeader.text = getString(R.string.history_header_template, action)
         }
         viewModel.setAction(action)
+        val adapterListener = object : TransactionClickListener {
+            override fun invoke(p1: TransactionResponse) {
+                viewModel.setSelectedTransaction(p1)
+                addFragmentWithoutRemove(TransactionDetailsFragment())
+            }
+        }
         if (action == HISTORY_ACTION_PREAUTH) {
             val header = "Select PREAUTH Transaction"
             binding.historyHeader.text = header
@@ -63,10 +77,9 @@ class TransactionHistoryFragment : BaseFragment() {
             binding.historyHeader.text = header
             binding.historyButton.visibility = View.GONE
             binding.searchButton.visibility = View.GONE
-        }
-        adapter = TransactionsAdapter {
-            viewModel.setSelectedTransaction(it)
-            addFragmentWithoutRemove(TransactionDetailsFragment())
+            adapter = EODAdapter(adapterListener)
+        } else {
+            adapter = TransactionsAdapter(adapterListener)
         }
         val tabListener = View.OnClickListener {
             val selected = when (it) {
@@ -84,14 +97,15 @@ class TransactionHistoryFragment : BaseFragment() {
                 DividerItemDecoration.VERTICAL
             )
         )
+
         if (action != HISTORY_ACTION_EOD)
             viewModel.pagedTransaction.observe(viewLifecycleOwner) {
-                adapter.submitList(it)
-                adapter.notifyDataSetChanged()
+                (adapter as PagedListAdapter<TransactionResponse, *>).submitList(it)
+                //adapter.notifyDataSetChanged()
             }
         else {
             val eodList = viewModel.getEodList()
-            //adapter.submitList(eodList)
+            (adapter as ListAdapter<TransactionResponse, TransactionsViewHolder>).submitList(eodList)
         }
         setSelectedTab()
     }

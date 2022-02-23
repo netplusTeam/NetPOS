@@ -363,7 +363,7 @@ class DashboardFragment : BaseFragment() {
             this.geo = "lat:51.507351-long:-0.127758"
             this.data = authEventData
         }
-        MqttHelper.sendPayload(MqttTopics.AUTHENTICATION, event)
+        //MqttHelper.sendPayload(MqttTopics.AUTHENTICATION, event)
         //Timber.e(Singletons.gson.toJson(event))
     }
 

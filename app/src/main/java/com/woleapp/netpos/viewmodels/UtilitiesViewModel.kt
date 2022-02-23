@@ -429,7 +429,7 @@ class UtilitiesViewModel : ViewModel() {
                         this.status = it.message
                     }
                 }
-                MqttHelper.sendPayload(MqttTopics.PRINTING_RECEIPT, printerEvent)
+                //MqttHelper.sendPayload(MqttTopics.PRINTING_RECEIPT, printerEvent)
             }.disposeWith(compositeDisposable)
     }
 

@@ -1,6 +1,7 @@
 package com.woleapp.netpos.network
 
 import com.woleapp.netpos.model.NipNotification
+import com.woleapp.netpos.model.SessionCode
 import io.reactivex.Single
 import retrofit2.http.GET
 import retrofit2.http.Query
@@ -18,4 +19,7 @@ interface NipService {
 
     @GET("api/nip-notifications")
     fun getNotificationByReference(@Query("referenceNo") referenceNo: String): Single<List<NipNotification>>
+
+    @GET("api/sessionCode")
+    fun getSessionCode(): Single<SessionCode>
 }
