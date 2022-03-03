@@ -48,7 +48,7 @@ class TransactionsViewHolder private constructor(val binding: LayoutTransactionI
     fun bind(transactionResponse: TransactionResponse) {
         binding.executePendingBindings()
         val cardDetails =
-            "${if (transactionResponse.cardLabel.isEmpty()) "card" else transactionResponse.cardLabel} ending with ${
+            "${transactionResponse.cardLabel.ifEmpty { "card" }} ending with ${
                 transactionResponse.maskedPan.takeLast(
                     4
                 )
