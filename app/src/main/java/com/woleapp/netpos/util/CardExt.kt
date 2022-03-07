@@ -17,7 +17,6 @@ import com.netpluspay.netpossdk.emv.CardReaderEvent
 import com.netpluspay.netpossdk.emv.CardReaderService
 import com.netpluspay.nibssclient.models.CardData
 import com.netpluspay.nibssclient.models.IsoAccountType
-import com.netpluspay.nibssclient.util.TripleDES
 import com.pos.sdk.emvcore.POIEmvCoreManager.DEV_ICC
 import com.pos.sdk.emvcore.POIEmvCoreManager.DEV_PICC
 import com.pos.sdk.security.POIHsmManage
@@ -26,8 +25,6 @@ import com.woleapp.netpos.databinding.DialogSelectAccountTypeBinding
 import com.woleapp.netpos.model.CardReaderMqttEvent
 import com.woleapp.netpos.model.MqttEvent
 import com.woleapp.netpos.model.MqttEvents
-import com.woleapp.netpos.model.MqttTopics
-import com.woleapp.netpos.mqtt.MqttHelper
 import com.woleapp.netpos.nibss.NetPosTerminalConfig
 import io.reactivex.android.schedulers.AndroidSchedulers
 import io.reactivex.disposables.CompositeDisposable

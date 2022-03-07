@@ -30,6 +30,7 @@ import com.woleapp.netpos.nibss.NetPosTerminalConfig
 import com.woleapp.netpos.util.*
 import com.woleapp.netpos.viewmodels.NetPosViewModelFactories
 import com.woleapp.netpos.viewmodels.TransactionsViewModel
+import io.reactivex.Single
 import io.reactivex.android.schedulers.AndroidSchedulers
 import io.reactivex.disposables.CompositeDisposable
 import io.reactivex.schedulers.Schedulers
@@ -276,8 +277,10 @@ class DashboardFragment : BaseFragment() {
 
     private fun getEndOfDayTransactions(timestamp: Long? = null) {
         endOfDayProgressDialog.show()
-        val be = getBeginningOfDay(timestamp)
-        val be1 = Timestamp.from(Instant.ofEpochMilli(be).plusSeconds(86400)).time
+        val be: Long = getBeginningOfDay(timestamp)
+        val be1: Long = Timestamp.from(Instant.ofEpochMilli(be).plusSeconds(86400)).time
+        Timber.e(be.toString())
+        Timber.e(be1.toString())
         val df = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
         Timber.e(df.format(be))
         Timber.e(df.format(be1))
@@ -288,7 +291,29 @@ class DashboardFragment : BaseFragment() {
             put("from", df.format(be))
             put("to", df.format(be1))
         }
-        gateWayService.getTransactions(data, GATEWAY_MAP)
+        gateWayService.getTransactions(data, GATEWAY_MAP).flatMap {
+            it.result = it.result.map { transaction ->
+                transaction.amount = transaction.amount.times(100)
+                val dateFormat =
+                    SimpleDateFormat("dd-MM-yyyy hh:mm:ss", Locale.getDefault())
+                val parsedDate: Date = dateFormat.parse(
+                    transaction.transactionTime.replace("T", " ").replace("Z", "")
+                ) ?: Date()
+                Timber.e(transaction.transactionTime)
+                Timber.e(parsedDate.time.toString())
+                transaction.transactionTimeInMillis = parsedDate.time
+                transaction
+            }
+            Single.just(it)
+        }.flatMap {
+            if (it.result.isEmpty())
+                return@flatMap getEndOfDayLocal(be, be1)
+            Single.just(it)
+        }.retry(2)
+            .onErrorResumeNext {
+                Timber.e("error resume next ${it.localizedMessage}")
+                getEndOfDayLocal(be, be1)
+            }
             .subscribeOn(Schedulers.io())
             .observeOn(AndroidSchedulers.mainThread())
             .doFinally {
@@ -296,22 +321,11 @@ class DashboardFragment : BaseFragment() {
             }
             .subscribe { t1, t2 ->
                 t1?.let {
-                    it.result = it.result.map { transaction ->
-                        transaction.amount = transaction.amount.times(100)
-                        val dateFormat =
-                            SimpleDateFormat("dd-MM-yyyy hh:mm:ss", Locale.getDefault())
-                        val parsedDate: Date = dateFormat.parse(
-                            transaction.transactionTime.replace("T", " ").replace("Z", "")
-                        ) ?: Date()
-                        Timber.e(transaction.transactionTime)
-                        Timber.e(parsedDate.time.toString())
-                        transaction.transactionTimeInMillis = parsedDate.time
-                        transaction
-                    }
                     Timber.e(it.count.toString())
                     showEndOfDayBottomSheetDialog(it.result)
                 }
                 t2?.let {
+                    Timber.e(it)
                     Toast.makeText(
                         requireContext(),
                         "An error occurred while fetching end of day, try again",
@@ -331,6 +345,22 @@ class DashboardFragment : BaseFragment() {
 //            livedata.removeObservers(viewLifecycleOwner)
 //        }
     }
+
+    private fun getEndOfDayLocal(be: Long, be1: Long) =
+        AppDatabase.getDatabaseInstance(requireContext())
+            .transactionResponseDao()
+            .getEndOfDayTransactionSingle(be, be1, NetPosTerminalConfig.getTerminalId())
+            .flatMap { transactionList ->
+                Single.just(
+                    GateWayTransactionResponse(
+                        transactionList,
+                        transactionList.size,
+                        1,
+                        1000
+                    )
+                )
+            }
+
 
     private fun showCalendarDialog() {
         val calendar = Calendar.getInstance()

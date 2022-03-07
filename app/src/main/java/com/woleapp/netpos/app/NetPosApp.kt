@@ -2,6 +2,7 @@ package com.woleapp.netpos.app
 
 import android.app.Application
 import android.content.ContextWrapper
+import android.content.pm.FeatureInfo
 import android.util.Log
 import android.widget.Toast
 import com.google.firebase.FirebaseApp
@@ -29,10 +30,11 @@ class NetPosApp : Application() {
             .setPrefsName(packageName)
             .setUseDefaultSharedPreference(true)
             .build()
+        Timber.e("device support: ${deviceSupportsMifareClassic()}")
         //TimeZone.setDefault(TimeZone.getTimeZone("GMT+8"));
-        RxJavaPlugins.setErrorHandler {
-            Timber.e("Error: ${it.localizedMessage}")
-        }
+//        RxJavaPlugins.setErrorHandler {
+//            Timber.e("Error: ${it.localizedMessage}")
+//        }
         /*Thread.setDefaultUncaughtExceptionHandler { _, e ->
             Timber.e("LMAOOOOO, e wan crash")
             Timber.e(e)
@@ -67,5 +69,15 @@ class NetPosApp : Application() {
                     Toast.makeText(baseContext, msg, Toast.LENGTH_SHORT).show()
                 }
         }
+    }
+
+    fun deviceSupportsMifareClassic(): Boolean {
+        val info = getPackageManager().getSystemAvailableFeatures()
+        for (i in info){
+            val name = i.name
+            if (name != null && name.equals("com.nxp.mifare"))
+                return true
+        }
+        return false
     }
 }

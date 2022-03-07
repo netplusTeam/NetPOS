@@ -23,7 +23,7 @@ interface TransactionResponseDao {
     @Update
     fun updateTransaction(transactionResponse: TransactionResponse): Single<Int>
 
-    @Query("SELECT * FROM transactionresponse WHERE terminalId=:terminalId ORDER BY id ASC")
+    @Query("SELECT * FROM transactionresponse WHERE terminalId=:terminalId ORDER BY transactionTimeInMillis DESC")
     fun getTransactions(terminalId: String): DataSource.Factory<Int, TransactionResponse>
 
     @Query("SELECT * FROM transactionresponse WHERE transactionTimeInMillis >= :beginningOfDay and transactionTimeInMillis <= :endOfDay and terminalId=:terminalId")
@@ -32,6 +32,13 @@ interface TransactionResponseDao {
         endOfDay: Long,
         terminalId: String
     ): LiveData<List<TransactionResponse>>
+
+    @Query("SELECT * FROM transactionresponse WHERE transactionTimeInMillis >= :beginningOfDay and transactionTimeInMillis <= :endOfDay and terminalId=:terminalId")
+    fun getEndOfDayTransactionSingle(
+        beginningOfDay: Long,
+        endOfDay: Long,
+        terminalId: String
+    ): Single<List<TransactionResponse>>
 
     @Query("SELECT * FROM transactionresponse WHERE transactionType=:transactionType ORDER BY id DESC")
     fun getTransactionByTransactionType(transactionType: TransactionType): LiveData<List<TransactionResponse>>

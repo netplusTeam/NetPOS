@@ -17,6 +17,7 @@ import com.google.gson.JsonObject
 import com.netpluspay.netpossdk.NetPosSdk
 import com.netpluspay.nibssclient.models.TransactionType
 import com.woleapp.netpos.R
+import com.woleapp.netpos.database.AppDatabase
 import com.woleapp.netpos.databinding.DialogPrintTypeBinding
 import com.woleapp.netpos.databinding.DialogTransactionResultBinding
 import com.woleapp.netpos.databinding.FragmentSalesBinding
@@ -29,6 +30,7 @@ import io.reactivex.android.schedulers.AndroidSchedulers
 import io.reactivex.disposables.CompositeDisposable
 import io.reactivex.schedulers.Schedulers
 import timber.log.Timber
+import com.woleapp.netpos.viewmodels.SalesViewModelProvider
 import java.io.BufferedReader
 import java.io.InputStreamReader
 import java.io.PrintWriter
@@ -51,7 +53,9 @@ class SalesFragment : BaseFragment() {
             }
     }
 
-    private val viewModel by viewModels<SalesViewModel>()
+    private val viewModel by viewModels<SalesViewModel>{
+        SalesViewModelProvider(AppDatabase.getDatabaseInstance(requireContext()).transactionResponseDao())
+    }
     private lateinit var transactionType: TransactionType
     private lateinit var alertDialog: AlertDialog
     private lateinit var receiptDialogBinding: DialogTransactionResultBinding

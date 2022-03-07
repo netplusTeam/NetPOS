@@ -16,6 +16,7 @@ import com.netpluspay.nibssclient.models.KeyHolder
 import com.netpluspay.nibssclient.service.NibssApiWrapper
 import com.netpluspay.nibssclient.util.app.NibssClient
 import com.pixplicity.easyprefs.library.Prefs
+import com.woleapp.netpos.BuildConfig
 import com.woleapp.netpos.model.*
 import com.woleapp.netpos.util.*
 import com.woleapp.netpos.util.Singletons.getSavedConfigurationData
@@ -48,8 +49,9 @@ object NetPosTerminalConfig {
     fun getTerminalId() = terminalId ?: ""
     private fun setTerminalId(configurationData: ConfigurationData) {
         Timber.e("use storm TID ${useStormTerminalId()}")
-        terminalId =
+        terminalId = if (BuildConfig.DEBUG) "2101JJ41" else {
             if (useStormTerminalId()) Singletons.getCurrentlyLoggedInUser()?.terminal_id else configurationData.terminalId
+        }
     }
 
     private var keyHolder: KeyHolder? = null

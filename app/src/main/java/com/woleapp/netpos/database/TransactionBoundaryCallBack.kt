@@ -6,7 +6,6 @@ import com.netpluspay.nibssclient.models.TransactionResponse
 import com.pixplicity.easyprefs.library.Prefs
 import com.woleapp.netpos.database.dao.TransactionResponseDao
 import com.woleapp.netpos.network.GatewayService
-import com.woleapp.netpos.nibss.NetPosTerminalConfig
 import com.woleapp.netpos.util.*
 import io.reactivex.Single
 import io.reactivex.android.schedulers.AndroidSchedulers
@@ -60,18 +59,15 @@ class TransactionBoundaryCallBack(
             .flatMap {
                 if (it.result.isEmpty())
                     dataLoadedFinished = true
-                Timber.e(it.result.size.toString())
                 it.result = it.result.map { transaction ->
                     transaction.amount = transaction.amount.times(100)
                     val dateFormat = SimpleDateFormat("dd-MM-yyyy hh:mm:ss", Locale.getDefault())
                     val parsedDate: Date = dateFormat.parse(
                         transaction.transactionTime.replace("T", " ").replace("Z", "")
                     ) ?: Date()
-                    Timber.e(parsedDate.time.toString())
                     transaction.transactionTimeInMillis = parsedDate.time
                     transaction
                 }
-                Timber.e(it.toString())
                 transactionResponseDao.insertNewTransaction(it.result)
                 Single.just(queryParams["page"])
             }
