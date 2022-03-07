@@ -69,6 +69,19 @@ object NetPosTerminalConfig {
         Timber.e("configure silently: $configureSilently")
         setTerminalId(configurationData)
         val terminalID = getTerminalId()
+
+        /**
+         * To connect to test environment
+         * */
+//        NibssClient.init(
+//            "epms-client.cert.pem",
+//            "epms-client.key.pem",
+//            terminalID,
+//            NetPosSdk.getDeviceSerial()
+//        )
+//        NibssClient.useSSL(true)
+//        NibssClient.useTestEnvironment(true)
+
         NibssClient.init(
             "netpos.cert.pem",
             "private.key.pem",

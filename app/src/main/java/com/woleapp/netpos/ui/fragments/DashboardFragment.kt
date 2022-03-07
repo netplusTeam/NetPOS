@@ -25,9 +25,7 @@ import com.woleapp.netpos.database.AppDatabase
 import com.woleapp.netpos.databinding.FragmentDashboardBinding
 import com.woleapp.netpos.databinding.LayoutPrintEndOfDayBinding
 import com.woleapp.netpos.model.*
-import com.woleapp.netpos.mqtt.MqttHelper
 import com.woleapp.netpos.network.NetPOSGatewayApi
-import com.woleapp.netpos.network.StormApiClient
 import com.woleapp.netpos.nibss.NetPosTerminalConfig
 import com.woleapp.netpos.util.*
 import com.woleapp.netpos.viewmodels.NetPosViewModelFactories
@@ -88,14 +86,13 @@ class DashboardFragment : BaseFragment() {
             }
             //addFragmentWithoutRemove(nextFrag)
         }
-        val listOfServices = ArrayList<Service>()
-            .apply {
-                add(Service(0, "Transaction", R.drawable.ic_trans))
-                add(Service(1, "Balance Inquiry", R.drawable.ic_write))
-                add(Service(2, "Bank Transfer", R.drawable.ic_lending))
-                //add(Service(3, "Pay Bills", R.drawable.ic_bill))
-                add(Service(4, "View End Of Day Transactions", R.drawable.ic_print))
-            }
+        val listOfServices = arrayListOf<Service>(
+            Service(0, "Transaction", R.drawable.ic_trans),
+            Service(1, "Balance Inquiry", R.drawable.ic_write),
+            Service(2, "Bank Transfer", R.drawable.ic_lending),
+            //add(Service(3, "Pay Bills", R.drawable.ic_bill))
+            Service(4, "View End Of Day Transactions", R.drawable.ic_print)
+        )
         adapter.submitList(listOfServices)
     }
 

@@ -127,4 +127,5 @@
     <string name="select_bank">Select Bank</string>
     <string name="address">Address</string>
     <string name="error_loading_states_tap_to_try_again">Error loading states, Tap to try again!</string>
+    <string name="give">Give</string>
 </resources>

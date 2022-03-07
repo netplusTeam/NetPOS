@@ -68,7 +68,7 @@ class TransactionsFragment : BaseFragment() {
             "konga" -> setUpKongaAdapter()
             else -> setUpDefaultAdapter()
         }
-        binding.rvTransactions.layoutManager = GridLayoutManager(context, 2)
+//        binding.rvTransactions.layoutManager = GridLayoutManager(context, 2)
         binding.rvTransactions.adapter = adapter
     }
 
@@ -159,16 +159,15 @@ class TransactionsFragment : BaseFragment() {
                 addFragmentWithoutRemove(fragment)
             }
         }
-        val listOfService = ArrayList<Service>()
-            .apply {
-                add(Service(0, "Purchase", R.drawable.ic_purchase))
-                add(Service(1, "Cash", R.drawable.ic_baseline_money_24))
-                add(Service(2, "PRE AUTHORIZATION", R.drawable.ic_pre_auth))
-                add(Service(3, "Cash Advance", R.drawable.ic_pay_cash_icon))
-                add(Service(4, "QR", R.drawable.ic_qr_code))
-                add(Service(5, "Reprint", R.drawable.ic_print))
-                add(Service(6, "VEND", R.drawable.ic_vend))
-            }
+        val listOfService = arrayListOf<Service>(
+                Service(0, "Purchase", R.drawable.ic_purchase),
+                Service(1, "Cash", R.drawable.ic_baseline_money_24),
+                Service(2, "PRE AUTHORIZATION", R.drawable.ic_pre_auth),
+                Service(3, "Cash Advance", R.drawable.ic_pay_cash_icon),
+                Service(4, "QR", R.drawable.ic_qr_code),
+                Service(5, "Reprint", R.drawable.ic_print),
+                Service(6, "VEND", R.drawable.ic_vend)
+        )
         adapter.submitList(listOfService)
     }
 }
