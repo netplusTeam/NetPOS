@@ -318,6 +318,9 @@ fun TransactionResponse.buildReceipt(
         if (isMerchantCopy)
             builder.isMerchantCopy
         else builder.isCustomerCopy
+        if (BuildConfig.FLAVOR.equals("heritage", true)){
+            builder.appendFootNote("THANK YOU FOR YOUR PURCHASE. CALL 0700-HERITAGE OR 01-2369000 FOR SUPPORT")
+        }
     }
 
 fun NipNotification.print(context: Context, printerListener: POIPrinterManage.IPrinterListener) {
