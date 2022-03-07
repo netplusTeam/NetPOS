@@ -6,6 +6,7 @@ import android.widget.Toast
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.ViewModelProvider
 import com.google.gson.Gson
 import com.google.gson.JsonObject
 import com.netpluspay.netpossdk.NetPosSdk
@@ -16,8 +17,8 @@ import com.netpluspay.nibssclient.models.*
 import com.netpluspay.nibssclient.service.NibssApiWrapper
 import com.pixplicity.easyprefs.library.Prefs
 import com.woleapp.netpos.BuildConfig
+import com.woleapp.netpos.database.dao.TransactionResponseDao
 import com.woleapp.netpos.model.*
-import com.woleapp.netpos.mqtt.MqttHelper
 import com.woleapp.netpos.network.NetPOSCashService
 import com.woleapp.netpos.network.StormApiClient
 import com.woleapp.netpos.nibss.NetPosTerminalConfig
@@ -40,7 +41,17 @@ import java.net.SocketException
 import java.net.UnknownHostException
 
 
-class SalesViewModel : ViewModel() {
+class SalesViewModelProvider(private val transactionResponseDao: TransactionResponseDao) : ViewModelProvider.Factory {
+    @Suppress("UNCHECKED_CAST")
+    override fun <T : ViewModel> create(modelClass: Class<T>): T {
+        if (modelClass.isAssignableFrom(SalesViewModel::class.java))
+            return SalesViewModel(transactionResponseDao) as T
+        throw IllegalArgumentException("Cannot provide viewmodel")
+    }
+
+}
+
+class SalesViewModel(private val transactionResponseDao: TransactionResponseDao) : ViewModel() {
     private var isVend: Boolean = false
     var cardData: CardData? = null
     private var netPOSCashService: NetPOSCashService = StormApiClient.getCashInstance()
@@ -132,6 +143,7 @@ class SalesViewModel : ViewModel() {
         Timber.e(Gson().toJson(requestData))
         NibssApiWrapper.makePayment(context, requestData)
             .flatMap {
+                it.amount = requestData.amount
                 if (it.responseCode == "A3") {
                     Prefs.remove(PREF_CONFIG_DATA)
                     Prefs.remove(PREF_KEYHOLDER)
@@ -180,7 +192,7 @@ class SalesViewModel : ViewModel() {
                 Timber.e(it.responseMessage)
                 _message.postValue(Event(if (it.responseCode == "00") "Transaction Approved" else "Transaction Not approved"))
                 printReceipt(context)
-                Single.just(1)
+                transactionResponseDao.insertNewTransaction(it)
             }
             .subscribeOn(Schedulers.io())
             .observeOn(AndroidSchedulers.mainThread())

@@ -126,6 +126,7 @@ class MainActivity : AppCompatActivity(), EasyPermissions.PermissionCallbacks {
         val token = Prefs.getString(PREF_USER_TOKEN, null)
         token?.let {
             if (JWTHelper.isExpired(it)) {
+                Timber.e("is expired")
                 logout()
             }
         }

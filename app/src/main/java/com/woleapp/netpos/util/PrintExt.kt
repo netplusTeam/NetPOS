@@ -293,7 +293,7 @@ fun TransactionResponse.buildReceipt(
         remark?.let {
             builder.appendRemark(it)
         }
-        builder.appendAppName("NetPOS")
+        builder.appendAppName(context.getString(R.string.app_name))
         builder.appendAppVersion(BuildConfig.VERSION_NAME)
         builder.appendAuthorizationCode(authCode)
         builder.appendCardHolderName(cardHolder)

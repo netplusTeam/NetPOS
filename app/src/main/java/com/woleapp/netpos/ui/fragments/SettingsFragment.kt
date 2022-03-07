@@ -28,7 +28,7 @@ class SettingsFragment : PreferenceFragmentCompat() {
         inflater: LayoutInflater,
         container: ViewGroup?,
         savedInstanceState: Bundle?
-    ): View? {
+    ): View {
         passwordDialogBinding =
             LayoutEnterPasswordBinding.inflate(LayoutInflater.from(requireContext()), null, false)
                 .apply {

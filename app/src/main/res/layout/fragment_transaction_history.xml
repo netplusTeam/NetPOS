@@ -29,6 +29,7 @@
             app:layout_constraintTop_toTopOf="parent" />
 
         <Button
+            android:visibility="gone"
             android:id="@+id/history_button"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
@@ -48,6 +49,7 @@
         </Button>
 
         <Button
+            android:visibility="gone"
             android:id="@+id/search_button"
             android:layout_width="0dp"
             android:layout_height="wrap_content"

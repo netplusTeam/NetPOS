@@ -145,5 +145,18 @@ class ExampleUnitTest {
         println(pinblockToNibss)
         assert(pinblockToNibss.isBlank().not())
     }
+
+
+    @Test
+    fun generateNibssPinblock(fourDigitPin: String, cardPan: String) {
+        val pinCipher = "04${fourDigitPin}FFFFFFFFFF"
+        val cardNum = "0000${cardPan.substring(3, 15)}"
+        val pinblock = xorHex(pinCipher, cardNum)!!
+        println(pinblock)
+        val clearPinKey = "6943DD4434E0B3C0D808D0FE2A590CD9"
+        val pinblockToNibss = TripleDES.encrypt(pinblock, clearPinKey)
+        println(pinblockToNibss)
+        assert(pinblockToNibss.isBlank().not())
+        }
 }
 
