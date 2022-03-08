@@ -142,7 +142,7 @@ class TransactionsFragment : BaseFragment() {
                     null
                 }
                 4 -> {
-                    //showQRBottomSheetDialog()
+//                    showQRBottomSheetDialog()
                     QRFragment()
                 }
                 5 -> {
