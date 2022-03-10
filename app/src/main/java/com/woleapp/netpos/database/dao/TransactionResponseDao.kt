@@ -4,7 +4,7 @@ import androidx.lifecycle.LiveData
 import androidx.paging.DataSource
 import androidx.room.Dao
 import androidx.room.Insert
-import androidx.room.OnConflictStrategy.REPLACE
+import androidx.room.OnConflictStrategy.IGNORE
 import androidx.room.Query
 import androidx.room.Update
 import com.netpluspay.nibssclient.models.TransactionResponse
@@ -14,10 +14,10 @@ import io.reactivex.Single
 
 @Dao
 interface TransactionResponseDao {
-    @Insert
+    @Insert(onConflict = IGNORE)
     fun insertNewTransaction(transactionResponse: TransactionResponse): Single<Long>
 
-    @Insert(onConflict = REPLACE)
+    @Insert(onConflict = IGNORE)
     fun insertNewTransaction(transactionResponses: List<TransactionResponse>)
 
     @Update

@@ -14,7 +14,12 @@ import com.netpluspay.netpossdk.utils.TerminalParameters
 import com.pixplicity.easyprefs.library.Prefs
 import com.woleapp.netpos.BuildConfig
 import com.woleapp.netpos.R
+import com.woleapp.netpos.network.StormApiClient
+import com.woleapp.netpos.util.*
+import io.reactivex.android.schedulers.AndroidSchedulers
+import io.reactivex.disposables.CompositeDisposable
 import io.reactivex.plugins.RxJavaPlugins
+import io.reactivex.schedulers.Schedulers
 import timber.log.Timber
 
 class NetPosApp : Application() {
@@ -30,11 +35,10 @@ class NetPosApp : Application() {
             .setPrefsName(packageName)
             .setUseDefaultSharedPreference(true)
             .build()
-        Timber.e("device support: ${deviceSupportsMifareClassic()}")
         //TimeZone.setDefault(TimeZone.getTimeZone("GMT+8"));
-//        RxJavaPlugins.setErrorHandler {
-//            Timber.e("Error: ${it.localizedMessage}")
-//        }
+        RxJavaPlugins.setErrorHandler {
+            Timber.e("Error: ${it.localizedMessage}")
+        }
         /*Thread.setDefaultUncaughtExceptionHandler { _, e ->
             Timber.e("LMAOOOOO, e wan crash")
             Timber.e(e)
@@ -69,15 +73,15 @@ class NetPosApp : Application() {
                     Toast.makeText(baseContext, msg, Toast.LENGTH_SHORT).show()
                 }
         }
+        if (checkBillsPaymentToken().not())
+            getBillsToken(StormApiClient.getBillsInstance())
+        if (checkAppToken().not())
+            getAppToken(StormApiClient.getBillsInstance()).subscribeOn(Schedulers.io())
+                .retry(2)
+                .observeOn(AndroidSchedulers.mainThread()).subscribe { _, _ ->
+
+                }.disposeWith(CompositeDisposable())
     }
 
-    fun deviceSupportsMifareClassic(): Boolean {
-        val info = getPackageManager().getSystemAvailableFeatures()
-        for (i in info){
-            val name = i.name
-            if (name != null && name.equals("com.nxp.mifare"))
-                return true
-        }
-        return false
-    }
+
 }

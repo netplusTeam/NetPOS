@@ -19,6 +19,7 @@ import com.woleapp.netpos.databinding.LayoutPreauthDialogBinding
 import com.woleapp.netpos.model.Service
 import com.woleapp.netpos.util.HISTORY_ACTION_PREAUTH
 import com.woleapp.netpos.util.HISTORY_ACTION_REFUND
+import com.woleapp.netpos.util.HISTORY_ACTION_REPRINT
 import com.woleapp.netpos.util.PREF_REPRINT_PASSWORD
 
 class TransactionsFragment : BaseFragment() {
@@ -49,7 +50,7 @@ class TransactionsFragment : BaseFragment() {
                 )
             ) {
                 inputPasswordDialog.cancel()
-                addFragmentWithoutRemove(ReprintFragment())
+                addFragmentWithoutRemove(TransactionHistoryFragment.newInstance(action = HISTORY_ACTION_REPRINT))
             }else
                 Toast.makeText(requireContext(), "Password is incorrect", Toast.LENGTH_SHORT).show()
         }
@@ -115,7 +116,7 @@ class TransactionsFragment : BaseFragment() {
                     //showQRBottomSheetDialog()
                     QRFragment()
                 }
-                5 -> ReprintFragment()
+                5 -> TransactionHistoryFragment.newInstance(action = HISTORY_ACTION_REPRINT)
                 6 -> SalesFragment.newInstance(isVend = true)
                 else -> SalesFragment.newInstance(TransactionType.CASH_ADVANCE)
             }
@@ -150,7 +151,7 @@ class TransactionsFragment : BaseFragment() {
                         inputPasswordDialog.show()
                         return@ServiceAdapter
                     }
-                    ReprintFragment()
+                    TransactionHistoryFragment.newInstance(action = HISTORY_ACTION_REPRINT)
                 }
                 6 -> SalesFragment.newInstance(isVend = true)
                 else -> SalesFragment.newInstance(TransactionType.CASH_ADVANCE)

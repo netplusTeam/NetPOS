@@ -422,58 +422,7 @@ class TransactionsViewModel(private val appDatabase: AppDatabase) : ViewModel() 
     }
 
     fun sendSmS(number: String) {
-        val map = JsonObject().apply {
-            addProperty("from", "NetPlus")
-            addProperty("to", "+234${number.substring(1)}")
-            addProperty("message", lastTransactionResponse.value!!.buildSMSText().toString())
-        }
-        Timber.e("payload: $map")
-        val auth = "Bearer ${Prefs.getString(PREF_APP_TOKEN, "")}"
-        val body: RequestBody = map.toString()
-            .toRequestBody("application/json; charset=utf-8".toMediaTypeOrNull())
-        val smsEvent = MqttEvent<SMSEvent>()
-
-        StormApiClient.getSmsServiceInstance().sendSms(auth, body)
-            .subscribeOn(Schedulers.io())
-            .observeOn(AndroidSchedulers.mainThread())
-            .subscribe { t1, t2 ->
-                t1?.let {
-                    _smsSent.value = Event(true)
-                    smsEvent.apply {
-                        event = MqttEvents.SMS_EVENTS.event
-                        status = "SUCCESS"
-                        code = "200"
-                        data = SMSEvent("+234${number.substring(1)}", "Success", it.toString())
-                    }
-                    //MqttHelper.sendPayload(MqttTopics.SMS_EVENTS, smsEvent)
-                    Timber.e("Data $it")
-                }
-                t2?.let {
-                    Timber.e(it)
-                    smsEvent.apply {
-                        event = MqttEvents.SMS_EVENTS.event
-                        status = "ERROR"
-                        code = "-99"
-                        data = SMSEvent(
-                            "+234${number.substring(1)}",
-                            "Failed",
-                            it.localizedMessage ?: "Error"
-                        )
-                    }
-                    val httpException = it as? HttpException
-                    httpException?.let { e ->
-                        smsEvent.code = e.code().toString()
-                        smsEvent.data.let { data ->
-                            e.response()?.errorBody()?.string()?.let { serverError ->
-                                (data as SMSEvent).serverResponse = serverError
-                            }
-                        }
-                    }
-                    //MqttHelper.sendPayload(MqttTopics.SMS_EVENTS, smsEvent)
-                    _smsSent.value = Event(false)
-                    _toastMessage.value = Event("Error: ${it.localizedMessage}")
-                }
-            }.disposeWith(compositeDisposable)
+        sendSmS(lastTransactionResponse.value!!, number, _smsSent, compositeDisposable)
     }
 
     fun setEndOfDayList(eodList: List<TransactionResponse>) {

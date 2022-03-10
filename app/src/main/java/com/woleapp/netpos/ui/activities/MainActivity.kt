@@ -32,6 +32,7 @@ import com.woleapp.netpos.ui.fragments.DashboardFragment
 import com.woleapp.netpos.util.*
 import com.woleapp.netpos.util.Singletons.gson
 import io.reactivex.android.schedulers.AndroidSchedulers
+import io.reactivex.disposables.CompositeDisposable
 import io.reactivex.schedulers.Schedulers
 import pub.devrel.easypermissions.EasyPermissions
 import timber.log.Timber
@@ -42,6 +43,7 @@ class MainActivity : AppCompatActivity(), EasyPermissions.PermissionCallbacks {
     private var progressDialog: ProgressDialog? = null
     private lateinit var alertDialog: AlertDialog
     private lateinit var binding: ActivityMainBinding
+    private var compositeDisposable: CompositeDisposable = CompositeDisposable()
 
     //private lateinit var client: MqttAndroidClient
     private val receiver = object : BroadcastReceiver() {
@@ -186,8 +188,6 @@ class MainActivity : AppCompatActivity(), EasyPermissions.PermissionCallbacks {
         binding.dashboardHeader.logout.setOnClickListener {
             logout()
         }
-        if (checkBillsPaymentToken().not())
-            getBillsToken(StormApiClient.getInstance())
         showFragment(DashboardFragment(), DashboardFragment::class.java.simpleName)
     }
 
@@ -254,5 +254,10 @@ class MainActivity : AppCompatActivity(), EasyPermissions.PermissionCallbacks {
             e.printStackTrace()
         }
 
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        compositeDisposable.dispose()
     }
 }
