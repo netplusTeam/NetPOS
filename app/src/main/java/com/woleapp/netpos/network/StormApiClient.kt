@@ -102,6 +102,14 @@ class StormApiClient {
                 .baseUrl("https://sms.netpluspay.com")
                 .addCallAdapterFactory(RxJava2CallAdapterFactory.create())
                 .addConverterFactory(GsonConverterFactory.create())
+                .client(OkHttpClient.Builder()
+                    .addInterceptor(HttpLoggingInterceptor().apply {
+                        setLevel(HttpLoggingInterceptor.Level.BODY)
+                    })
+                    .addInterceptor(HttpLoggingInterceptor().apply {
+                        setLevel(HttpLoggingInterceptor.Level.HEADERS)
+                    })
+                    .build())
                 .build().create(SmsService::class.java)
                 .also {
                     smsServiceInstance = it

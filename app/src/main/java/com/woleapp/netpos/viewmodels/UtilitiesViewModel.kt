@@ -446,31 +446,7 @@ class UtilitiesViewModel : ViewModel() {
     }
 
     fun sendSmS(number: String) {
-        val map = JsonObject().apply {
-            addProperty("from", "NetPlus")
-            addProperty("to", "+234${number.substring(1)}")
-            addProperty("message", lastTransactionResponse.value!!.buildSMSText(remark).toString())
-        }
-        Timber.e("payload: $map")
-        val auth = "Bearer ${Prefs.getString(PREF_APP_TOKEN, "")}"
-        val body: RequestBody = map.toString()
-            .toRequestBody("application/json; charset=utf-8".toMediaTypeOrNull())
-        StormApiClient.getSmsServiceInstance().sendSms(auth, body)
-            .subscribeOn(Schedulers.io())
-            .observeOn(AndroidSchedulers.mainThread())
-            .subscribe { t1, t2 ->
-                t1?.let {
-                    _smsSent.value = Event(true)
-                    Timber.e("Data $it")
-                }
-                t2?.let {
-                    val httpException = it as? HttpException
-                    httpException?.let { _ ->
-
-                    }
-                    _smsSent.value = Event(false)
-                }
-            }.disposeWith(compositeDisposable)
+        sendSmS(lastTransactionResponse.value!!, number, _smsSent, compositeDisposable)
     }
 
     override fun onCleared() {

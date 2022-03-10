@@ -3,18 +3,52 @@ package com.woleapp.netpos.util
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import com.google.gson.JsonObject
+import com.netpluspay.nibssclient.models.TransactionResponse
 import com.pixplicity.easyprefs.library.Prefs
+import com.woleapp.netpos.model.MqttEvent
+import com.woleapp.netpos.model.MqttEvents
+import com.woleapp.netpos.model.SMSEvent
+import com.woleapp.netpos.network.StormApiClient
 
 import com.woleapp.netpos.network.StormApiService
+import io.reactivex.Single
 import io.reactivex.android.schedulers.AndroidSchedulers
 import io.reactivex.disposables.CompositeDisposable
 import io.reactivex.schedulers.Schedulers
+import okhttp3.MediaType.Companion.toMediaTypeOrNull
+import okhttp3.RequestBody
+import okhttp3.RequestBody.Companion.toRequestBody
+import retrofit2.HttpException
 import timber.log.Timber
 import java.lang.Exception
 
 fun checkBillsPaymentToken(): Boolean {
     val billsToken = Prefs.getString(PREF_BILLS_TOKEN, null)
     return !(billsToken.isNullOrEmpty() || JWTHelper.isExpired(billsToken))
+}
+
+fun checkAppToken(): Boolean {
+    val appToken = Prefs.getString(PREF_APP_TOKEN, null)
+    return !(appToken.isNullOrEmpty() || JWTHelper.isExpired(appToken))
+}
+
+fun getAppToken(stormApiService: StormApiService): Single<Boolean> {
+    val credentials = JsonObject()
+    credentials.addProperty("appname", "storm_app")
+    credentials.addProperty("password", "C0R3MELTDOWN!")
+    Timber.e("get resp")
+    return stormApiService.appToken(credentials)
+        .flatMap {
+            Timber.e(it.toString())
+            Single.just(
+                if (!it.success) {
+                    false
+                } else {
+                    Prefs.putString(PREF_APP_TOKEN, it.token)
+                    true
+                }
+            )
+        }
 }
 
 fun getBillsToken(stormApiService: StormApiService): LiveData<Event<Boolean>> {
@@ -45,7 +79,7 @@ fun getBillsToken(stormApiService: StormApiService): LiveData<Event<Boolean>> {
                 if (!it.success) {
                     liveData.value = Event(false)
                     return@let
-                }else{
+                } else {
                     Prefs.putString(PREF_BILLS_TOKEN, it.token)
                     liveData.value = Event(true)
                 }
@@ -56,4 +90,52 @@ fun getBillsToken(stormApiService: StormApiService): LiveData<Event<Boolean>> {
             }
         }.disposeWith(CompositeDisposable())
     return liveData
+}
+
+private fun sendSmSReq(transactionResponse: TransactionResponse, number: String): Single<Any> {
+    val map = JsonObject().apply {
+        addProperty("from", "NetPlus")
+        addProperty("to", "+234${number.substring(1)}")
+        addProperty("message", transactionResponse.buildSMSText().toString())
+    }
+    Timber.e("payload: $map")
+    val auth = "Bearer ${Prefs.getString(PREF_APP_TOKEN, "")}"
+    val body: RequestBody = map.toString()
+        .toRequestBody("application/json; charset=utf-8".toMediaTypeOrNull())
+    return StormApiClient.getSmsServiceInstance().sendSms(auth, body)
+}
+
+fun sendSmS(
+    transactionResponse: TransactionResponse,
+    number: String,
+    _smsSent: MutableLiveData<Event<Boolean>>,
+    compositeDisposable: CompositeDisposable
+) {
+
+    val req = if (checkAppToken().not()) {
+        Timber.e("app token not found, get it first")
+        getAppToken(StormApiClient.getBillsInstance())
+            .flatMap {
+                sendSmSReq(transactionResponse, number)
+            }
+    } else
+        sendSmSReq(transactionResponse, number)
+
+    req
+        .subscribeOn(Schedulers.io())
+        .observeOn(AndroidSchedulers.mainThread())
+        .subscribe { t1, t2 ->
+            t1?.let {
+                _smsSent.value = Event(true)
+                Timber.e("Data $it")
+            }
+            t2?.let {
+                Timber.e(it)
+                val httpException = it as? HttpException
+                httpException?.let { e ->
+                }
+                //MqttHelper.sendPayload(MqttTopics.SMS_EVENTS, smsEvent)
+                _smsSent.value = Event(false)
+            }
+        }.disposeWith(compositeDisposable)
 }

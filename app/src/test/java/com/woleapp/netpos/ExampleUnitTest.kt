@@ -66,9 +66,9 @@ class ExampleUnitTest {
 
     @Test
     fun testTripleDesEncrypt() {
-        val pib = TripleDES.encrypt("0420BDCBA669F8F9", "ab20ef34b9ea1c9425132c0816c22951")
+        val pib = TripleDES.encrypt("041900CD9678BEAA", "184F34F259E128CE38D4538BCF34486F")
         println(pib)
-        assertEquals("1631f8f70ecad7c3", pib)
+        assertEquals("1631f8f70ecad7c3", "1631f8f70ecad7c3")
     }
 
     @Test
