@@ -69,7 +69,7 @@ class TransactionsFragment : BaseFragment() {
             "konga" -> setUpKongaAdapter()
             else -> setUpDefaultAdapter()
         }
-//        binding.rvTransactions.layoutManager = GridLayoutManager(context, 2)
+        binding.rvTransactions.layoutManager = GridLayoutManager(context, 2)
         binding.rvTransactions.adapter = adapter
     }
 
