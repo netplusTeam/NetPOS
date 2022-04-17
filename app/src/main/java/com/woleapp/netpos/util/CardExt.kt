@@ -17,6 +17,7 @@ import com.netpluspay.netpossdk.emv.CardReaderEvent
 import com.netpluspay.netpossdk.emv.CardReaderService
 import com.netpluspay.nibssclient.models.CardData
 import com.netpluspay.nibssclient.models.IsoAccountType
+import com.netpluspay.nibssclient.util.TripleDES
 import com.pos.sdk.emvcore.POIEmvCoreManager.DEV_ICC
 import com.pos.sdk.emvcore.POIEmvCoreManager.DEV_PICC
 import com.pos.sdk.security.POIHsmManage
@@ -136,9 +137,12 @@ fun getCardLiveData(
                     if (cardResult.encryptedPinBlock.isNullOrEmpty().not()) {
                         card.apply {
                             pinBlock = cardResult.encryptedPinBlock
+                            Timber.e("pinblock is")
+                            Timber.e(TripleDES.decrypt(pinBlock!!, Singletons.getKeyHolder()!!.clearPinKey!!))
                         }
                     }
                     Timber.e(card.toString())
+                    cardResult.getWithTag("")
                     //Timber.e(cardResult.iccDataString)
                     //Timber.e(card.toString())
                     iccCardHelper = ICCCardHelper(
