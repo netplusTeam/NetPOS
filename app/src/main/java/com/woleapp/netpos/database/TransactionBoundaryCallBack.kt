@@ -2,7 +2,7 @@ package com.woleapp.netpos.database
 
 import androidx.lifecycle.MutableLiveData
 import androidx.paging.PagedList
-import com.netpluspay.nibssclient.models.TransactionResponse
+import com.danbamitale.epmslib.entities.TransactionResponse
 import com.pixplicity.easyprefs.library.Prefs
 import com.woleapp.netpos.database.dao.TransactionResponseDao
 import com.woleapp.netpos.network.GatewayService
@@ -61,11 +61,11 @@ class TransactionBoundaryCallBack(
                     dataLoadedFinished = true
                 it.result = it.result.map { transaction ->
                     transaction.amount = transaction.amount.times(100)
-                    val dateFormat = SimpleDateFormat("dd-MM-yyyy hh:mm:ss", Locale.getDefault())
-                    val parsedDate: Date = dateFormat.parse(
-                        transaction.transactionTime.replace("T", " ").replace("Z", "")
-                    ) ?: Date()
-                    transaction.transactionTimeInMillis = parsedDate.time
+//                    val dateFormat = SimpleDateFormat("dd-MM-yyyy hh:mm:ss", Locale.getDefault())
+//                    val parsedDate: Date = dateFormat.parse(
+//                        transaction.transactionTime.replace("T", " ").replace("Z", "")
+//                    ) ?: Date()
+//                    transaction.transactionTimeInMillis = parsedDate.time
                     transaction
                 }
                 transactionResponseDao.insertNewTransaction(it.result)

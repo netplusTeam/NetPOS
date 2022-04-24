@@ -1,10 +1,7 @@
 package com.woleapp.netpos.network
 
 import com.google.gson.JsonObject
-import com.woleapp.netpos.model.NipNotification
-import com.woleapp.netpos.model.SessionCode
-import com.woleapp.netpos.model.TokenResp
-import com.woleapp.netpos.model.User
+import com.woleapp.netpos.model.*
 import io.reactivex.Single
 import retrofit2.Response
 import retrofit2.http.*
@@ -47,4 +44,15 @@ interface StormApiService {
         @Header("X-CLIENT-ID") clientId: String,
         @Header("X-ACCESSCODE") accessCode: String
     ): Single<List<NipNotification>>
+
+    @POST("/pos_transaction")
+    fun logTransactionBeforeConnectingToNibss(
+        @Body dataToLog: TransactionToLogBeforeConnectingToNibbs
+    ): Single<ResponseBodyAfterLoginToBackend>
+
+    @PUT("/pos_transaction/{rrn}")
+    fun updateLogAfterConnectingToNibss(
+        @Path("rrn") rrn: String,
+        @Body data: DataToLogAfterConnectingToNibss
+    ): Single<LogToBackendResponse>
 }

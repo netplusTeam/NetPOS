@@ -12,12 +12,11 @@ import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.Observer
+import com.danbamitale.epmslib.entities.CardData
+import com.danbamitale.epmslib.utils.IsoAccountType
 import com.netpluspay.netpossdk.emv.CardReadResult
 import com.netpluspay.netpossdk.emv.CardReaderEvent
 import com.netpluspay.netpossdk.emv.CardReaderService
-import com.netpluspay.nibssclient.models.CardData
-import com.netpluspay.nibssclient.models.IsoAccountType
-import com.netpluspay.nibssclient.util.TripleDES
 import com.pos.sdk.emvcore.POIEmvCoreManager.DEV_ICC
 import com.pos.sdk.emvcore.POIEmvCoreManager.DEV_PICC
 import com.pos.sdk.security.POIHsmManage
@@ -26,6 +25,8 @@ import com.woleapp.netpos.databinding.DialogSelectAccountTypeBinding
 import com.woleapp.netpos.model.CardReaderMqttEvent
 import com.woleapp.netpos.model.MqttEvent
 import com.woleapp.netpos.model.MqttEvents
+import com.woleapp.netpos.model.MqttTopics
+import com.woleapp.netpos.mqtt.MqttHelper
 import com.woleapp.netpos.nibss.NetPosTerminalConfig
 import io.reactivex.android.schedulers.AndroidSchedulers
 import io.reactivex.disposables.CompositeDisposable
@@ -41,7 +42,6 @@ data class ICCCardHelper(
     val cardData: CardData? = null,
     val error: Throwable? = null
 )
-
 
 fun showCardDialog(
     context: Activity,
@@ -110,7 +110,7 @@ fun getCardLiveData(
     val dialog = ProgressDialog(context)
         .apply {
             setMessage("Waiting for card")
-            //setCancelable(false)
+            // setCancelable(false)
         }
     var iccCardHelper: ICCCardHelper? = null
     val cardService = CardReaderService(context, listOf(DEV_ICC, DEV_PICC), keyMode = POIHsmManage.PED_PINBLOCK_FETCH_MODE_TPK)
@@ -137,14 +137,11 @@ fun getCardLiveData(
                     if (cardResult.encryptedPinBlock.isNullOrEmpty().not()) {
                         card.apply {
                             pinBlock = cardResult.encryptedPinBlock
-                            Timber.e("pinblock is")
-                            Timber.e(TripleDES.decrypt(pinBlock!!, Singletons.getKeyHolder()!!.clearPinKey!!))
                         }
                     }
                     Timber.e(card.toString())
-                    cardResult.getWithTag("")
-                    //Timber.e(cardResult.iccDataString)
-                    //Timber.e(card.toString())
+                    // Timber.e(cardResult.iccDataString)
+                    // Timber.e(card.toString())
                     iccCardHelper = ICCCardHelper(
                         cardReadResult = cardResult,
                         customerName = cardResult.cardHolderName,
@@ -173,17 +170,15 @@ fun getCardLiveData(
                     Timber.e("Card Detected")
                 }
                 else -> {
-
                 }
             }
         }, {
             it?.let {
                 dialog.dismiss()
-                //sendCardEvent("ERROR", "99", CardReaderMqttEvent(readerError = it.localizedMessage))
+                // sendCardEvent("ERROR", "99", CardReaderMqttEvent(readerError = it.localizedMessage))
                 Timber.e("error: ${it.localizedMessage}")
                 liveData.value = Event(ICCCardHelper(error = it))
             }
-
         }, {
             dialog.dismiss()
             showSelectAccountTypeDialog(context, iccCardHelper!!, liveData)
@@ -206,7 +201,7 @@ fun sendCardEvent(s: String, s1: String, cardReaderMqttEvent: CardReaderMqttEven
         timestamp = System.currentTimeMillis()
         this.code = s1
     }
-    //MqttHelper.sendPayload(MqttTopics.CARD_READER_EVENTS, event)
+    MqttHelper.sendPayload(MqttTopics.CARD_READER_EVENTS, event)
 }
 private fun showSelectAccountTypeDialog(
     context: Activity,

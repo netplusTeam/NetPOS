@@ -3,131 +3,131 @@ package com.woleapp.netpos.nibss
 import android.content.Context
 import android.content.Intent
 import android.text.format.DateUtils
-import android.widget.Toast
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.localbroadcastmanager.content.LocalBroadcastManager
+import com.danbamitale.epmslib.entities.*
+import com.danbamitale.epmslib.processors.TerminalConfigurator
 import com.netpluspay.netpossdk.NetPosSdk
 import com.netpluspay.netpossdk.NetPosSdk.writeTpkKey
 import com.netpluspay.netpossdk.utils.DeviceConfig
-import com.netpluspay.nibssclient.exception.NibssClientException
-import com.netpluspay.nibssclient.models.ConfigurationParams
-import com.netpluspay.nibssclient.models.KeyHolder
-import com.netpluspay.nibssclient.service.NibssApiWrapper
-import com.netpluspay.nibssclient.util.app.NibssClient
 import com.pixplicity.easyprefs.library.Prefs
-import com.woleapp.netpos.BuildConfig
-import com.woleapp.netpos.model.*
-import com.woleapp.netpos.util.*
+import com.woleapp.netpos.model.ConfigurationData
+import com.woleapp.netpos.util.* // ktlint-disable no-wildcard-imports
 import com.woleapp.netpos.util.Singletons.getSavedConfigurationData
 import com.woleapp.netpos.util.Singletons.gson
 import io.reactivex.Single
 import io.reactivex.android.schedulers.AndroidSchedulers
 import io.reactivex.disposables.CompositeDisposable
-import io.reactivex.disposables.Disposable
 import io.reactivex.schedulers.Schedulers
 import timber.log.Timber
 
+// const val NIBSS_TEST_IP = "196.6.103.72"
+// const val NIBSS_PROD_IP = "196.6.103.73"
+// const val TERMINAL_SERIAL = "0123456789ABC"
 const val CONFIGURATION_STATUS = "terminal_configuration_status"
 const val CONFIGURATION_ACTION = "com.woleapp.netpos.TERMINAL_CONFIGURATION"
 const val DEFAULT_TERMINAL_ID = "2057H63U"
 
-object NetPosTerminalConfig {
-    private var configurationData: ConfigurationData = getSavedConfigurationData()
-    private val disposables = CompositeDisposable()
-    private var terminalId: String? = null
-    var isConfigurationInProcess = false
-    var configurationStatus = -1
-    private val mutableLiveData = MutableLiveData(Event(-99))
-    val liveData: LiveData<Event<Int>>
-        get() = mutableLiveData
-    private val sendIntent = Intent(CONFIGURATION_ACTION)
-    private lateinit var localBroadcastManager: LocalBroadcastManager
-    private var configureSilently: Boolean = false
-    private var configDisposable: Disposable? = null
-
-    fun getTerminalId() = terminalId ?: ""
-    private fun setTerminalId(configurationData: ConfigurationData) {
-        Timber.e("use storm TID ${useStormTerminalId()}")
-        terminalId = if (BuildConfig.DEBUG) "2101JJ41" else {
-            if (useStormTerminalId()) Singletons.getCurrentlyLoggedInUser()?.terminal_id else configurationData.terminalId
-        }
-    }
-
-    private var keyHolder: KeyHolder? = null
-
-    fun init(
-        context: Context,
-        newConfigurationData: ConfigurationData? = null,
-        configureSilently: Boolean = false
-    ) {
-        this.configureSilently = configureSilently
-        if (::localBroadcastManager.isInitialized.not())
-            localBroadcastManager = LocalBroadcastManager.getInstance(context)
-        newConfigurationData?.let { it ->
-            configurationData = it
-        }
-
-        Timber.e("configure silently: $configureSilently")
-        setTerminalId(configurationData)
-        val terminalID = getTerminalId()
-
-        /**
-         * To connect to test environment
-         * */
-//        NibssClient.init(
-//            "epms-client.cert.pem",
-//            "epms-client.key.pem",
-//            terminalID,
-//            NetPosSdk.getDeviceSerial()
-//        )
-//        NibssClient.useSSL(true)
-//        NibssClient.useTestEnvironment(true)
-
-        NibssClient.init(
-            "netpos.cert.pem",
-            "private.key.pem",
-            terminalID,
-            NetPosSdk.getDeviceSerial()
+class NetPosTerminalConfig {
+    companion object {
+        private var configurationData: ConfigurationData = getSavedConfigurationData()
+        private val disposables = CompositeDisposable()
+        var connectionData: ConnectionData = ConnectionData(
+            ipAddress = configurationData.ip,
+            ipPort = configurationData.port.toInt(),
+            isSSL = true
         )
-        NibssClient.useSSL(true)
-        NibssClient.useTestEnvironment(false)
-        Timber.e("Terminal ID: $terminalId")
-        if (isConfigurationInProcess)
-            return
-        keyHolder = Singletons.getKeyHolder()
-        val req = when {
-            DateUtils.isToday(Prefs.getLong(LAST_POS_CONFIGURATION_TIME, 0)).not() -> {
-                Timber.e("last configuration time was not today, configure terminal now")
-                configureTerminal(context)
+        private var terminalId: String? = null
+        var isConfigurationInProcess = false
+        var configurationStatus = -1
+        private val mutableLiveData = MutableLiveData(Event(-99))
+        val liveData: LiveData<Event<Int>>
+            get() = mutableLiveData
+        private val sendIntent = Intent(CONFIGURATION_ACTION)
+        private var terminalConfigurator: TerminalConfigurator =
+            TerminalConfigurator(connectionData)
+
+        fun getTerminalId() = "2101JJ41" ?: ""
+
+        private fun setTerminalId() {
+            terminalId = Singletons.getCurrentlyLoggedInUser()?.terminal_id
+        }
+
+        private var keyHolder: KeyHolder? = null
+
+        private var configData: ConfigData? = null
+
+        fun getConfigData(): ConfigData? = configData
+
+        fun getKeyHolder(): KeyHolder? = keyHolder
+
+        fun init(
+            context: Context,
+            configureSilently: Boolean = false
+        ) {
+            KeyHolder.setHostKeyComponents(
+                configurationData.key1,
+                configurationData.key2
+            ) // default to test  //Set your base keys here
+
+            setTerminalId()
+            Timber.e("Terminal ID: $terminalId")
+            keyHolder = Singletons.getKeyHolder()
+            configData = Singletons.getConfigData()
+            val localBroadcastManager = LocalBroadcastManager.getInstance(context)
+            if (isConfigurationInProcess)
+                return
+            configurationStatus = 0
+            sendIntent.putExtra(CONFIGURATION_STATUS, configurationStatus)
+            localBroadcastManager.sendBroadcast(sendIntent)
+            if (configureSilently.not()) {
+                mutableLiveData.value = Event(configurationStatus)
+                mutableLiveData.value = Event(-99)
             }
-            keyHolder != null -> {
-                Timber.e("calling home")
-                configurationStatus = 1
-                callHome(context).flatMap {
-                    if ((it == "00").not())
-                        throw NibssClientException("Call home failed", null)
-                    Single.just(KeyHolder())
-                }.onErrorResumeNext {
-                    Timber.e("call home failed, configure terminal")
+            val req = when {
+                DateUtils.isToday(Prefs.getLong(LAST_POS_CONFIGURATION_TIME, 0)).not() -> {
+                    Timber.e("last configuration time was not today, configure terminal now")
                     configureTerminal(context)
                 }
+                keyHolder != null && configData != null -> {
+                    Timber.e("calling home")
+                    configurationStatus = 1
+                    callHome(context).onErrorResumeNext {
+                        Timber.e(it)
+                        Timber.e("call home failed, configure terminal")
+                        configureTerminal(context)
+                    }
+                }
+                else -> configureTerminal(context)
             }
-            else -> configureTerminal(context)
-        }
-        configDisposable = req.subscribeOn(Schedulers.io())
-            .observeOn(AndroidSchedulers.mainThread())
-            .doFinally {
-                isConfigurationInProcess = false
-            }
-            .subscribe { t1, t2 ->
-                t1?.let {
-                    if (it.configureTerminal) {
-                        Prefs.putLong(LAST_POS_CONFIGURATION_TIME, System.currentTimeMillis())
-                        Timber.e(it.toString())
-                        Prefs.putString(PREF_KEYHOLDER, gson.toJson(it))
+            val disposable = req.subscribeOn(Schedulers.io())
+                .observeOn(AndroidSchedulers.mainThread())
+                .doOnSubscribe {
+                    isConfigurationInProcess = true
+                }
+                .doFinally { isConfigurationInProcess = false }
+                .subscribe { pair, error ->
+                    error?.let {
+                        // TerminalManager.getInstance().beep(context, TerminalManager.BEEP_MODE_FAILURE)
+                        configurationStatus = -1
+                        if (configureSilently.not()) {
+                            mutableLiveData.value = Event(configurationStatus)
+                            mutableLiveData.value = Event(-99)
+                        }
+                        sendIntent.putExtra(CONFIGURATION_STATUS, configurationStatus)
+                        localBroadcastManager.sendBroadcast(sendIntent)
+                        Timber.e(it)
+                    }
+                    pair?.let {
+                        pair.first?.let {
+                            Prefs.putLong(LAST_POS_CONFIGURATION_TIME, System.currentTimeMillis())
+                            Prefs.putString(PREF_CONFIG_DATA, gson.toJson(pair.second))
+                            Prefs.putString(PREF_KEYHOLDER, gson.toJson(pair.first))
+                            writeTpkKey(DeviceConfig.TPKIndex, pair.first!!.clearPinKey)
+                            this.configData = pair.second
+                        }
                         configurationStatus = 1
-                        writeTpkKey(DeviceConfig.TPKIndex, it.clearPinKey!!)
                         sendIntent.putExtra(CONFIGURATION_STATUS, configurationStatus)
                         localBroadcastManager.sendBroadcast(sendIntent)
                         if (configureSilently.not()) {
@@ -135,58 +135,44 @@ object NetPosTerminalConfig {
                             mutableLiveData.value = Event(-99)
                         }
                         Timber.e("Config data set")
-                    } else
-                        Timber.e("call home success")
-                    disposeDisposables()
-                }
-                t2?.let {
-                    if (it is NibssClientException) {
-                        it.nibssError?.let { nibssError -> Timber.e(nibssError.toString()) }
+                        disposeDisposables()
                     }
-                    Toast.makeText(
-                        context,
-                        "Terminal Configuration Failed",
-                        Toast.LENGTH_SHORT
-                    ).show()
-                    configurationStatus = -1
-                    if (configureSilently.not()) {
-                        mutableLiveData.value = Event(configurationStatus)
-                        mutableLiveData.value = Event(-99)
-                    }
-                    sendIntent.putExtra(CONFIGURATION_STATUS, configurationStatus)
-                    localBroadcastManager.sendBroadcast(sendIntent)
-                    Timber.e(it)
                 }
+            disposables.add(disposable)
+        }
+
+        private fun callHome(context: Context): Single<Pair<KeyHolder?, ConfigData?>> {
+            Timber.e(keyHolder.toString())
+            return terminalConfigurator.nibssCallHome(
+                context,
+                getTerminalId(),
+                keyHolder?.clearSessionKey ?: "",
+                NetPosSdk.getDeviceSerial()
+            ).flatMap {
+                Timber.e("call home result $it")
+                if (it == "00")
+                    return@flatMap Single.just(Pair(null, null))
+                else Single.error(Exception("call home failed"))
             }
-        configDisposable?.disposeWith(disposables)
-
-    }
-
-    private fun configureTerminal(context: Context): Single<KeyHolder> {
-        Prefs.remove(PREF_KEYHOLDER)
-        isConfigurationInProcess = true
-        configurationStatus = 0
-        sendIntent.putExtra(CONFIGURATION_STATUS, configurationStatus)
-        localBroadcastManager.sendBroadcast(sendIntent)
-        if (configureSilently.not()) {
-            mutableLiveData.postValue(Event(configurationStatus))
-            mutableLiveData.postValue(Event(-99))
         }
-        return NibssApiWrapper.configureTerminal(context, ConfigurationParams())
-    }
 
+        private fun configureTerminal(context: Context): Single<Pair<KeyHolder?, ConfigData?>> =
+            terminalConfigurator.downloadNibssKeys(context, getTerminalId())
+                .flatMap { nibssKeyHolder ->
+                    keyHolder = nibssKeyHolder
+                    terminalConfigurator.downloadTerminalParameters(
+                        context,
+                        getTerminalId(),
+                        nibssKeyHolder.clearSessionKey,
+                        NetPosSdk.getDeviceSerial()
+                    ).map { nibssConfigData ->
+                        configData = nibssConfigData
+                        return@map Pair(nibssKeyHolder, nibssConfigData)
+                    }
+                }
 
-    private fun callHome(context: Context): Single<String> =
-        NibssApiWrapper.callHome(context, ConfigurationParams())
-
-    private val KeyHolder.configureTerminal
-        get() = this.clearPinKey.isNullOrEmpty().not()
-
-    fun disposeDisposables() {
-        configDisposable?.let {
-            if (it.isDisposed.not())
-                it.dispose()
+        fun disposeDisposables() {
+            disposables.clear()
         }
-        disposables.clear()
     }
 }

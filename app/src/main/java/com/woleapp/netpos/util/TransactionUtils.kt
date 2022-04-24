@@ -3,12 +3,12 @@ package com.woleapp.netpos.util
 import android.content.Context
 import android.view.LayoutInflater
 import android.widget.Toast
+import com.danbamitale.epmslib.entities.TransactionResponse
+import com.danbamitale.epmslib.entities.TransactionType
+import com.danbamitale.epmslib.entities.responseMessage
+import com.danbamitale.epmslib.utils.IsoAccountType
 import com.google.android.material.bottomsheet.BottomSheetDialog
 import com.google.gson.JsonObject
-import com.netpluspay.nibssclient.models.IsoAccountType
-import com.netpluspay.nibssclient.models.TransactionResponse
-import com.netpluspay.nibssclient.models.TransactionType
-import com.netpluspay.nibssclient.models.responseMessage
 import com.pixplicity.easyprefs.library.Prefs
 import com.woleapp.netpos.R
 import com.woleapp.netpos.databinding.LayoutPayWithTransferBinding
@@ -112,7 +112,7 @@ fun showPayWithTransferDialog(context: Context) {
     bottomSheetDialog.setContentView(bankDetailsBinding.root)
     val user = Singletons.gson.fromJson(Prefs.getString(PREF_USER, ""), User::class.java)
     val bank = "Zenith Bank"
-    val accountNumber = "0123456789"
+    val accountNumber = "0123456789" //user.account_number!!
     val accountName = user.business_name ?: ""
 //        val bank ="GTB"
 //        val accountNumber = "0239952959"

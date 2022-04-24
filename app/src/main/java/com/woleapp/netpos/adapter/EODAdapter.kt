@@ -2,7 +2,8 @@ package com.woleapp.netpos.adapter
 
 import android.view.ViewGroup
 import androidx.recyclerview.widget.ListAdapter
-import com.netpluspay.nibssclient.models.TransactionResponse
+import com.danbamitale.epmslib.entities.TransactionResponse
+
 class EODAdapter(val listener: TransactionClickListener) :
     ListAdapter<TransactionResponse, TransactionsViewHolder>(TransactionItemDiffUtil) {
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int) =

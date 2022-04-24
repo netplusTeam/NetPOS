@@ -2,23 +2,29 @@ package com.woleapp.netpos.viewmodels
 
 import android.content.Context
 import android.os.Build
-import androidx.lifecycle.*
-import androidx.paging.DataSource
+import android.util.Log
+import androidx.lifecycle.LiveData
+import androidx.lifecycle.MutableLiveData
+import androidx.lifecycle.ViewModel
 import androidx.paging.LivePagedListBuilder
 import androidx.paging.PagedList
+import com.danbamitale.epmslib.entities.* // ktlint-disable no-wildcard-imports
+import com.danbamitale.epmslib.entities.TransactionResponse
+import com.danbamitale.epmslib.processors.TransactionProcessor
+import com.danbamitale.epmslib.utils.IsoAccountType
 import com.google.gson.JsonObject
+import com.netpluspay.netpossdk.NetPosSdk
 import com.netpluspay.netpossdk.printer.PrinterResponse
-import com.netpluspay.nibssclient.models.*
-import com.netpluspay.nibssclient.service.NibssApiWrapper
 import com.pixplicity.easyprefs.library.Prefs
 import com.woleapp.netpos.database.AppDatabase
 import com.woleapp.netpos.database.TransactionBoundaryCallBack
-import com.woleapp.netpos.model.*
+import com.woleapp.netpos.model.* // ktlint-disable no-wildcard-imports
 import com.woleapp.netpos.mqtt.MqttHelper
 import com.woleapp.netpos.network.NetPOSGatewayApi
 import com.woleapp.netpos.network.StormApiClient
 import com.woleapp.netpos.nibss.NetPosTerminalConfig
-import com.woleapp.netpos.util.*
+import com.woleapp.netpos.util.* // ktlint-disable no-wildcard-imports
+import io.reactivex.Single
 import io.reactivex.android.schedulers.AndroidSchedulers
 import io.reactivex.disposables.CompositeDisposable
 import io.reactivex.schedulers.Schedulers
@@ -43,6 +49,7 @@ class TransactionsViewModel(private val appDatabase: AppDatabase) : ViewModel() 
     private var cardScheme: String? = null
     private val _showProgressDialog = MutableLiveData<Event<Boolean>>()
     private val _showPrintDialog = MutableLiveData<Event<String>>()
+    private var user: User?
 
     private val _showPrinterError = MutableLiveData<Event<String>>()
 
@@ -53,7 +60,6 @@ class TransactionsViewModel(private val appDatabase: AppDatabase) : ViewModel() 
 
     val showReceiptType: LiveData<Event<Boolean>>
         get() = _showReceiptTypeMutableLiveData
-
 
     private val _shouldRefreshNibssKeys = MutableLiveData<Event<Boolean>>()
     val shouldRefreshNibssKeys: LiveData<Event<Boolean>>
@@ -83,10 +89,10 @@ class TransactionsViewModel(private val appDatabase: AppDatabase) : ViewModel() 
     val selectedAction: LiveData<String>
         get() = _selectedAction
 
-
     val pagedTransaction: LiveData<PagedList<TransactionResponse>>
 
     init {
+        user = Singletons.getCurrentlyLoggedInUser()
         val config = PagedList.Config.Builder()
             .setPageSize(20)
             .setEnablePlaceholders(false)
@@ -101,7 +107,8 @@ class TransactionsViewModel(private val appDatabase: AppDatabase) : ViewModel() 
 
         pagedTransaction = LivePagedListBuilder(
             appDatabase.transactionResponseDao()
-                .getTransactions(NetPosTerminalConfig.getTerminalId()), config
+                .getTransactions(NetPosTerminalConfig.getTerminalId()),
+            config
         ).setBoundaryCallback(transactionBoundaryCallBack)
             .build()
     }
@@ -112,7 +119,6 @@ class TransactionsViewModel(private val appDatabase: AppDatabase) : ViewModel() 
         lastTransactionResponse.value = transactionResponse
     }
 
-
 //    fun getTransactions() =
 //        when (_selectedAction.value) {
 //            HISTORY_ACTION_PREAUTH -> appDatabase!!.transactionResponseDao()
@@ -122,7 +128,6 @@ class TransactionsViewModel(private val appDatabase: AppDatabase) : ViewModel() 
 //            else -> appDatabase!!.transactionResponseDao()
 //                .getTransactions(NetPosTerminalConfig.getTerminalId())
 //        }
-
 
     fun setAction(action: String?) {
         _selectedAction.value = action!!
@@ -146,33 +151,32 @@ class TransactionsViewModel(private val appDatabase: AppDatabase) : ViewModel() 
     }
 
     private fun refundTransaction(transactionResponse: TransactionResponse, context: Context) {
-        val refundTransactionParams = RefundTransactionParams(
-            cardData!!,
-            transactionResponse,
-            accountType,
-            MessageReasonCode.CompletedPartially
+        val originalDataElements = transactionResponse.toOriginalDataElements()
+
+        val hostConfig = HostConfig(
+            NetPosTerminalConfig.getTerminalId(),
+            NetPosTerminalConfig.connectionData,
+            NetPosTerminalConfig.getKeyHolder()!!,
+            NetPosTerminalConfig.getConfigData()!!
+        )
+
+        val requestData = TransactionRequestData(
+            transactionType = TransactionType.REVERSAL,
+            amount = originalDataElements.originalAmount,
+            originalDataElements = originalDataElements,
+            accountType = accountType
         )
         inProgress.value = true
-        NibssApiWrapper.refundTransaction(context, refundTransactionParams).flatMap {
+        TransactionProcessor(hostConfig).processTransaction(
+            context,
+            requestData,
+            cardData!!
+        ).flatMap {
             if (it.responseCode == "A3")
                 _shouldRefreshNibssKeys.postValue(Event(true))
             _message.postValue(Event("Transaction: ${it.responseMessage}"))
             it.cardHolder = cardHolderName
             it.cardLabel = cardScheme!!
-            val transactionEvent = MqttEvent<NibssResponse>()
-            transactionEvent.apply {
-                this.event = MqttEvents.TRANSACTIONS.event
-                this.code = it.responseCode
-                this.timestamp = System.currentTimeMillis()
-                this.data = it.toNibssResponse()
-                this.transactionType = it.transactionType.name
-                this.status = try {
-                    it.responseMessage
-                } catch (ex: Exception) {
-                    "Error"
-                }
-            }
-            //MqttHelper.sendPayload(MqttTopics.TRANSACTIONS, transactionEvent)
             it.id = transactionResponse.id
             lastTransactionResponse.postValue(it)
             appDatabase.transactionResponseDao().updateTransaction(it)
@@ -182,16 +186,30 @@ class TransactionsViewModel(private val appDatabase: AppDatabase) : ViewModel() 
             .subscribe { response, error ->
                 error?.let {
                     inProgress.value = false
-                    _message.value = Event("Network Error")
+                    _message.value = Event(it.localizedMessage ?: "")
                     Timber.e(it)
                     it.printStackTrace()
                 }
-
                 response?.let {
-                    printReceipt(context)
+                    startPrintingReceipt(context)
                 }
             }.disposeWith(compositeDisposable)
+    }
 
+    private fun printReceipt2(
+        context: Context
+    ): Single<PrinterResponse> {
+        return if (Build.MODEL == "P3" && lastTransactionResponse.value != null) lastTransactionResponse.value!!.print(
+            context
+        )
+        else {
+            _showPrintDialog.postValue(
+                Event(
+                    lastTransactionResponse.value?.buildSMSText().toString()
+                )
+            )
+            Single.just(PrinterResponse())
+        }
     }
 
     private fun printReceipt(context: Context) {
@@ -201,6 +219,7 @@ class TransactionsViewModel(private val appDatabase: AppDatabase) : ViewModel() 
             }
 
         if (Build.MODEL.equals("Pro", true) || Build.MODEL.equals("P3", true)) {
+            Log.d("DATAAAA", Prefs.getString(PREF_PRINTER_SETTINGS, PREF_VALUE_PRINT_CUSTOMER_COPY_ONLY))
             when (Prefs.getString(PREF_PRINTER_SETTINGS, PREF_VALUE_PRINT_CUSTOMER_COPY_ONLY)) {
                 PREF_VALUE_PRINT_CUSTOMER_COPY_ONLY -> startPrintingReceipt(
                     context,
@@ -220,7 +239,6 @@ class TransactionsViewModel(private val appDatabase: AppDatabase) : ViewModel() 
             _showPrintDialog.postValue(
                 Event(transactionResponse.buildSMSText().toString())
             )
-
 
 //        if (Build.MODEL.equals("Pro", true) || Build.MODEL.equals(
 //                "P3",
@@ -242,45 +260,30 @@ class TransactionsViewModel(private val appDatabase: AppDatabase) : ViewModel() 
 //            .disposeWith(compositeDisposable)
     }
 
-    private fun sendPrinterEvent(it: PrinterResponse) {
-        val printerEvent = MqttEvent<PrinterEventData>()
-        printerEvent.apply {
-            this.event = MqttEvents.PRINTING_RECEIPT.event
-            this.code = it.code.toString()
-            this.timestamp = System.currentTimeMillis()
-            this.data = PrinterEventData(lastTransactionResponse.value?.RRN ?: "", it.message)
-            this.status = it.message
-        }
-        //MqttHelper.sendPayload(MqttTopics.PRINTING_RECEIPT, printerEvent)
-    }
-
     fun startPrintingReceipt(
-        context: Context, isMerchantCopy: Boolean = false,
+        context: Context,
+        isMerchantCopy: Boolean = false,
         printBoth: Boolean = false
     ) {
         inProgress.value = true
         val transactionResponse = lastTransactionResponse.value
         transactionResponse?.apply {
             this.cardExpiry = ""
-            //this.cardHolder = this
+            // this.cardHolder = this
         }
         transactionResponse?.print(context, isMerchantCopy = isMerchantCopy, isReprint = true)
             ?.subscribeOn(Schedulers.io())
             ?.observeOn(AndroidSchedulers.mainThread())
             ?.subscribe { t1, t2 ->
-                val printerEvent = MqttEvent<PrinterEventData>()
                 t1?.let {
                     if (printBoth) {
                         if (isMerchantCopy) {
-                            sendPrinterEvent(it)
                             _done.value = true
                             inProgress.value = false
                         } else {
-                            sendPrinterEvent(it)
                             startPrintingReceipt(context, isMerchantCopy = true, printBoth = true)
                         }
                     } else {
-                        sendPrinterEvent(it)
                         _done.value = true
                         inProgress.value = false
                     }
@@ -291,20 +294,45 @@ class TransactionsViewModel(private val appDatabase: AppDatabase) : ViewModel() 
                     _showPrinterError.value = Event(it.localizedMessage ?: "Error")
                     Timber.e(it)
                     _message.value = Event(it.localizedMessage ?: "Error")
-                    printerEvent.apply {
-                        this.event = MqttEvents.PRINTING_RECEIPT.event
-                        this.code = "-1"
-                        this.timestamp = System.currentTimeMillis()
-                        this.data = PrinterEventData(
-                            transactionResponse.RRN,
-                            it.localizedMessage ?: "Printer Error"
-                        )
-                        this.status = it.message
-                    }
                 }
-                //MqttHelper.sendPayload(MqttTopics.PRINTING_RECEIPT, printerEvent)
+                // MqttHelper.sendPayload(MqttTopics.PRINTING_RECEIPT, printerEvent)
             }?.disposeWith(compositeDisposable)
     }
+
+//    fun startPrintingReceipt2(
+//        context: Context
+//    ) {
+//        inProgress.value = true
+//        printReceipt(context)
+//            .subscribeOn(Schedulers.io())
+//            .observeOn(AndroidSchedulers.mainThread())
+//            .subscribe { t1, t2 ->
+//                t1?.let {
+//                    event.apply {
+//                        this.event = MqttEvents.PRINTING_RECEIPT.event
+//                        this.code = it.code.toString()
+//                        this.timestamp = System.currentTimeMillis()
+//                        this.data =
+//                            lastTransactionResponse.value?.let { it1 ->
+//                                PrinterEventData(
+//                                    it1.RRN,
+//                                    it.message
+//                                )
+//                            }
+//                        this.status = it.message
+//                    }
+//                    MqttHelper.sendPayload(MqttTopics.PRINTING_RECEIPT, event)
+//                }
+//                _done.value = true
+//                inProgress.value = false
+//
+//                t2?.let {
+//                    _showPrinterError.value = Event(it.localizedMessage ?: "")
+//                    Timber.e(it)
+//                    _message.value = Event(it.localizedMessage ?: "")
+//                }
+//            }?.disposeWith(compositeDisposable)
+//    }
 
     fun showReceiptDialog() {
         _showPrintDialog.value = Event(
@@ -328,60 +356,66 @@ class TransactionsViewModel(private val appDatabase: AppDatabase) : ViewModel() 
     fun doSaleCompletion(context: Context) {
         val transactionResponse = lastTransactionResponse.value!!
         val originalDataElements = transactionResponse.toOriginalDataElements()
+        val hostConfig = HostConfig(
+            NetPosTerminalConfig.getTerminalId(),
+            NetPosTerminalConfig.connectionData,
+            NetPosTerminalConfig.getKeyHolder()!!,
+            NetPosTerminalConfig.getConfigData()!!
+        )
 
-        val makePaymentParams = MakePaymentParams(
+        val requestData = TransactionRequestData(
+            transactionType = TransactionType.PRE_AUTHORIZATION_COMPLETION,
             amount = originalDataElements.originalAmount,
-            transactionType = TransactionType.PRE_AUTHORIZATION_COMPLETION
-        ).apply {
-            this.originalDataElements = originalDataElements
-        }
+            originalDataElements = originalDataElements
+        )
 
         _showProgressDialog.value = Event(true)
-        NibssApiWrapper.completion(context, makePaymentParams).flatMap {
+        TransactionProcessor(hostConfig).processTransaction(
+            context, requestData,
+            cardData!!
+        ).flatMap {
             if (it.responseCode == "A3")
                 _shouldRefreshNibssKeys.postValue(Event(true))
             _showProgressDialog.postValue(Event(false))
             _message.postValue(Event("Transaction: ${it.responseMessage}"))
             it.cardHolder = cardHolderName
             it.cardLabel = cardScheme!!
-            val transactionEvent = MqttEvent<NibssResponse>()
-            transactionEvent.apply {
-                this.event = MqttEvents.TRANSACTIONS.event
-                this.code = it.responseCode
-                this.timestamp = System.currentTimeMillis()
-                this.data = it.toNibssResponse()
-                this.transactionType = it.transactionType.name
-                this.status = try {
-                    it.responseMessage
-                } catch (ex: Exception) {
-                    "Error"
-                }
-            }
-            //MqttHelper.sendPayload(MqttTopics.TRANSACTIONS, transactionEvent)
             it.id = transactionResponse.id
             lastTransactionResponse.postValue(it)
-            appDatabase!!.transactionResponseDao().updateTransaction(it)
+            appDatabase.transactionResponseDao().updateTransaction(it)
         }.subscribeOn(Schedulers.io())
             .observeOn(AndroidSchedulers.mainThread())
             .subscribe { response, error ->
                 error?.let {
-                    _message.value = Event(it.localizedMessage ?: "Error")
+                    _message.value = Event(it.localizedMessage)
                     Timber.e(it)
                     it.printStackTrace()
                 }
 
                 response?.let {
-                    printReceipt(context)
+                    startPrintingReceipt(context)
                 }
             }.disposeWith(compositeDisposable)
     }
 
     fun preAuthRefund(context: Context) {
         val transactionResponse = lastTransactionResponse.value!!
-        val refundTransactionParams =
-            RefundTransactionParams(cardData!!, transactionResponse, accountType)
+        val originalDataElements = transactionResponse.toOriginalDataElements()
+
+        val hostConfig = HostConfig(
+            NetPosTerminalConfig.getTerminalId(),
+            NetPosTerminalConfig.connectionData,
+            NetPosTerminalConfig.getKeyHolder()!!,
+            NetPosTerminalConfig.getConfigData()!!
+        )
+
+        val requestData = TransactionRequestData(
+            transactionType = TransactionType.REFUND,
+            amount = originalDataElements.originalAmount,
+            originalDataElements = originalDataElements
+        )
         _showProgressDialog.value = Event(true)
-        NibssApiWrapper.refundTransaction(context, refundTransactionParams)
+        TransactionProcessor(hostConfig).processTransaction(context, requestData, cardData!!)
             .flatMap {
                 if (it.responseCode == "A3")
                     _shouldRefreshNibssKeys.postValue(Event(true))
@@ -389,20 +423,6 @@ class TransactionsViewModel(private val appDatabase: AppDatabase) : ViewModel() 
                 _message.postValue(Event("Transaction: ${it.responseMessage}"))
                 it.cardHolder = cardHolderName
                 it.cardLabel = cardScheme!!
-                val transactionEvent = MqttEvent<NibssResponse>()
-                transactionEvent.apply {
-                    this.event = MqttEvents.TRANSACTIONS.event
-                    this.code = it.responseCode
-                    this.timestamp = System.currentTimeMillis()
-                    this.data = it.toNibssResponse()
-                    this.transactionType = it.transactionType.name
-                    this.status = try {
-                        it.responseMessage
-                    } catch (ex: Exception) {
-                        "Error"
-                    }
-                }
-                //MqttHelper.sendPayload(MqttTopics.TRANSACTIONS, transactionEvent)
                 it.id = transactionResponse.id
                 lastTransactionResponse.postValue(it)
                 appDatabase!!.transactionResponseDao().updateTransaction(it)
@@ -410,19 +430,41 @@ class TransactionsViewModel(private val appDatabase: AppDatabase) : ViewModel() 
             .observeOn(AndroidSchedulers.mainThread())
             .subscribe { response, error ->
                 error?.let {
-                    _message.value = Event(it.localizedMessage ?: "Error")
+                    _message.value = Event(it.localizedMessage)
                     Timber.e(it)
                     it.printStackTrace()
                 }
 
                 response?.let {
-                    printReceipt(context)
+                    startPrintingReceipt(context)
                 }
             }.disposeWith(compositeDisposable)
     }
 
     fun sendSmS(number: String) {
-        sendSmS(lastTransactionResponse.value!!, number, _smsSent, compositeDisposable)
+        val map = JsonObject().apply {
+            addProperty("from", "NetPlus")
+            addProperty("to", "+234${number.substring(1)}")
+            addProperty("message", lastTransactionResponse.value!!.buildSMSText().toString())
+        }
+        Timber.e("payload: $map")
+        val auth = "Bearer ${Prefs.getString(PREF_APP_TOKEN, "")}"
+        val body: RequestBody = map.toString()
+            .toRequestBody("application/json; charset=utf-8".toMediaTypeOrNull())
+
+        StormApiClient.getSmsServiceInstance().sendSms(auth, body)
+            .subscribeOn(Schedulers.io())
+            .observeOn(AndroidSchedulers.mainThread())
+            .subscribe { t1, t2 ->
+                t1?.let {
+                    _smsSent.value = Event(true)
+                    Timber.e("Data $it")
+                }
+                t2?.let {
+                    _smsSent.value = Event(false)
+                    _toastMessage.value = Event("Error: ${it.localizedMessage}")
+                }
+            }.disposeWith(compositeDisposable)
     }
 
     fun setEndOfDayList(eodList: List<TransactionResponse>) {

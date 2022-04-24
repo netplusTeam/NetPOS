@@ -4,14 +4,14 @@ import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.os.Build
+import com.danbamitale.epmslib.entities.TransactionResponse
+import com.danbamitale.epmslib.entities.responseMessage
+import com.danbamitale.epmslib.extensions.formatCurrencyAmount
 
 import com.netpluspay.netpossdk.NetPosSdk
 import com.netpluspay.netpossdk.printer.PrinterResponse
 import com.netpluspay.netpossdk.printer.ReceiptBuilder
 import com.netpluspay.netpossdk.utils.DeviceConfig
-import com.netpluspay.nibssclient.models.TransactionResponse
-import com.netpluspay.nibssclient.models.responseMessage
-import com.netpluspay.nibssclient.util.formatCurrencyAmount
 import com.pos.sdk.printer.POIPrinterManage
 import com.pos.sdk.printer.models.BitmapPrintLine
 import com.pos.sdk.printer.models.PrintLine
@@ -286,14 +286,14 @@ fun TransactionResponse.buildReceipt(
             )
         )
         builder.appendAID(AID)
-        builder.appendAddress(Singletons.getCurrentlyLoggedInUser()!!.business_name)
+//        builder.appendAddress(Singletons.getCurrentlyLoggedInUser()!!.business_name)
         builder.appendAmount(
             amount.div(100).formatCurrencyAmount("\u20A6")
         )
         remark?.let {
             builder.appendRemark(it)
         }
-        builder.appendAppName(context.getString(R.string.app_name))
+        builder.appendAppName("NetPOS")
         builder.appendAppVersion(BuildConfig.VERSION_NAME)
         builder.appendAuthorizationCode(authCode)
         builder.appendCardHolderName(cardHolder)
@@ -318,9 +318,6 @@ fun TransactionResponse.buildReceipt(
         if (isMerchantCopy)
             builder.isMerchantCopy
         else builder.isCustomerCopy
-        if (BuildConfig.FLAVOR.equals("heritage", true)){
-            builder.appendFootNote("THANK YOU FOR YOUR PURCHASE. CALL 0700-HERITAGE OR 01-2369000 FOR SUPPORT")
-        }
     }
 
 fun NipNotification.print(context: Context, printerListener: POIPrinterManage.IPrinterListener) {

@@ -2,8 +2,8 @@ package com.woleapp.netpos.util
 
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
+import com.danbamitale.epmslib.entities.TransactionResponse
 import com.google.gson.JsonObject
-import com.netpluspay.nibssclient.models.TransactionResponse
 import com.pixplicity.easyprefs.library.Prefs
 import com.woleapp.netpos.model.MqttEvent
 import com.woleapp.netpos.model.MqttEvents

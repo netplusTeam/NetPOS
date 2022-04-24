@@ -5,20 +5,23 @@ import android.os.Build
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
+import com.danbamitale.epmslib.entities.*
+import com.danbamitale.epmslib.processors.TransactionProcessor
+import com.danbamitale.epmslib.utils.IsoAccountType
 import com.google.gson.Gson
 import com.google.gson.JsonObject
 import com.netpluspay.netpossdk.printer.PrinterResponse
-import com.netpluspay.nibssclient.models.*
-import com.netpluspay.nibssclient.service.NibssApiWrapper
 import com.pixplicity.easyprefs.library.Prefs
 import com.woleapp.netpos.database.AppDatabase
-import com.woleapp.netpos.model.*
-import com.woleapp.netpos.mqtt.MqttHelper
+import com.woleapp.netpos.model.ErrorNetworkResponse
+import com.woleapp.netpos.model.NetworkResponse
+import com.woleapp.netpos.model.UtilitiesPayload
+import com.woleapp.netpos.model.ValidateBillResponse
 import com.woleapp.netpos.network.StormApiClient
 import com.woleapp.netpos.network.StormUtilitiesApiService
+import com.woleapp.netpos.nibss.NetPosTerminalConfig
 import com.woleapp.netpos.util.*
 import io.reactivex.Single
-
 import io.reactivex.SingleObserver
 import io.reactivex.android.schedulers.AndroidSchedulers
 import io.reactivex.disposables.CompositeDisposable
@@ -29,7 +32,6 @@ import okhttp3.RequestBody
 import okhttp3.RequestBody.Companion.toRequestBody
 import retrofit2.HttpException
 import timber.log.Timber
-
 
 class UtilitiesViewModel : ViewModel() {
     var cardData: CardData? = null
@@ -50,6 +52,16 @@ class UtilitiesViewModel : ViewModel() {
             it.value = UtilitiesPayload()
         }
     }
+
+    private val hostConfig = HostConfig(
+        NetPosTerminalConfig.getTerminalId(),
+        NetPosTerminalConfig.connectionData,
+        NetPosTerminalConfig.getKeyHolder()!!,
+        NetPosTerminalConfig.getConfigData()!!
+    )
+
+    private val processor = TransactionProcessor(hostConfig)
+
     private val _showProgressMutableLiveData: MutableLiveData<Event<Boolean>> by lazy {
         MutableLiveData<Event<Boolean>>().also {
             it.value = Event(false)
@@ -116,7 +128,7 @@ class UtilitiesViewModel : ViewModel() {
 
     fun setUtilityProvider(utilityProvider: String) {
         val utilitiesPayload = payloadMutableLiveData.value
-        //_message.value = Event(utilityProvider)
+        // _message.value = Event(utilityProvider)
         payloadMutableLiveData.value = utilitiesPayload?.apply {
             provider = utilityProvider.replace(" ", "")
         }
@@ -190,7 +202,6 @@ class UtilitiesViewModel : ViewModel() {
                         ErrorNetworkResponse("Could not verify destination Number: ${utilitiesPayload.destinationAccount}")
                     _result.value = Event(errorResponse)
                 }
-
             })
     }
 
@@ -208,7 +219,6 @@ class UtilitiesViewModel : ViewModel() {
         }
         _validateResponse.value = Event(billResponse)
     }
-
 
     /*fun getServiceFee() {
         val validateBillResponse = _billResponse.value
@@ -253,7 +263,7 @@ class UtilitiesViewModel : ViewModel() {
         }
         amountLong = utilitiesPayload.amount.toLong().times(100)
         _initiateBillsPayment.value = Event(utilitiesPayload.amount.toLong().times(100))
-        //payBill()
+        // payBill()
     }
 
     private fun payBill(context: Context) {
@@ -285,11 +295,11 @@ class UtilitiesViewModel : ViewModel() {
                     errorResponse =
                         if (it.isHttpException()) {
                             _message.value =
-                                Event("${utilitiesPayload.billType} request failed, reversing transaction")
+                                Event("${utilitiesPayload.billType} request failed, reversing transaction 😂")
                             val error = it.getResponseBody()
                             gson.fromJson(error, ErrorNetworkResponse::class.java)
                         } else
-                            ErrorNetworkResponse("Failed")
+                            ErrorNetworkResponse(it.localizedMessage ?: "")
 
                     remark.plus("\n${utilitiesPayload.billType} Payment Failed")
                     Timber.e(it.toString())
@@ -299,54 +309,50 @@ class UtilitiesViewModel : ViewModel() {
     }
 
     private fun reverseTransaction(context: Context) {
-        val requestData = RefundTransactionParams(
-            cardData!!,
-            lastTransactionResponse.value!!,
-            messageReasonCode = MessageReasonCode.CompletedPartially,
-            accountType = isoAccountType!!
-        ).apply {
-            fundWallet = false
-        }
-        NibssApiWrapper.refundTransaction(
-            context,
-            requestData
-        ).subscribeOn(Schedulers.io())
-            .observeOn(AndroidSchedulers.mainThread())
-            .doFinally {
-                _showProgressMutableLiveData.value = Event(false)
-                _result.value = Event(
-                    errorResponse
-                        ?: ErrorNetworkResponse("An unresolvable error occurred, contact administrator")
-                )
-                printReceipt(context)
-            }
-            .subscribe { t1, t2 ->
-                t1?.let { response ->
-                    Timber.e(response.toString())
-                    lastTransactionResponse.value = response
-                    if (response.responseCode == "06") {
-                        errorResponse?.message =
-                            "Could not process ${payloadMutableLiveData.value?.billType} payment, Transaction Reversed"
-                    } else {
+        val transactionResponse = lastTransactionResponse.value
+        transactionResponse?.let {
+            val originalDataElements = it.toOriginalDataElements()
+            val transactionRequestData = TransactionRequestData(
+                transactionType = TransactionType.REVERSAL,
+                amount = originalDataElements.originalAmount,
+                accountType = isoAccountType ?: IsoAccountType.DEFAULT_UNSPECIFIED,
+                originalDataElements = originalDataElements
+            )
+            processor.processTransaction(context, transactionRequestData, cardData!!)
+                .subscribeOn(Schedulers.io())
+                .observeOn(AndroidSchedulers.mainThread())
+                .doFinally {
+                    _showProgressMutableLiveData.value = Event(false)
+                    _result.value = Event(
+                        errorResponse
+                            ?: ErrorNetworkResponse("An unresolvable error occurred, contact administrator")
+                    )
+                    printReceipt(context)
+                }
+                .subscribe { t1, t2 ->
+                    t1?.let { response ->
+                        lastTransactionResponse.value = response
+                        if (response.responseCode == "00") {
+                            errorResponse?.message =
+                                "Could not process ${payloadMutableLiveData.value?.billType} payment, Transaction Reversed"
+                        } else {
+                            errorResponse?.message =
+                                "Could not process ${payloadMutableLiveData.value?.billType} payment, Transaction could not be auto reversed, contact administrator"
+                        }
+                    }
+                    t2?.let {
                         errorResponse?.message =
                             "Could not process ${payloadMutableLiveData.value?.billType} payment, Transaction could not be auto reversed, contact administrator"
                     }
-                }
-                t2?.let {
-                    errorResponse?.message =
-                        "Could not process ${payloadMutableLiveData.value?.billType} payment, Transaction could not be auto reversed, contact administrator"
-                }
-            }.disposeWith(compositeDisposable)
-
+                }.disposeWith(compositeDisposable)
+        }
     }
 
     fun makePayment(context: Context, transactionType: TransactionType = TransactionType.PURCHASE) {
         _showProgressMutableLiveData.value = Event(true)
-        val makePaymentParams =
-            MakePaymentParams(amountLong, 0L, cardData, transactionType, isoAccountType!!).apply {
-                fundWallet = false
-            }
-        NibssApiWrapper.makePayment(context, makePaymentParams)
+        val requestData =
+            TransactionRequestData(transactionType, 200, 0L, accountType = isoAccountType!!)
+        processor.processTransaction(context, requestData, cardData!!)
             .flatMap {
                 if (it.responseCode == "A3") {
                     Prefs.remove(PREF_CONFIG_DATA)
@@ -356,11 +362,12 @@ class UtilitiesViewModel : ViewModel() {
                 it.cardHolder = customerName.value!!
                 it.cardLabel = cardScheme!!
                 lastTransactionResponse.postValue(it)
-                //_message.postValue(Event(if (it.responseCode == "00") "Transaction Approved" else "Transaction Not approved"))
+                // _message.postValue(Event(if (it.responseCode == "00") "Transaction Approved" else "Transaction Not approved"))
                 if (it.responseCode == "00") {
                     payBill(context)
                 } else {
-                    _showProgressMutableLiveData.postValue(Event(false))
+                    _message.value
+                    _showProgressMutableLiveData.value = Event(false)
                     _result.postValue(Event(ErrorNetworkResponse("Transaction Declined")))
                     printReceipt(context)
                 }
@@ -371,10 +378,9 @@ class UtilitiesViewModel : ViewModel() {
             .observeOn(AndroidSchedulers.mainThread())
             .subscribe { t1, throwable ->
                 t1?.let {
-
                 }
                 throwable?.let {
-                    _message.value = Event("Failed")
+                    _message.value = Event(it.localizedMessage ?: "")
                     _showProgressMutableLiveData.value = Event(false)
                     _result.value = Event(ErrorNetworkResponse("Could Not Make Payment"))
                 }
@@ -389,14 +395,9 @@ class UtilitiesViewModel : ViewModel() {
     }
 
     private fun printReceipt(context: Context) {
-        _message.postValue(Event("Printing Receipt"))
-        Timber.e(remark)
+        _message.value = Event("Printing Receipt")
         val transactionResponse = lastTransactionResponse.value!!
-        val single = if (Build.MODEL.equals("Pro", true) || Build.MODEL.equals(
-                "P3",
-                true
-            )
-        ) transactionResponse.print(context, remark) else {
+        val single = if (Build.MODEL == "P3") transactionResponse.print(context, remark) else {
             _showPrintDialog.postValue(
                 Event(
                     transactionResponse.buildSMSText(remark).toString()
@@ -407,29 +408,13 @@ class UtilitiesViewModel : ViewModel() {
         single.subscribeOn(Schedulers.io())
             .observeOn(AndroidSchedulers.mainThread())
             .subscribe { t1, t2 ->
-                val printerEvent = MqttEvent<PrinterEventData>()
                 t1?.let {
-                    _message.value = Event("Printer: ${it.message}")
-                    printerEvent.apply {
-                        this.event = MqttEvents.PRINTING_RECEIPT.event
-                        this.code = it.code.toString()
-                        this.timestamp = System.currentTimeMillis()
-                        this.data = PrinterEventData(transactionResponse.RRN, it.message)
-                        this.status = it.message
-                    }
+                    _message.value = Event(it.message)
                 }
                 t2?.let {
                     _message.value = Event(it.localizedMessage!!)
                     _showPrinterError.value = Event(it.localizedMessage!!)
-                    printerEvent.apply {
-                        this.event = MqttEvents.PRINTING_RECEIPT.event
-                        this.code = "-1"
-                        this.timestamp = System.currentTimeMillis()
-                        this.data = PrinterEventData(transactionResponse.RRN, it.localizedMessage ?: "Printer Error")
-                        this.status = it.message
-                    }
                 }
-                //MqttHelper.sendPayload(MqttTopics.PRINTING_RECEIPT, printerEvent)
             }.disposeWith(compositeDisposable)
     }
 
@@ -446,7 +431,30 @@ class UtilitiesViewModel : ViewModel() {
     }
 
     fun sendSmS(number: String) {
-        sendSmS(lastTransactionResponse.value!!, number, _smsSent, compositeDisposable)
+        val map = JsonObject().apply {
+            addProperty("from", "NetPlus")
+            addProperty("to", "+234${number.substring(1)}")
+            addProperty("message", lastTransactionResponse.value!!.buildSMSText(remark).toString())
+        }
+        Timber.e("payload: $map")
+        val auth = "Bearer ${Prefs.getString(PREF_APP_TOKEN, "")}"
+        val body: RequestBody = map.toString()
+            .toRequestBody("application/json; charset=utf-8".toMediaTypeOrNull())
+        StormApiClient.getSmsServiceInstance().sendSms(auth, body)
+            .subscribeOn(Schedulers.io())
+            .observeOn(AndroidSchedulers.mainThread())
+            .subscribe { t1, t2 ->
+                t1?.let {
+                    _smsSent.value = Event(true)
+                    Timber.e("Data $it")
+                }
+                t2?.let {
+                    val httpException = it as? HttpException
+                    httpException?.let { _ ->
+                    }
+                    _smsSent.value = Event(false)
+                }
+            }.disposeWith(compositeDisposable)
     }
 
     override fun onCleared() {

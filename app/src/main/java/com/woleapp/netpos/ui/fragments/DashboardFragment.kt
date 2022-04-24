@@ -13,10 +13,11 @@ import android.view.ViewGroup
 import android.widget.Toast
 import androidx.fragment.app.activityViewModels
 import androidx.recyclerview.widget.GridLayoutManager
+import com.danbamitale.epmslib.entities.*
+import com.danbamitale.epmslib.extensions.formatCurrencyAmount
+import com.danbamitale.epmslib.processors.TransactionProcessor
+import com.danbamitale.epmslib.utils.IsoAccountType
 import com.google.android.material.bottomsheet.BottomSheetDialog
-import com.netpluspay.nibssclient.models.*
-import com.netpluspay.nibssclient.service.NibssApiWrapper
-import com.netpluspay.nibssclient.util.formatCurrencyAmount
 import com.pixplicity.easyprefs.library.Prefs
 import com.woleapp.netpos.BuildConfig
 import com.woleapp.netpos.R
@@ -165,10 +166,24 @@ class DashboardFragment : BaseFragment() {
         cardData: CardData,
         accountType: IsoAccountType = IsoAccountType.DEFAULT_UNSPECIFIED
     ) {
-        val checkBalanceParam = CheckBalanceParams(cardData, accountType)
+        if (NetPosTerminalConfig.getKeyHolder() == null) {
+            Toast.makeText(requireContext(), "Terminal not configured", Toast.LENGTH_LONG).show()
+            return
+        }
+
+        val hostConfig = HostConfig(
+            NetPosTerminalConfig.getTerminalId(),
+            NetPosTerminalConfig.connectionData,
+            NetPosTerminalConfig.getKeyHolder()!!,
+            NetPosTerminalConfig.getConfigData()!!
+        )
+        val requestData =
+            TransactionRequestData(TransactionType.BALANCE, 0L, accountType = accountType)
         progressDialog.setMessage("Checking Balance...")
         progressDialog.show()
-        val disposable = NibssApiWrapper.checkBalance(requireContext(), checkBalanceParam)
+        val processor = TransactionProcessor(hostConfig)
+        // processor.
+        val disposable = processor.processTransaction(requireContext(), requestData, cardData)
             .subscribeOn(Schedulers.io())
             .observeOn(AndroidSchedulers.mainThread())
             .subscribe { response, error ->
@@ -206,7 +221,6 @@ class DashboardFragment : BaseFragment() {
                     showMessage(if (it.isApproved) "Approved" else "Declined", messageString)
                 }
             }
-        disposable.disposeWith(compositeDisposable)
     }
 
     private fun showMessage(s: String, messageString: String) {
@@ -294,14 +308,6 @@ class DashboardFragment : BaseFragment() {
         gateWayService.getTransactions(data, GATEWAY_MAP).flatMap {
             it.result = it.result.map { transaction ->
                 transaction.amount = transaction.amount.times(100)
-                val dateFormat =
-                    SimpleDateFormat("dd-MM-yyyy hh:mm:ss", Locale.getDefault())
-                val parsedDate: Date = dateFormat.parse(
-                    transaction.transactionTime.replace("T", " ").replace("Z", "")
-                ) ?: Date()
-                Timber.e(transaction.transactionTime)
-                Timber.e(parsedDate.time.toString())
-                transaction.transactionTimeInMillis = parsedDate.time
                 transaction
             }
             Single.just(it)

@@ -1,6 +1,5 @@
 package com.woleapp.netpos.network
 
-import com.netpluspay.nibssclient.models.TransactionResponse
 import com.woleapp.netpos.model.GateWayTransactionResponse
 import io.reactivex.Single
 import okhttp3.OkHttpClient

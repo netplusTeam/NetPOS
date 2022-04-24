@@ -8,7 +8,7 @@ import android.view.ViewGroup
 import android.widget.Toast
 import androidx.fragment.app.Fragment
 import androidx.recyclerview.widget.GridLayoutManager
-import com.netpluspay.nibssclient.models.TransactionType
+import com.danbamitale.epmslib.entities.TransactionType
 import com.pixplicity.easyprefs.library.Prefs
 import com.woleapp.netpos.BuildConfig
 import com.woleapp.netpos.R
@@ -137,7 +137,7 @@ class TransactionsFragment : BaseFragment() {
         adapter = ServiceAdapter {
             val nextFrag: Fragment? = when (it.id) {
                 0 -> SalesFragment.newInstance()
-                1 -> SalesFragment.newInstance(TransactionType.CASH)
+                1 -> SalesFragment.newInstance(TransactionType.DEPOSIT)
                 2 -> {
                     showPreAuthDialog()
                     null

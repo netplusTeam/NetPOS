@@ -1,7 +1,8 @@
 package com.woleapp.netpos.model
 
+import com.danbamitale.epmslib.entities.TransactionResponse
 import com.google.gson.annotations.SerializedName
-import com.netpluspay.nibssclient.models.TransactionResponse
+
 
 
 data class UtilitiesPayload(

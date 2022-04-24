@@ -7,8 +7,8 @@ import androidx.room.Insert
 import androidx.room.OnConflictStrategy.IGNORE
 import androidx.room.Query
 import androidx.room.Update
-import com.netpluspay.nibssclient.models.TransactionResponse
-import com.netpluspay.nibssclient.models.TransactionType
+import com.danbamitale.epmslib.entities.TransactionResponse
+import com.danbamitale.epmslib.entities.TransactionType
 import io.reactivex.Completable
 import io.reactivex.Single
 

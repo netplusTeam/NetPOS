@@ -176,6 +176,21 @@ class StormApiClient {
                         blueCodeService = it
                     }
             }
+
+        private const val BASE_URL_FOR_LOGGING_TO_BACKEND = "https://device.netpluspay.com/"
+        private var LOGGING_INSTANCE: StormApiService? = null
+        fun getStormApiLoginInstance(): StormApiService = LOGGING_INSTANCE ?: synchronized(this) {
+            LOGGING_INSTANCE ?: Retrofit.Builder()
+                .baseUrl(BASE_URL_FOR_LOGGING_TO_BACKEND)
+                .client(getBaseOkhttpClientBuilder().build())
+                .addCallAdapterFactory(RxJava2CallAdapterFactory.create())
+                .addConverterFactory(GsonConverterFactory.create())
+                .build()
+                .create(StormApiService::class.java)
+                .also {
+                    INSTANCE = it
+                }
+        }
     }
 }
 

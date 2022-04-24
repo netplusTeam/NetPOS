@@ -8,11 +8,11 @@ import android.graphics.BitmapFactory
 import android.graphics.Color
 import android.util.Base64
 import android.util.Log
+import com.danbamitale.epmslib.entities.NibssAID
+import com.danbamitale.epmslib.entities.NibssCA
 import com.google.zxing.BarcodeFormat
 import com.google.zxing.MultiFormatWriter
 import com.google.zxing.common.BitMatrix
-import com.netpluspay.nibssclient.models.NibssAID
-import com.netpluspay.nibssclient.models.NibssCA
 import com.pos.sdk.emvcore.PosEmvAid
 import com.pos.sdk.emvcore.PosEmvCapk
 import com.pos.sdk.utils.PosUtils

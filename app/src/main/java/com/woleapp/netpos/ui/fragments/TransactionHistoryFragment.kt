@@ -10,7 +10,7 @@ import androidx.paging.PagedListAdapter
 import androidx.recyclerview.widget.DividerItemDecoration
 import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
-import com.netpluspay.nibssclient.models.TransactionResponse
+import com.danbamitale.epmslib.entities.TransactionResponse
 import com.woleapp.netpos.R
 import com.woleapp.netpos.adapter.EODAdapter
 import com.woleapp.netpos.adapter.TransactionClickListener

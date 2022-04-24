@@ -12,10 +12,10 @@ import android.view.WindowManager
 import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
 import androidx.fragment.app.viewModels
+import com.danbamitale.epmslib.entities.TransactionType
 import com.google.android.material.snackbar.Snackbar
 import com.google.gson.JsonObject
 import com.netpluspay.netpossdk.NetPosSdk
-import com.netpluspay.nibssclient.models.TransactionType
 import com.woleapp.netpos.R
 import com.woleapp.netpos.database.AppDatabase
 import com.woleapp.netpos.databinding.DialogPrintTypeBinding
@@ -78,7 +78,7 @@ class SalesFragment : BaseFragment() {
                 TransactionType.PURCHASE.name
             ) ?: TransactionType.PURCHASE.name
         )
-        if (transactionType == TransactionType.CASH) {
+        if (transactionType == TransactionType.DEPOSIT) {
             binding.enterName.visibility = View.GONE
         }
         isVend = arguments?.getBoolean("IS_VEND", false) ?: false
@@ -261,7 +261,7 @@ class SalesFragment : BaseFragment() {
             }
         }
         binding.process.setOnClickListener {
-            if (transactionType == TransactionType.CASH)
+            if (transactionType == TransactionType.DEPOSIT)
                 viewModel.beginCashPayment()
             else
                 viewModel.validateField()
