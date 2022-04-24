@@ -188,7 +188,7 @@ class StormApiClient {
                 .build()
                 .create(StormApiService::class.java)
                 .also {
-                    INSTANCE = it
+                    LOGGING_INSTANCE = it
                 }
         }
     }
