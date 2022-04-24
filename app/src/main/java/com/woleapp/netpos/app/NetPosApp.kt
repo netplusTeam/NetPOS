@@ -70,7 +70,7 @@ class NetPosApp : Application() {
                         Prefs.putBoolean("notification_campaign", true)
                     }
                     Timber.e(msg)
-                    Toast.makeText(baseContext, msg, Toast.LENGTH_SHORT).show()
+                    //Toast.makeText(baseContext, msg, Toast.LENGTH_SHORT).show()
                 }
         }
         if (checkBillsPaymentToken().not())

@@ -48,7 +48,7 @@ class NetPosTerminalConfig {
         private var terminalConfigurator: TerminalConfigurator =
             TerminalConfigurator(connectionData)
 
-        fun getTerminalId() = "2101JJ41" ?: ""
+        fun getTerminalId() = terminalId ?: ""
 
         private fun setTerminalId() {
             terminalId = Singletons.getCurrentlyLoggedInUser()?.terminal_id
