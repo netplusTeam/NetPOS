@@ -7,7 +7,6 @@ import android.os.Build
 import com.danbamitale.epmslib.entities.TransactionResponse
 import com.danbamitale.epmslib.entities.responseMessage
 import com.danbamitale.epmslib.extensions.formatCurrencyAmount
-
 import com.netpluspay.netpossdk.NetPosSdk
 import com.netpluspay.netpossdk.printer.PrinterResponse
 import com.netpluspay.netpossdk.printer.ReceiptBuilder
@@ -27,7 +26,6 @@ import timber.log.Timber
 import java.lang.StringBuilder
 import java.text.SimpleDateFormat
 import java.util.*
-
 
 fun List<TransactionResponse>.printEndOfDay(
     context: Context,
@@ -162,7 +160,7 @@ fun List<TransactionResponse>.printEndOfDay(
             Timber.e("Printing started")
         }
     }
-    //printerManager.addPrintLine(listOfTextPrintLine)
+    // printerManager.addPrintLine(listOfTextPrintLine)
     return Single.create {
         emitter = it
         printerManager.beginPrint(printerListener)
@@ -233,11 +231,11 @@ fun TransactionResponse.builder() = StringBuilder().apply {
         .append("\n")
     append("RESPONSE CODE: ").append(responseCode).append("\n").append(
         " : ${
-            try {
-                responseMessage
-            } catch (ex: Exception) {
-                "Error"
-            }
+        try {
+            responseMessage
+        } catch (ex: Exception) {
+            "Error"
+        }
         }"
     )
 }
@@ -247,11 +245,11 @@ fun TransactionResponse.buildSMSText(s: String? = null): StringBuilder = StringB
     append("Response Code: $responseCode\n")
     append(
         "Message: ${
-            try {
-                responseMessage
-            } catch (e: java.lang.Exception) {
-                ""
-            }
+        try {
+            responseMessage
+        } catch (e: java.lang.Exception) {
+            ""
+        }
         }\n"
     )
     append("Amount: ${amount.div(100).formatCurrencyAmount("\u20A6")}\n")
@@ -274,11 +272,13 @@ fun TransactionResponse.buildReceipt(
     remark: String? = null,
     isReprint: Boolean = false
 ) =
-    ReceiptBuilder(NetPosSdk.getPrinterManager(context).apply {
-        cleanCache()
-        setPrintGray(2000)
-        setLineSpace(1)
-    }).also { builder ->
+    ReceiptBuilder(
+        NetPosSdk.getPrinterManager(context).apply {
+            cleanCache()
+            setPrintGray(2000)
+            setLineSpace(1)
+        }
+    ).also { builder ->
         builder.appendLogo(
             BitmapFactory.decodeResource(
                 context.resources,
@@ -286,6 +286,7 @@ fun TransactionResponse.buildReceipt(
             )
         )
         builder.appendAID(AID)
+        builder.appendMerchantName(Singletons.getCurrentlyLoggedInUser()!!.business_name)
 //        builder.appendAddress(Singletons.getCurrentlyLoggedInUser()!!.business_name)
         builder.appendAmount(
             amount.div(100).formatCurrencyAmount("\u20A6")
@@ -307,11 +308,11 @@ fun TransactionResponse.buildReceipt(
         builder.appendTransactionStatus(if (responseCode == "00") "Approved" else "Declined")
         builder.appendResponseCode(
             "${responseCode}\nMessage: ${
-                try {
-                    responseMessage
-                } catch (ex: Exception) {
-                    "Error"
-                }
+            try {
+                responseMessage
+            } catch (ex: Exception) {
+                "Error"
+            }
             }"
         )
         builder.isReprint = isReprint
@@ -329,11 +330,13 @@ fun NipNotification.print(context: Context): Single<PrinterResponse> {
 }
 
 fun NipNotification.buildNipReceipt(context: Context): ReceiptBuilder =
-    ReceiptBuilder(NetPosSdk.getPrinterManager(context).apply {
-        cleanCache()
-        setPrintGray(2000)
-        setLineSpace(1)
-    }).apply {
+    ReceiptBuilder(
+        NetPosSdk.getPrinterManager(context).apply {
+            cleanCache()
+            setPrintGray(2000)
+            setLineSpace(1)
+        }
+    ).apply {
         appendLogo(BitmapFactory.decodeResource(context.resources, R.drawable.ic_print_logo))
         appendTextEntityFontSixteenCenter("BANK TRANSFER")
         appendTextEntity("\nBeneficiary Account Number: $beneficiaryAccountNumber")
@@ -344,7 +347,6 @@ fun NipNotification.buildNipReceipt(context: Context): ReceiptBuilder =
         )
         appendTextEntity("Date: $createdAt")
     }
-
 
 fun List<NipNotification>.printAllNotifications(context: Context): Observable<PrinterResponse> {
     var emitter: ObservableEmitter<PrinterResponse>? = null

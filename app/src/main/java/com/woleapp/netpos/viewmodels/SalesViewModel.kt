@@ -18,7 +18,6 @@ import com.google.gson.JsonObject
 import com.netpluspay.netpossdk.printer.PrinterResponse
 import com.pixplicity.easyprefs.library.Prefs
 import com.woleapp.netpos.BuildConfig
-import com.woleapp.netpos.database.AppDatabase
 import com.woleapp.netpos.database.dao.TransactionResponseDao
 import com.woleapp.netpos.model.* // ktlint-disable no-wildcard-imports
 import com.woleapp.netpos.network.NetPOSCashService
@@ -46,7 +45,6 @@ import java.io.PrintWriter
 import java.net.InetSocketAddress
 import java.net.Socket
 
-
 class SalesViewModelProvider(private val transactionResponseDao: TransactionResponseDao) :
     ViewModelProvider.Factory {
     @Suppress("UNCHECKED_CAST")
@@ -55,7 +53,6 @@ class SalesViewModelProvider(private val transactionResponseDao: TransactionResp
             return SalesViewModel(transactionResponseDao) as T
         throw IllegalArgumentException("Cannot provide viewmodel")
     }
-
 }
 
 class SalesViewModel(private val transactionResponseDao: TransactionResponseDao) : ViewModel() {
@@ -125,11 +122,11 @@ class SalesViewModel(private val transactionResponseDao: TransactionResponseDao)
 
     fun validateField() {
         amountDbl = (
-                amount.value!!.toDoubleOrNull() ?: kotlin.run {
-                    _message.value = Event("Enter a valid amount")
-                    return
-                }
-                ) * 100
+            amount.value!!.toDoubleOrNull() ?: kotlin.run {
+                _message.value = Event("Enter a valid amount")
+                return
+            }
+            ) * 100
         if (BuildConfig.FLAVOR == "konga" && (remark.value.isNullOrEmpty() || remark.value!!.length < 10)) {
             _message.value = Event("Remark too short")
             return
@@ -159,7 +156,6 @@ class SalesViewModel(private val transactionResponseDao: TransactionResponseDao)
     ): Single<LogToBackendResponse> {
         val dataToLog = DataToLogAfterConnectingToNibss(status, transactionResponse, rrn)
         return stormApiService!!.updateLogAfterConnectingToNibss(rrn, dataToLog)
-
     }
 
     fun makePayment(context: Context, transactionType: TransactionType = TransactionType.PURCHASE) {
@@ -321,6 +317,7 @@ class SalesViewModel(private val transactionResponseDao: TransactionResponseDao)
             this.cardExpiry = ""
             this.cardHolder = customerName.value ?: ""
         }
+        Log.d("MNAME2", Singletons.getCurrentlyLoggedInUser()!!.business_name ?: "Null")
 
         if (Build.MODEL.equals("Pro", true) || Build.MODEL.equals("P3", true)) {
             when (Prefs.getString(PREF_PRINTER_SETTINGS, PREF_VALUE_PRINT_CUSTOMER_COPY_ONLY)) {
@@ -440,7 +437,6 @@ class SalesViewModel(private val transactionResponseDao: TransactionResponseDao)
                 t2?.let {
                     val httpException = it as? HttpException
                     httpException?.let { e ->
-
                     }
                     _smsSent.value = Event(false)
                     _toastMessage.value = Event("Error: ${it.localizedMessage}")
@@ -484,11 +480,11 @@ class SalesViewModel(private val transactionResponseDao: TransactionResponseDao)
 
     fun beginCashPayment() {
         (
-                amount.value!!.toDoubleOrNull() ?: kotlin.run {
-                    _message.value = Event("Enter a valid amount")
-                    return
-                }
-                )
+            amount.value!!.toDoubleOrNull() ?: kotlin.run {
+                _message.value = Event("Enter a valid amount")
+                return
+            }
+            )
         val reqBody = JsonObject().apply {
             addProperty("amount", amount.value!!.toDouble())
         }
