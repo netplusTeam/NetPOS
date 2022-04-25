@@ -13,7 +13,7 @@ import android.view.ViewGroup
 import android.widget.Toast
 import androidx.fragment.app.activityViewModels
 import androidx.recyclerview.widget.GridLayoutManager
-import com.danbamitale.epmslib.entities.*
+import com.danbamitale.epmslib.entities.* // ktlint-disable no-wildcard-imports
 import com.danbamitale.epmslib.extensions.formatCurrencyAmount
 import com.danbamitale.epmslib.processors.TransactionProcessor
 import com.danbamitale.epmslib.utils.IsoAccountType
@@ -25,10 +25,10 @@ import com.woleapp.netpos.adapter.ServiceAdapter
 import com.woleapp.netpos.database.AppDatabase
 import com.woleapp.netpos.databinding.FragmentDashboardBinding
 import com.woleapp.netpos.databinding.LayoutPrintEndOfDayBinding
-import com.woleapp.netpos.model.*
+import com.woleapp.netpos.model.* // ktlint-disable no-wildcard-imports
 import com.woleapp.netpos.network.NetPOSGatewayApi
 import com.woleapp.netpos.nibss.NetPosTerminalConfig
-import com.woleapp.netpos.util.*
+import com.woleapp.netpos.util.* // ktlint-disable no-wildcard-imports
 import com.woleapp.netpos.viewmodels.NetPosViewModelFactories
 import com.woleapp.netpos.viewmodels.TransactionsViewModel
 import io.reactivex.Single
@@ -39,10 +39,7 @@ import timber.log.Timber
 import java.sql.Timestamp
 import java.text.SimpleDateFormat
 import java.time.Instant
-import java.util.*
-import kotlin.collections.ArrayList
-import kotlin.collections.HashMap
-
+import java.util.* // ktlint-disable no-wildcard-imports
 
 class DashboardFragment : BaseFragment() {
 
@@ -86,13 +83,13 @@ class DashboardFragment : BaseFragment() {
                     sendPayload()
                 }
             }
-            //addFragmentWithoutRemove(nextFrag)
+            // addFragmentWithoutRemove(nextFrag)
         }
         val listOfServices = arrayListOf<Service>(
             Service(0, "Transaction", R.drawable.ic_trans),
             Service(1, "Balance Inquiry", R.drawable.ic_write),
             Service(2, "Bank Transfer", R.drawable.ic_lending),
-            //add(Service(3, "Pay Bills", R.drawable.ic_bill))
+            // add(Service(3, "Pay Bills", R.drawable.ic_bill))
             Service(4, "View End Of Day Transactions", R.drawable.ic_print)
         )
         adapter.submitList(listOfServices)
@@ -121,7 +118,7 @@ class DashboardFragment : BaseFragment() {
                     sendPayload()
                 }
             }
-            //addFragmentWithoutRemove(nextFrag)
+            // addFragmentWithoutRemove(nextFrag)
         }
         val listOfServices = ArrayList<Service>()
             .apply {
@@ -211,7 +208,7 @@ class DashboardFragment : BaseFragment() {
                     val messageString = if (it.isApproved) {
                         "Account Balance:\n " + it.accountBalances.joinToString("\n") { accountBalance ->
                             "${accountBalance.accountType}, ${
-                                accountBalance.amount.div(100).formatCurrencyAmount()
+                            accountBalance.amount.div(100).formatCurrencyAmount()
                             }"
                         }
                     } else {
@@ -267,7 +264,7 @@ class DashboardFragment : BaseFragment() {
                     }, { err ->
                         Toast.makeText(requireContext(), err.localizedMessage, Toast.LENGTH_LONG)
                             .show()
-                        //Timber.e(err.localizedMessage)
+                        // Timber.e(err.localizedMessage)
                     }).disposeWith(CompositeDisposable())
             }
         }
@@ -281,13 +278,12 @@ class DashboardFragment : BaseFragment() {
         endOfDay.view.setOnClickListener {
             transactionViewModel.setEndOfDayList(transactions)
             bottomSheet.dismiss()
-            addFragmentWithoutRemove(TransactionHistoryFragment.newInstance(HISTORY_ACTION_EOD))
+            addFragmentWithoutRemove(TransactionHistoryFragment.newInstance(HISTORY_ACTION_REPRINT))
         }
         endOfDay.closeButton.setOnClickListener {
             bottomSheet.dismiss()
         }
     }
-
 
     private fun getEndOfDayTransactions(timestamp: Long? = null) {
         endOfDayProgressDialog.show()
@@ -367,7 +363,6 @@ class DashboardFragment : BaseFragment() {
                 )
             }
 
-
     private fun showCalendarDialog() {
         val calendar = Calendar.getInstance()
         DatePickerDialog(
@@ -384,7 +379,7 @@ class DashboardFragment : BaseFragment() {
     }
 
     private fun sendPayload() {
-        //val user = Singletons.gson.fromJson(Prefs.getString(PREF_USER, ""), User::class.java)
+        // val user = Singletons.gson.fromJson(Prefs.getString(PREF_USER, ""), User::class.java)
         val event = MqttEvent<AuthenticationEventData>()
         val authEventData =
             AuthenticationEventData(event.business_name!!, event.storm_id!!, event.deviceSerial!!)
@@ -396,8 +391,8 @@ class DashboardFragment : BaseFragment() {
             this.geo = "lat:51.507351-long:-0.127758"
             this.data = authEventData
         }
-        //MqttHelper.sendPayload(MqttTopics.AUTHENTICATION, event)
-        //Timber.e(Singletons.gson.toJson(event))
+        // MqttHelper.sendPayload(MqttTopics.AUTHENTICATION, event)
+        // Timber.e(Singletons.gson.toJson(event))
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {

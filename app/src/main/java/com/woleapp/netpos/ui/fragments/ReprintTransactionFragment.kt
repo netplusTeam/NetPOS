@@ -25,7 +25,7 @@ class ReprintTransactionFragment : BaseFragment() {
         })
             .apply {
                 appendAID("sample aid")
-                appendAddress("Oluwatayo Adegboye")
+//                appendAddress("Oluwatayo Adegboye")
                 appendAmount("5000")
                 appendAppName("NetPOS")
                 appendAppVersion("1.5")
