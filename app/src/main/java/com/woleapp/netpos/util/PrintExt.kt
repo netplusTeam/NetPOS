@@ -23,9 +23,8 @@ import io.reactivex.ObservableEmitter
 import io.reactivex.Single
 import io.reactivex.SingleEmitter
 import timber.log.Timber
-import java.lang.StringBuilder
 import java.text.SimpleDateFormat
-import java.util.*
+import java.util.* // ktlint-disable no-wildcard-imports
 
 fun List<TransactionResponse>.printEndOfDay(
     context: Context,
@@ -63,7 +62,12 @@ fun List<TransactionResponse>.printEndOfDay(
 
     textPrintLine.apply {
         isBold = false
-        content = "EOD FOR: ${SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(this@printEndOfDay.first().transactionTimeInMillis)}"
+        content = "EOD FOR: ${
+        SimpleDateFormat(
+            "yyyy-MM-dd",
+            Locale.getDefault()
+        ).format(this@printEndOfDay.first().transactionTimeInMillis)
+        }"
     }
     printerManager.appendTextEntity(textPrintLine)
 
@@ -219,7 +223,12 @@ fun TransactionResponse.print(
     isMerchantCopy: Boolean = false,
     isReprint: Boolean = false
 ) =
-    buildReceipt(remark = remark, context = context, isMerchantCopy = isMerchantCopy, isReprint = isReprint).print()
+    buildReceipt(
+        remark = remark,
+        context = context,
+        isMerchantCopy = isMerchantCopy,
+        isReprint = isReprint
+    ).print()
 
 fun TransactionResponse.builder() = StringBuilder().apply {
     append("Merchant Name: ").append(Singletons.getCurrentlyLoggedInUser()!!.business_name)
