@@ -34,9 +34,7 @@ class TransactionHistoryFragment : BaseFragment() {
                     putString(HISTORY_ACTION, action)
                 }
             }
-
     }
-
 
     private lateinit var binding: FragmentTransactionHistoryBinding
     private val viewModel by activityViewModels<TransactionsViewModel> {
@@ -101,7 +99,7 @@ class TransactionHistoryFragment : BaseFragment() {
         if (action != HISTORY_ACTION_EOD)
             viewModel.pagedTransaction.observe(viewLifecycleOwner) {
                 (adapter as PagedListAdapter<TransactionResponse, *>).submitList(it)
-                //adapter.notifyDataSetChanged()
+                // adapter.notifyDataSetChanged()
             }
         else {
             val eodList = viewModel.getEodList()

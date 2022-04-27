@@ -296,7 +296,6 @@ fun TransactionResponse.buildReceipt(
         )
         builder.appendAID(AID)
         builder.appendMerchantName(Singletons.getCurrentlyLoggedInUser()!!.business_name)
-//        builder.appendAddress(Singletons.getCurrentlyLoggedInUser()!!.business_name)
         builder.appendAmount(
             amount.div(100).formatCurrencyAmount("\u20A6")
         )

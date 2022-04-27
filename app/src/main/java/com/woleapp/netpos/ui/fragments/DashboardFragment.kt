@@ -240,6 +240,11 @@ class DashboardFragment : BaseFragment() {
         endOfDay.apply {
             approvedCount.text = approvedList.size.toString()
             declinedCount.text = declinedList.size.toString()
+            totalTransactionsAmount.text =
+                getString(
+                    R.string.total_transaction_amount,
+                    approvedList.sumOf { it.amount }.div(100).formatCurrencyAmount()
+                )
             totalTransactions.text =
                 getString(R.string.total_transaction_count, transactions.size.toString())
             print.setOnClickListener {

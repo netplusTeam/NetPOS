@@ -31,8 +31,8 @@ android {
         applicationId "com.woleapp.netpos"
         minSdkVersion 21
         targetSdkVersion 30
-        versionCode 106
-        versionName "1.1.106"
+        versionCode 108
+        versionName "1.1.108"
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         def environmentPath
         if (appModeProd == "true")
