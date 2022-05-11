@@ -20,20 +20,16 @@ import androidx.databinding.DataBindingUtil
 import androidx.fragment.app.Fragment
 import com.pixplicity.easyprefs.library.Prefs
 import com.woleapp.netpos.R
-import com.woleapp.netpos.database.AppDatabase
 import com.woleapp.netpos.databinding.ActivityMainBinding
 import com.woleapp.netpos.model.User
 import com.woleapp.netpos.mqtt.MqttHelper
-import com.woleapp.netpos.network.StormApiClient
 import com.woleapp.netpos.nibss.CONFIGURATION_STATUS
 import com.woleapp.netpos.nibss.NetPosTerminalConfig
 import com.woleapp.netpos.receivers.BatteryReceiver
 import com.woleapp.netpos.ui.fragments.DashboardFragment
-import com.woleapp.netpos.util.*
+import com.woleapp.netpos.util.* // ktlint-disable no-wildcard-imports
 import com.woleapp.netpos.util.Singletons.gson
-import io.reactivex.android.schedulers.AndroidSchedulers
 import io.reactivex.disposables.CompositeDisposable
-import io.reactivex.schedulers.Schedulers
 import pub.devrel.easypermissions.EasyPermissions
 import timber.log.Timber
 
@@ -45,7 +41,7 @@ class MainActivity : AppCompatActivity(), EasyPermissions.PermissionCallbacks {
     private lateinit var binding: ActivityMainBinding
     private var compositeDisposable: CompositeDisposable = CompositeDisposable()
 
-    //private lateinit var client: MqttAndroidClient
+    // private lateinit var client: MqttAndroidClient
     private val receiver = object : BroadcastReceiver() {
         override fun onReceive(context: Context?, intent: Intent?) {
             intent?.let {
@@ -62,7 +58,6 @@ class MainActivity : AppCompatActivity(), EasyPermissions.PermissionCallbacks {
                 }
             }
         }
-
     }
     private val iFilter = IntentFilter().apply {
         addAction(Intent.ACTION_POWER_CONNECTED)
@@ -81,16 +76,17 @@ class MainActivity : AppCompatActivity(), EasyPermissions.PermissionCallbacks {
 
     override fun onStop() {
         super.onStop()
-        //LocalBroadcastManager.getInstance(this).unregisterReceiver(receiver)
+        // LocalBroadcastManager.getInstance(this).unregisterReceiver(receiver)
         unregisterReceiver(batteryReceiver)
     }
 
     override fun onStart() {
         super.onStart()
         registerReceiver(batteryReceiver, iFilter)
-        //LocalBroadcastManager.getInstance(this).registerReceiver(receiver, IntentFilter(CONFIGURATION_ACTION))
-        when (//NetPosTerminalConfig.isConfigurationInProcess -> showProgressDialog()
-            NetPosTerminalConfig.configurationStatus) {
+        // LocalBroadcastManager.getInstance(this).registerReceiver(receiver, IntentFilter(CONFIGURATION_ACTION))
+        when ( // NetPosTerminalConfig.isConfigurationInProcess -> showProgressDialog()
+            NetPosTerminalConfig.configurationStatus
+        ) {
             -1 -> NetPosTerminalConfig.init(
                 applicationContext
             )
@@ -104,24 +100,18 @@ class MainActivity : AppCompatActivity(), EasyPermissions.PermissionCallbacks {
 //                }
             }
         }
-        checkTokenExpiry()
+//        checkTokenExpiry()
     }
 
     private fun logout() {
-        val subscribe = AppDatabase.getDatabaseInstance(this)
-            .transactionResponseDao()
-            .nukeAllTransactions().subscribeOn(Schedulers.io())
-            .observeOn(AndroidSchedulers.mainThread())
-            .subscribe {
-                NetPosTerminalConfig.disposeDisposables()
-                Prefs.clear()
-                MqttHelper.disconnect()
-                val intent = Intent(this, AuthenticationActivity::class.java)
-                intent.flags =
-                    Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
-                startActivity(intent)
-                finish()
-            }
+        NetPosTerminalConfig.disposeDisposables()
+        Prefs.clear()
+        MqttHelper.disconnect()
+        val intent = Intent(this, AuthenticationActivity::class.java)
+        intent.flags =
+            Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+        startActivity(intent)
+        finish()
     }
 
     private fun checkTokenExpiry() {
@@ -142,11 +132,10 @@ class MainActivity : AppCompatActivity(), EasyPermissions.PermissionCallbacks {
         progressDialog?.show()
     }
 
-
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         binding = DataBindingUtil.setContentView(this, R.layout.activity_main)
-        //loadCerts()
+        // loadCerts()
         if (!EasyPermissions.hasPermissions(
                 applicationContext,
                 Manifest.permission.ACCESS_FINE_LOCATION,
@@ -205,7 +194,6 @@ class MainActivity : AppCompatActivity(), EasyPermissions.PermissionCallbacks {
     }
 
     override fun onPermissionsDenied(requestCode: Int, perms: MutableList<String>) {
-
     }
 
     @SuppressLint("MissingPermission")
@@ -216,7 +204,7 @@ class MainActivity : AppCompatActivity(), EasyPermissions.PermissionCallbacks {
                 // Called when a new location is found by the network location provider.
                 location.let {
                     Prefs.putString(PREF_LAST_LOCATION, "lat:${it.latitude} long:${it.longitude}")
-                    //Timber.e("lat:${it.latitude} long:${it.longitude}")
+                    // Timber.e("lat:${it.latitude} long:${it.longitude}")
                 }
             }
 
@@ -238,7 +226,7 @@ class MainActivity : AppCompatActivity(), EasyPermissions.PermissionCallbacks {
             0f,
             locationListener
         )
-        //locationManager.getLastKnownLocation(LocationManager.NETWORK_PROVIDER)
+        // locationManager.getLastKnownLocation(LocationManager.NETWORK_PROVIDER)
         locationManager.getLastKnownLocation(LocationManager.GPS_PROVIDER)
     }
 
@@ -253,7 +241,6 @@ class MainActivity : AppCompatActivity(), EasyPermissions.PermissionCallbacks {
         } catch (e: Exception) {
             e.printStackTrace()
         }
-
     }
 
     override fun onDestroy() {

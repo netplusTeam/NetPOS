@@ -10,6 +10,7 @@
         <entry key="app/src/main/res/drawable/ic_trans.xml" value="0.2235" />
         <entry key="app/src/main/res/drawable/splash_background.xml" value="0.208" />
         <entry key="app/src/main/res/layout/activity_authentication.xml" value="0.215625" />
+        <entry key="app/src/main/res/layout/activity_main.xml" value="0.25625" />
         <entry key="app/src/main/res/layout/dashboard_header.xml" value="0.215625" />
         <entry key="app/src/main/res/layout/dialog_fragment_mcc.xml" value="0.3651041666666667" />
         <entry key="app/src/main/res/layout/dialog_fragment_zenith_mcc.xml" value="0.3594871794871795" />

@@ -15,8 +15,6 @@ import com.woleapp.netpos.databinding.FragmentLoginBinding
 import com.woleapp.netpos.model.AuthenticationEventData
 import com.woleapp.netpos.model.MqttEvent
 import com.woleapp.netpos.model.MqttEvents
-import com.woleapp.netpos.model.MqttTopics
-import com.woleapp.netpos.mqtt.MqttHelper
 import com.woleapp.netpos.network.StormApiClient
 import com.woleapp.netpos.nibss.NetPosTerminalConfig
 import com.woleapp.netpos.ui.activities.MainActivity
