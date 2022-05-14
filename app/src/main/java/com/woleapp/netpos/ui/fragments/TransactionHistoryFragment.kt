@@ -1,6 +1,7 @@
 package com.woleapp.netpos.ui.fragments
 
 import android.os.Bundle
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -98,6 +99,15 @@ class TransactionHistoryFragment : BaseFragment() {
 
         if (action != HISTORY_ACTION_EOD)
             viewModel.pagedTransaction.observe(viewLifecycleOwner) {
+                println(it.size)
+                it.forEach { trs ->
+                    println("PGD_LIST " + trs.amount)
+                    println("PGD_LIST " + trs.localTime_12)
+                    println("PGD_LIST " + trs.localDate_13)
+                    println("PGD_LIST " + trs.transmissionDateTime)
+                    println("PGD_LIST " + trs.transactionTimeInMillis)
+                    println("====================================\n")
+                }
                 (adapter as PagedListAdapter<TransactionResponse, *>).submitList(it)
                 // adapter.notifyDataSetChanged()
             }

@@ -48,5 +48,4 @@ interface TransactionResponseDao {
 
     @Query("DELETE FROM transactionresponse")
     fun nukeAllTransactions(): Completable
-
 }

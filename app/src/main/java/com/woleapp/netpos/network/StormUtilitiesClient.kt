@@ -1,7 +1,6 @@
 package com.woleapp.netpos.network
 
 import android.content.Context
-import android.util.Log
 import com.pixplicity.easyprefs.library.Prefs
 import com.woleapp.netpos.BuildConfig
 import com.woleapp.netpos.util.PREF_BILLS_TOKEN
@@ -18,8 +17,8 @@ import java.util.concurrent.TimeUnit
 
 object StormUtilitiesApiClient {
 
-    //private const val BASE_URL_TEST = "http://storm-utilities.test.netpluspay.com/"
-    //private const val BASE_URL_LIVE = "https://storm-utilities.netpluspay.com/
+    // private const val BASE_URL_TEST = "http://storm-utilities.test.netpluspay.com/"
+    // private const val BASE_URL_LIVE = "https://storm-utilities.netpluspay.com/
     private const val BASE_URL = BuildConfig.BASE_URL_STORM_UTILITIES
 
     @Volatile
@@ -39,7 +38,6 @@ object StormUtilitiesApiClient {
         }
     }
 }
-
 
 fun getBillsOkHttpClient(context: Context): OkHttpClient = OkHttpClient.Builder()
     .callTimeout(60, TimeUnit.SECONDS)
@@ -62,16 +60,18 @@ class BillsTokenInterceptor(val context: Context) : Interceptor {
             val contentLength = reqBody.contentLength()
             Timber.e("$contentLength")
         }
-        val response = chain.proceed(request.newBuilder().run {
-            token?.let {
-                Timber.e("Token: Bearer $it")
-                addHeader(
-                    "Authorization",
-                    "Bearer $it"
-                )
+        val response = chain.proceed(
+            request.newBuilder().run {
+                token?.let {
+                    Timber.e("Token: Bearer $it")
+                    addHeader(
+                        "Authorization",
+                        "Bearer $it"
+                    )
+                }
+                build()
             }
-            build()
-        })
+        )
         val body = response.body
         val bodyString = body?.string()
         Timber.e("response %s", bodyString!!)

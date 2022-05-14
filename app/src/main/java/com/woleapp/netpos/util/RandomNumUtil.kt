@@ -8,6 +8,14 @@ import java.text.SimpleDateFormat
 import java.util.* // ktlint-disable no-wildcard-imports
 
 object RandomNumUtil {
+
+    @SuppressLint("SimpleDateFormat")
+    fun getDateInMillis(dateTime: String): Long {
+        val format = SimpleDateFormat("dd-MM-yyyy hh:mm:ss")
+        val date = format.parse(dateTime)
+        return date!!.time
+    }
+
     fun generateRandomRrn(length: Int): String {
         val random = Random()
         var digits = ""
@@ -38,12 +46,12 @@ object RandomNumUtil {
 
     fun mapTransactionResponse(transResp: TransactionResponse) =
         "CardHolder: ${transResp.cardHolder} " +
-                "\nCardType: ${transResp.cardLabel}" +
-                "\nAmount: ${transResp.amount} " +
-                "\nRRN: ${transResp.RRN} \n" +
-                "ResponseCode: ${transResp.responseCode} \n" +
-                "TransmissionDateTime: ${transResp.transmissionDateTime} \n" +
-                "Time in Millis: ${transResp.transactionTimeInMillis}"
+            "\nCardType: ${transResp.cardLabel}" +
+            "\nAmount: ${transResp.amount} " +
+            "\nRRN: ${transResp.RRN} \n" +
+            "ResponseCode: ${transResp.responseCode} \n" +
+            "TransmissionDateTime: ${transResp.transmissionDateTime} \n" +
+            "Time in Millis: ${transResp.transactionTimeInMillis}"
 
     @SuppressLint("SimpleDateFormat")
     fun getDate(milliSeconds: Long): String {

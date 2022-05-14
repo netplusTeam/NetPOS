@@ -1,9 +1,6 @@
 package com.woleapp.netpos.model
 
-import com.danbamitale.epmslib.entities.TransactionResponse
 import com.google.gson.annotations.SerializedName
-
-
 
 data class UtilitiesPayload(
     var destinationAccount: String,
@@ -69,7 +66,7 @@ data class Vend(val amount: Double)
 data class AuthError(val success: Boolean, val message: String?)
 
 data class GateWayTransactionResponse(
-    var result: List<TransactionResponse>,
+    var result: List<TransactionResponseModelFromGateWay>,
     val count: Int,
     val page: Int,
     val total: Int

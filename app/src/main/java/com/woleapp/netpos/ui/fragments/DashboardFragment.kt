@@ -7,6 +7,7 @@ import android.app.DatePickerDialog
 import android.app.ProgressDialog
 import android.content.DialogInterface
 import android.os.Bundle
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -29,6 +30,8 @@ import com.woleapp.netpos.model.* // ktlint-disable no-wildcard-imports
 import com.woleapp.netpos.network.NetPOSGatewayApi
 import com.woleapp.netpos.nibss.NetPosTerminalConfig
 import com.woleapp.netpos.util.* // ktlint-disable no-wildcard-imports
+import com.woleapp.netpos.util.ModelMapper.mapEntityToTransFromGateWay
+import com.woleapp.netpos.util.ModelMapper.mapTransFromGateWayToEntity
 import com.woleapp.netpos.viewmodels.NetPosViewModelFactories
 import com.woleapp.netpos.viewmodels.TransactionsViewModel
 import io.reactivex.Single
@@ -148,7 +151,7 @@ class DashboardFragment : BaseFragment() {
         ).observe(viewLifecycleOwner) { event ->
             event.getContentIfNotHandled()?.let {
                 it.error?.let { error ->
-                    Timber.e(error)
+                    Timber.e("DISCOVER_FIRST"+error)
                     Toast.makeText(requireContext(), error.localizedMessage, Toast.LENGTH_SHORT)
                         .show()
                 }
@@ -265,7 +268,7 @@ class DashboardFragment : BaseFragment() {
                     .subscribeOn(Schedulers.io())
                     .observeOn(AndroidSchedulers.mainThread())
                     .subscribe({ printResp ->
-                        Timber.e(printResp.toString())
+                        Timber.e("DISCOVER1"+printResp.toString())
                     }, { err ->
                         Toast.makeText(requireContext(), err.localizedMessage, Toast.LENGTH_LONG)
                             .show()
@@ -294,11 +297,11 @@ class DashboardFragment : BaseFragment() {
         endOfDayProgressDialog.show()
         val be: Long = getBeginningOfDay(timestamp)
         val be1: Long = Timestamp.from(Instant.ofEpochMilli(be).plusSeconds(86400)).time
-        Timber.e(be.toString())
-        Timber.e(be1.toString())
-        val df = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
-        Timber.e(df.format(be))
-        Timber.e(df.format(be1))
+        Timber.e("DISCOVER2"+be.toString())
+        Timber.e("DISCOVER3"+be1.toString())
+        val df = SimpleDateFormat("dd:MM:yyyy hh:mm:ss", Locale.getDefault())
+        Timber.e("DISCOVER4"+df.format(be))
+        Timber.e("DISCOVER5"+df.format(be1))
 
         val data = HashMap<String, String>().apply {
             put("terminalId", NetPosTerminalConfig.getTerminalId())
@@ -307,6 +310,9 @@ class DashboardFragment : BaseFragment() {
             put("to", df.format(be1))
         }
         gateWayService.getTransactions(data, GATEWAY_MAP).flatMap {
+
+            println("====CHECKING_PAYLOAD" + it.result.toString())
+            Log.d("====CHECKING_PAYLOAD", it.result.toString())
             it.result = it.result.map { transaction ->
                 transaction.amount = transaction.amount.times(100)
                 transaction
@@ -328,11 +334,11 @@ class DashboardFragment : BaseFragment() {
             }
             .subscribe { t1, t2 ->
                 t1?.let {
-                    Timber.e(it.count.toString())
-                    showEndOfDayBottomSheetDialog(it.result)
+                    Timber.e("DISCOVER6"+it.count.toString())
+                    showEndOfDayBottomSheetDialog(mapEntityToTransFromGateWay(it.result))
                 }
                 t2?.let {
-                    Timber.e(it)
+                    Timber.e("DISCOVER7"+it)
                     Toast.makeText(
                         requireContext(),
                         "An error occurred while fetching end of day, try again",
@@ -360,7 +366,7 @@ class DashboardFragment : BaseFragment() {
             .flatMap { transactionList ->
                 Single.just(
                     GateWayTransactionResponse(
-                        transactionList,
+                        mapTransFromGateWayToEntity(transactionList),
                         transactionList.size,
                         1,
                         1000

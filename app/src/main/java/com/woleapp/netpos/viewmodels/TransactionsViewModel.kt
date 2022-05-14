@@ -13,13 +13,11 @@ import com.danbamitale.epmslib.entities.TransactionResponse
 import com.danbamitale.epmslib.processors.TransactionProcessor
 import com.danbamitale.epmslib.utils.IsoAccountType
 import com.google.gson.JsonObject
-import com.netpluspay.netpossdk.NetPosSdk
 import com.netpluspay.netpossdk.printer.PrinterResponse
 import com.pixplicity.easyprefs.library.Prefs
 import com.woleapp.netpos.database.AppDatabase
 import com.woleapp.netpos.database.TransactionBoundaryCallBack
 import com.woleapp.netpos.model.* // ktlint-disable no-wildcard-imports
-import com.woleapp.netpos.mqtt.MqttHelper
 import com.woleapp.netpos.network.NetPOSGatewayApi
 import com.woleapp.netpos.network.StormApiClient
 import com.woleapp.netpos.nibss.NetPosTerminalConfig
@@ -31,7 +29,6 @@ import io.reactivex.schedulers.Schedulers
 import okhttp3.MediaType.Companion.toMediaTypeOrNull
 import okhttp3.RequestBody
 import okhttp3.RequestBody.Companion.toRequestBody
-import retrofit2.HttpException
 import timber.log.Timber
 
 class TransactionsViewModel(private val appDatabase: AppDatabase) : ViewModel() {
@@ -114,8 +111,6 @@ class TransactionsViewModel(private val appDatabase: AppDatabase) : ViewModel() 
     }
 
     fun setSelectedTransaction(transactionResponse: TransactionResponse) {
-//        Timber.e(gson.toJson(transactionResponse))
-//        Timber.e(gson.toJson(transactionResponse.toNibssResponse()))
         lastTransactionResponse.value = transactionResponse
     }
 
@@ -469,6 +464,14 @@ class TransactionsViewModel(private val appDatabase: AppDatabase) : ViewModel() 
 
     fun setEndOfDayList(eodList: List<TransactionResponse>) {
         this.endOfDayList = eodList
+        Log.d("SIZESIZE", eodList.size.toString())
+        eodList.forEach {
+            println("ANOTHER_V" + it.localDate_13)
+            println("ANOTHER_V" + it.transmissionDateTime)
+            println("ANOTHER_V" + it.transactionTimeInMillis.toString())
+            println("ANOTHER_V" + it.localTime_12)
+            print("============================================\n")
+        }
     }
 
     fun getEodList() = endOfDayList

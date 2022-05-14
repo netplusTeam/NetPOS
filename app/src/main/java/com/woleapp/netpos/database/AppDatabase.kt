@@ -13,7 +13,7 @@ import com.woleapp.netpos.util.RoomTypeConverters
 
 @Database(
     entities = [TransactionResponse::class, MqttEventsLocal::class],
-    version = 6,
+    version = 7,
     exportSchema = false
 )
 @TypeConverters(

@@ -49,9 +49,9 @@ class TransactionsViewHolder private constructor(val binding: LayoutTransactionI
         binding.executePendingBindings()
         val cardDetails =
             "${transactionResponse.cardLabel.ifEmpty { "card" }} ending with ${
-                transactionResponse.maskedPan.takeLast(
-                    4
-                )
+            transactionResponse.maskedPan.takeLast(
+                4
+            )
             }"
         binding.cardDetails.text = cardDetails
         binding.transactionStatus.text =

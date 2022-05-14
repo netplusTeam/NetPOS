@@ -7,16 +7,20 @@ import okhttp3.logging.HttpLoggingInterceptor
 import retrofit2.Retrofit
 import retrofit2.adapter.rxjava2.RxJava2CallAdapterFactory
 import retrofit2.converter.gson.GsonConverterFactory
-import retrofit2.http.*
+import retrofit2.http.* // ktlint-disable no-wildcard-imports
 
 object NetPOSGatewayApi {
 
     private val client = OkHttpClient.Builder()
-        .addInterceptor(HttpLoggingInterceptor().apply {
-            setLevel(HttpLoggingInterceptor.Level.HEADERS)
-        }).addInterceptor(HttpLoggingInterceptor().apply {
-            setLevel(HttpLoggingInterceptor.Level.BODY)
-        }).build()
+        .addInterceptor(
+            HttpLoggingInterceptor().apply {
+                setLevel(HttpLoggingInterceptor.Level.HEADERS)
+            }
+        ).addInterceptor(
+            HttpLoggingInterceptor().apply {
+                setLevel(HttpLoggingInterceptor.Level.BODY)
+            }
+        ).build()
 
     private const val BASE_URL = "https://netpos.netpluspay.com/"
     private var INSTANCE: GatewayService? = null
@@ -32,7 +36,6 @@ object NetPOSGatewayApi {
                 INSTANCE = it
             }
     }
-
 }
 
 interface GatewayService {

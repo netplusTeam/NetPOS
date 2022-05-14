@@ -178,6 +178,7 @@ class SalesViewModel(private val transactionResponseDao: TransactionResponseDao)
         val customRrn = generateRandomRrn(12)
         val transTime = formattedTime.replace(":", "")
         val transDateTime = getCurrentDateTime()
+        println("=========TTT+Time $transDateTime")
 
         // IsoAccountType.
         this.amountLong = amountDbl.toLong()
