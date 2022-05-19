@@ -8,6 +8,7 @@ import androidx.room.TypeConverters
 import com.danbamitale.epmslib.entities.TransactionResponse
 import com.woleapp.netpos.database.dao.MqttLocalDao
 import com.woleapp.netpos.database.dao.TransactionResponseDao
+import com.woleapp.netpos.model.AppConstants.APP_DB_NAME
 import com.woleapp.netpos.model.MqttEventsLocal
 import com.woleapp.netpos.util.RoomTypeConverters
 
@@ -33,7 +34,7 @@ abstract class AppDatabase : RoomDatabase() {
         }
 
         private fun buildDatabase(context: Context) =
-            Room.databaseBuilder(context, AppDatabase::class.java, "netpos-db")
+            Room.databaseBuilder(context, AppDatabase::class.java, APP_DB_NAME)
                 .fallbackToDestructiveMigration()
                 .build()
     }

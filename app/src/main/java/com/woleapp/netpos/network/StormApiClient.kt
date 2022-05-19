@@ -1,11 +1,12 @@
 package com.woleapp.netpos.network
 
 import com.pixplicity.easyprefs.library.Prefs
+import com.woleapp.netpos.model.AppConstants.BASE_URL_FOR_LOGGING_TO_BACKEND
 import com.woleapp.netpos.model.User
 import com.woleapp.netpos.util.PREF_USER
 import com.woleapp.netpos.util.PREF_USER_TOKEN
 import com.woleapp.netpos.util.Singletons
-import okhttp3.*
+import okhttp3.* // ktlint-disable no-wildcard-imports
 import okhttp3.MediaType.Companion.toMediaTypeOrNull
 import okhttp3.ResponseBody.Companion.toResponseBody
 import okhttp3.logging.HttpLoggingInterceptor
@@ -102,14 +103,20 @@ class StormApiClient {
                 .baseUrl("https://sms.netpluspay.com")
                 .addCallAdapterFactory(RxJava2CallAdapterFactory.create())
                 .addConverterFactory(GsonConverterFactory.create())
-                .client(OkHttpClient.Builder()
-                    .addInterceptor(HttpLoggingInterceptor().apply {
-                        setLevel(HttpLoggingInterceptor.Level.BODY)
-                    })
-                    .addInterceptor(HttpLoggingInterceptor().apply {
-                        setLevel(HttpLoggingInterceptor.Level.HEADERS)
-                    })
-                    .build())
+                .client(
+                    OkHttpClient.Builder()
+                        .addInterceptor(
+                            HttpLoggingInterceptor().apply {
+                                setLevel(HttpLoggingInterceptor.Level.BODY)
+                            }
+                        )
+                        .addInterceptor(
+                            HttpLoggingInterceptor().apply {
+                                setLevel(HttpLoggingInterceptor.Level.HEADERS)
+                            }
+                        )
+                        .build()
+                )
                 .build().create(SmsService::class.java)
                 .also {
                     smsServiceInstance = it
@@ -166,7 +173,7 @@ class StormApiClient {
                     .baseUrl("http://bluecode.netpluspay.com:7777/api/")
 //                    .client(OkHttpClient.Builder().apply {
 //                        addInterceptor(BlueCodeInterceptor())
-                //    }.build())
+                    //    }.build())
                     .client(getOkHttpClient())
                     .addCallAdapterFactory(RxJava2CallAdapterFactory.create())
                     .addConverterFactory(GsonConverterFactory.create())
@@ -177,7 +184,6 @@ class StormApiClient {
                     }
             }
 
-        private const val BASE_URL_FOR_LOGGING_TO_BACKEND = "https://device.netpluspay.com/"
         private var LOGGING_INSTANCE: StormApiService? = null
         fun getStormApiLoginInstance(): StormApiService = LOGGING_INSTANCE ?: synchronized(this) {
             LOGGING_INSTANCE ?: Retrofit.Builder()
@@ -212,7 +218,6 @@ class TokenInterceptor : Interceptor {
     }
 }
 
-
 class BlueCodeInterceptor : Interceptor {
     override fun intercept(chain: Interceptor.Chain): Response {
         val requestUri = chain.request().url.toUri().toString()
@@ -243,7 +248,6 @@ class BlueCodeInterceptor : Interceptor {
             .addHeader("content-type", "application/json")
             .build()
 
-
     private fun getResponseString(requestUrl: String): String {
         return when {
             requestUrl.contains("registerMerchant") -> {
@@ -253,7 +257,7 @@ class BlueCodeInterceptor : Interceptor {
             requestUrl.contains("getPostal") -> "{ \"ABIA\": \"440001\", \"ABUJA\": \"900001\", \"ADAMAWA\": \"640001\", \"AKWA-IBOM\": \"520001\", \"ANAMBRA\": \"420001\", \"BAUCHI\": \"740001\", \"BAYELSA\": \"561001\", \"BENUE\": \"970001\", \"BORNO\": \"600001\", \"CROSS-RIVER\": \"540001\", \"DELTA\": \"320001\", \"EBONYI\": \"840001\", \"EDO\": \"300001\", \"EKITI\": \"360001\", \"ENUGU\": \"400001\", \"GOMBE\": \"760001\", \"IMO\": \"460001\", \"JIGAWA\": \"720001\", \"KADUNA\": \"700001\", \"KANO\": \"800001\", \"KATSINA\": \"820001\", \"KEBBI\": \"860001\", \"KOGI\": \"260001\", \"KWARA\": \"240001\", \"LAGOS\": { \"MAINLAND\": \"100001\", \"ISLAND\": \"101001\" }, \"NASARAWA\": \"962001\", \"NIGER\": \"920001\", \"OGUN\": \"110001\", \"ONDO\": \"340001\", \"OSUN\": \"230001\", \"OYO\": \"200001\", \"PLATEAU\": \"930001\", \"RIVERS\": \"500001\", \"SOKOTO\": \"840001\", \"TARABA\": \"660001\", \"YOBE\": \"320001\", \"ZAMFARA\": \"860001\" }"
             requestUrl.contains("getQr") -> {
                 if (Prefs.contains("hasQr")
-                        .not()
+                    .not()
                 ) "{\"status\":\"failed\", \"message\":\"merchant not registered\"}"
                 else "{ \"qr\": \"data:image/png;base64,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\", \"transactionId\": \"BC04012022131608438097\" }"
             }
@@ -262,7 +266,6 @@ class BlueCodeInterceptor : Interceptor {
         }
     }
 }
-
 
 class NipInterceptor : Interceptor {
     override fun intercept(chain: Interceptor.Chain): Response {

@@ -165,7 +165,7 @@ class SalesViewModel(private val transactionResponseDao: TransactionResponseDao)
                 Event("Terminal has not been configured, restart the application to configure")
             return
         }
-        val keyHolder = NetPosTerminalConfig.getKeyHolder()!!
+        val keyHolder: KeyHolder = NetPosTerminalConfig.getKeyHolder()!!
         Timber.e("terminal id for transaction ${NetPosTerminalConfig.getTerminalId()}")
         val hostConfig = HostConfig(
             NetPosTerminalConfig.getTerminalId(),

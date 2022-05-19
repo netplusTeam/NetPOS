@@ -25,19 +25,18 @@ import com.woleapp.netpos.model.Vend
 import com.woleapp.netpos.nibss.NetPosTerminalConfig
 import com.woleapp.netpos.util.*
 import com.woleapp.netpos.viewmodels.SalesViewModel
+import com.woleapp.netpos.viewmodels.SalesViewModelProvider
 import io.reactivex.Observable
 import io.reactivex.android.schedulers.AndroidSchedulers
 import io.reactivex.disposables.CompositeDisposable
 import io.reactivex.schedulers.Schedulers
 import timber.log.Timber
-import com.woleapp.netpos.viewmodels.SalesViewModelProvider
 import java.io.BufferedReader
 import java.io.InputStreamReader
 import java.io.PrintWriter
 import java.net.InetSocketAddress
 import java.net.Socket
 import java.util.concurrent.TimeUnit
-
 
 class SalesFragment : BaseFragment() {
     companion object {
@@ -53,7 +52,7 @@ class SalesFragment : BaseFragment() {
             }
     }
 
-    private val viewModel by viewModels<SalesViewModel>{
+    private val viewModel by viewModels<SalesViewModel> {
         SalesViewModelProvider(AppDatabase.getDatabaseInstance(requireContext()).transactionResponseDao())
     }
     private lateinit var transactionType: TransactionType
@@ -299,7 +298,8 @@ class SalesFragment : BaseFragment() {
         Snackbar.make(
             requireActivity().findViewById(
                 R.id.container_main
-            ), message, Snackbar.LENGTH_LONG
+            ),
+            message, Snackbar.LENGTH_LONG
         ).show()
     }
 
@@ -343,7 +343,7 @@ class SalesFragment : BaseFragment() {
                     val s = reader?.readLine()
                     Timber.e(s)
                     val vend = Singletons.gson.fromJson(s, Vend::class.java)
-                    //socket.close()
+                    // socket.close()
                     Observable.just(vend)
                 } catch (e: Exception) {
                     Observable.just(Vend(0.0))

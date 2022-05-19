@@ -3,7 +3,6 @@ package com.woleapp.netpos.model
 import com.danbamitale.epmslib.entities.TransactionType
 import com.danbamitale.epmslib.utils.IsoAccountType
 
-
 data class NibssResponse(
     var AID: String,
     var RRN: String,

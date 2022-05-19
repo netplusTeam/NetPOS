@@ -3,6 +3,8 @@ apply plugin: 'kotlin-android'
 apply plugin: 'kotlin-android-extensions'
 apply plugin: 'kotlin-kapt'
 apply plugin: 'com.github.sgtsilvio.gradle.android-retrofix'
+apply plugin: 'kotlin-kapt'
+apply plugin:  'dagger.hilt.android.plugin'
 
 def appPropertiesFile = rootProject.file("app-settings.properties")
 def appProperties = new Properties()
@@ -211,6 +213,8 @@ dependencies {
     //paging
     implementation "androidx.paging:paging-runtime:2.1.2"
 
+    implementation "androidx.paging:paging-runtime-ktx:3.1.1"
+
     //preference
     implementation("androidx.preference:preference-ktx:1.2.0")
 
@@ -223,5 +227,8 @@ dependencies {
     androidTestImplementation 'androidx.test.ext:junit:1.1.3'
     androidTestImplementation 'androidx.test.espresso:espresso-core:3.4.0'
     debugImplementation 'com.amitshekhar.android:debug-db:1.0.6'
+
+    implementation "com.google.dagger:hilt-android:2.38.1"
+    kapt "com.google.dagger:hilt-compiler:2.38.1"
 }
 apply plugin: 'com.google.gms.google-services'

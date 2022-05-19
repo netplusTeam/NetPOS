@@ -20,6 +20,6 @@ class RoomTypeConverters {
 
         @JvmStatic
         @TypeConverter
-        fun convertTransactionResponseToEnum(value: String)= TransactionType.valueOf(value)
+        fun convertTransactionResponseToEnum(value: String) = TransactionType.valueOf(value)
     }
 }

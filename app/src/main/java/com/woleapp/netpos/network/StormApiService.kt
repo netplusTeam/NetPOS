@@ -1,10 +1,10 @@
 package com.woleapp.netpos.network
 
 import com.google.gson.JsonObject
-import com.woleapp.netpos.model.*
+import com.woleapp.netpos.model.* // ktlint-disable no-wildcard-imports
 import io.reactivex.Single
 import retrofit2.Response
-import retrofit2.http.*
+import retrofit2.http.* // ktlint-disable no-wildcard-imports
 
 interface StormApiService {
     @POST("api/token")
@@ -54,5 +54,13 @@ interface StormApiService {
     fun updateLogAfterConnectingToNibss(
         @Path("rrn") rrn: String,
         @Body data: DataToLogAfterConnectingToNibss
+    ): Single<LogToBackendResponse>
+
+    @GET("/pos_transaction/partners/{partnerId}/{terminalId}/{page}")
+    fun getEodFromRemote(
+        @Path("partnerId") partnerId: String,
+        @Path("terminalId") terminalId: String,
+        @Path("page") page: Int,
+        @Query("pageSize") pageSize: Int,
     ): Single<LogToBackendResponse>
 }

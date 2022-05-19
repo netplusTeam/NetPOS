@@ -5,7 +5,7 @@ package com.woleapp.netpos.util
 import android.app.Activity
 import android.app.AlertDialog
 import android.app.ProgressDialog
-import android.content.*
+import android.content.* // ktlint-disable no-wildcard-imports
 import android.view.LayoutInflater
 import android.widget.Toast
 import androidx.lifecycle.LifecycleOwner
