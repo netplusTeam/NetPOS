@@ -52,7 +52,7 @@ class PaginationHelper {
 
     constructor(
         networkResourceLiveData: LiveData<Event<NetworkResource>>,
-        data:LiveData<PagedList<MerchantCategory>>?
+        data: LiveData<PagedList<MerchantCategory>>?
     ) {
         eventLiveData = networkResourceLiveData
         this.data = data

@@ -7,7 +7,6 @@ import android.app.DatePickerDialog
 import android.app.ProgressDialog
 import android.content.DialogInterface
 import android.os.Bundle
-import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -28,10 +27,15 @@ import com.woleapp.netpos.databinding.FragmentDashboardBinding
 import com.woleapp.netpos.databinding.LayoutPrintEndOfDayBinding
 import com.woleapp.netpos.model.* // ktlint-disable no-wildcard-imports
 import com.woleapp.netpos.network.NetPOSGatewayApi
+import com.woleapp.netpos.network.StormApiClient
 import com.woleapp.netpos.nibss.NetPosTerminalConfig
 import com.woleapp.netpos.util.* // ktlint-disable no-wildcard-imports
-import com.woleapp.netpos.util.ModelMapper.mapEntityToTransFromGateWay
+import com.woleapp.netpos.util.ModelMapper.mapRowToTransactionResponse
 import com.woleapp.netpos.util.ModelMapper.mapTransFromGateWayToEntity
+import com.woleapp.netpos.util.RandomNumUtil.getDateInMilliSecsForLocal
+import com.woleapp.netpos.util.RandomNumUtil.getDateInMilliSecsForLocalForEndOfDay
+import com.woleapp.netpos.util.RandomNumUtil.getDateInTheFormatExpectedByTheNewService
+import com.woleapp.netpos.util.RandomNumUtil.getDateInTheFormatExpectedByTheNewServiceForEnd
 import com.woleapp.netpos.viewmodels.NetPosViewModelFactories
 import com.woleapp.netpos.viewmodels.TransactionsViewModel
 import io.reactivex.Single
@@ -51,6 +55,7 @@ class DashboardFragment : BaseFragment() {
     private lateinit var adapter: ServiceAdapter
     private var compositeDisposable = CompositeDisposable()
     private val gateWayService = NetPOSGatewayApi.getInstance()
+    private val stormApiService = StormApiClient.getStormApiLoginInstance()
     private lateinit var endOfDayProgressDialog: ProgressDialog
     private val transactionViewModel by activityViewModels<TransactionsViewModel> {
         NetPosViewModelFactories(AppDatabase.getDatabaseInstance(requireContext()))
@@ -72,6 +77,10 @@ class DashboardFragment : BaseFragment() {
             }
         }
         return binding.root
+    }
+
+    override fun onResume() {
+        super.onResume()
     }
 
     private fun setupKongaAdapter() {
@@ -151,7 +160,7 @@ class DashboardFragment : BaseFragment() {
         ).observe(viewLifecycleOwner) { event ->
             event.getContentIfNotHandled()?.let {
                 it.error?.let { error ->
-                    Timber.e("DISCOVER_FIRST"+error)
+                    Timber.d(error)
                     Toast.makeText(requireContext(), error.localizedMessage, Toast.LENGTH_SHORT)
                         .show()
                 }
@@ -251,29 +260,41 @@ class DashboardFragment : BaseFragment() {
             totalTransactions.text =
                 getString(R.string.total_transaction_count, transactions.size.toString())
             print.setOnClickListener {
-                when (chipGroup.checkedChipId) {
-                    R.id.print_approved -> approvedList
-                    R.id.print_declined -> declinedList
-                    else -> transactions
-                }.apply {
-                    if (isEmpty()) {
-                        Toast.makeText(
-                            requireContext(),
-                            "No transactions to print",
-                            Toast.LENGTH_SHORT
-                        ).show()
-                        return@setOnClickListener
-                    }
-                }.printEndOfDay(requireContext())
-                    .subscribeOn(Schedulers.io())
-                    .observeOn(AndroidSchedulers.mainThread())
-                    .subscribe({ printResp ->
-                        Timber.e("DISCOVER1"+printResp.toString())
-                    }, { err ->
-                        Toast.makeText(requireContext(), err.localizedMessage, Toast.LENGTH_LONG)
-                            .show()
-                        // Timber.e(err.localizedMessage)
-                    }).disposeWith(CompositeDisposable())
+                if (transactions.isEmpty()) {
+                    Toast.makeText(
+                        context,
+                        getString(R.string.noTransactionsToPrint),
+                        Toast.LENGTH_LONG
+                    ).show()
+                } else {
+                    when (chipGroup.checkedChipId) {
+                        R.id.print_approved -> approvedList
+                        R.id.print_declined -> declinedList
+                        else -> transactions
+                    }.apply {
+                        if (isEmpty()) {
+                            Toast.makeText(
+                                requireContext(),
+                                "No transactions to print",
+                                Toast.LENGTH_SHORT
+                            ).show()
+                            return@setOnClickListener
+                        }
+                    }.printEndOfDay(requireContext())
+                        .subscribeOn(Schedulers.io())
+                        .observeOn(AndroidSchedulers.mainThread())
+                        .subscribe({ printResp ->
+                            Timber.e(printResp.toString())
+                        }, { err ->
+                            Toast.makeText(
+                                requireContext(),
+                                err.localizedMessage,
+                                Toast.LENGTH_LONG
+                            )
+                                .show()
+                            // Timber.e(err.localizedMessage)
+                        }).disposeWith(CompositeDisposable())
+                }
             }
         }
         val bottomSheet = BottomSheetDialog(requireContext(), R.style.SheetDialog)
@@ -284,9 +305,14 @@ class DashboardFragment : BaseFragment() {
                 show()
             }
         endOfDay.view.setOnClickListener {
-            transactionViewModel.setEndOfDayList(transactions)
-            bottomSheet.dismiss()
-            addFragmentWithoutRemove(TransactionHistoryFragment.newInstance(HISTORY_ACTION_REPRINT))
+            if (transactions.isNotEmpty()) {
+                transactionViewModel.setEndOfDayList(transactions)
+                bottomSheet.dismiss()
+                addFragmentWithoutRemove(TransactionHistoryFragment.newInstance(HISTORY_ACTION_EOD))
+            } else {
+                Toast.makeText(context, getString(R.string.noTransactionsToView), Toast.LENGTH_LONG)
+                    .show()
+            }
         }
         endOfDay.closeButton.setOnClickListener {
             bottomSheet.dismiss()
@@ -297,11 +323,11 @@ class DashboardFragment : BaseFragment() {
         endOfDayProgressDialog.show()
         val be: Long = getBeginningOfDay(timestamp)
         val be1: Long = Timestamp.from(Instant.ofEpochMilli(be).plusSeconds(86400)).time
-        Timber.e("DISCOVER2"+be.toString())
-        Timber.e("DISCOVER3"+be1.toString())
+        Timber.e("DISCOVER2%s", be.toString())
+        Timber.e("DISCOVER3%s", be1.toString())
         val df = SimpleDateFormat("dd:MM:yyyy hh:mm:ss", Locale.getDefault())
-        Timber.e("DISCOVER4"+df.format(be))
-        Timber.e("DISCOVER5"+df.format(be1))
+        Timber.e("DISCOVER4%s", df.format(be))
+        Timber.e("DISCOVER5%s", df.format(be1))
 
         val data = HashMap<String, String>().apply {
             put("terminalId", NetPosTerminalConfig.getTerminalId())
@@ -309,23 +335,47 @@ class DashboardFragment : BaseFragment() {
             put("from", df.format(be))
             put("to", df.format(be1))
         }
-        gateWayService.getTransactions(data, GATEWAY_MAP).flatMap {
+        Timber.d(df.format(be))
+        Timber.d(df.format(be1))
 
-            println("====CHECKING_PAYLOAD" + it.result.toString())
-            Log.d("====CHECKING_PAYLOAD", it.result.toString())
-            it.result = it.result.map { transaction ->
+        val parameters = GetEodFromNewServiceModel(
+            NetPosTerminalConfig.getTerminalId(),
+            getDateInTheFormatExpectedByTheNewService(df.format(be)),
+            getDateInTheFormatExpectedByTheNewServiceForEnd(df.format(be)),
+            1,
+            1000
+        )
+        stormApiService.getTransactionsFromNewService(
+            parameters.terminalId,
+            parameters.from,
+            parameters.to,
+            parameters.page,
+            parameters.pageSize
+        ).flatMap {
+
+            Timber.d("ISOK==>" + it.data.rows.mapRowToTransactionResponse().toString())
+            println("====CHECKING_PAYLOAD" + it.data.rows.toString())
+            Timber.d(it.data.rows.toString())
+
+            it.data.rows = it.data.rows.map { transaction ->
                 transaction.amount = transaction.amount.times(100)
                 transaction
             }
             Single.just(it)
         }.flatMap {
-            if (it.result.isEmpty())
-                return@flatMap getEndOfDayLocal(be, be1)
+            if (it.data.rows.isEmpty())
+                return@flatMap getEndOfDayLocal(
+                    getDateInMilliSecsForLocal(df.format(be)),
+                    getDateInMilliSecsForLocalForEndOfDay(df.format(be))
+                )
             Single.just(it)
         }.retry(2)
             .onErrorResumeNext {
                 Timber.e("error resume next ${it.localizedMessage}")
-                getEndOfDayLocal(be, be1)
+                getEndOfDayLocal(
+                    getDateInMilliSecsForLocal(df.format(be)),
+                    getDateInMilliSecsForLocalForEndOfDay(df.format(be))
+                )
             }
             .subscribeOn(Schedulers.io())
             .observeOn(AndroidSchedulers.mainThread())
@@ -334,11 +384,16 @@ class DashboardFragment : BaseFragment() {
             }
             .subscribe { t1, t2 ->
                 t1?.let {
-                    Timber.e("DISCOVER6"+it.count.toString())
-                    showEndOfDayBottomSheetDialog(mapEntityToTransFromGateWay(it.result))
+                    Timber.e("DISCOVER61" + it.toString())
+                    if (it is GetEndOfDayModelFromNewServer) {
+                        Timber.e("DISCOVER6%s", it.data.count.toString())
+                        showEndOfDayBottomSheetDialog(it.data.rows.mapRowToTransactionResponse())
+                    } else {
+                        showEndOfDayBottomSheetDialog(listOf<TransactionResponse>())
+                    }
                 }
                 t2?.let {
-                    Timber.e("DISCOVER7"+it)
+                    Timber.d(it)
                     Toast.makeText(
                         requireContext(),
                         "An error occurred while fetching end of day, try again",
@@ -364,6 +419,8 @@ class DashboardFragment : BaseFragment() {
             .transactionResponseDao()
             .getEndOfDayTransactionSingle(be, be1, NetPosTerminalConfig.getTerminalId())
             .flatMap { transactionList ->
+                Timber.d("NN_TIME1" + be.toString())
+                Timber.d("NN_TIME2" + be1.toString())
                 Single.just(
                     GateWayTransactionResponse(
                         mapTransFromGateWayToEntity(transactionList),

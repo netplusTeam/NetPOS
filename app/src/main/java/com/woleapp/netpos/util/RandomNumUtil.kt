@@ -3,6 +3,7 @@ package com.woleapp.netpos.util
 import android.annotation.SuppressLint
 import com.danbamitale.epmslib.entities.TransactionResponse
 import com.woleapp.netpos.model.TransactionResponseX
+import timber.log.Timber
 import java.text.DateFormat
 import java.text.SimpleDateFormat
 import java.util.* // ktlint-disable no-wildcard-imports
@@ -11,9 +12,64 @@ object RandomNumUtil {
 
     @SuppressLint("SimpleDateFormat")
     fun getDateInMillis(dateTime: String): Long {
+        val format = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'.000Z'")
+        val date = format.parse(dateTime)
+        return date!!.time
+    }
+
+    @SuppressLint("SimpleDateFormat")
+    fun getDateInTheFormatExpectedByTheNewService(
+        date: String
+    ): String {
+        val initDate = SimpleDateFormat("dd:MM:yyyy hh:mm:ss").parse(date) ?: Date()
+        val formatter = SimpleDateFormat("yyyy-MM-dd")
+        return formatter.format(initDate) + " 00:00:00"
+    }
+
+    @SuppressLint("SimpleDateFormat")
+    fun getDateInTheFormatExpectedByTheNewServiceForEnd(
+        date: String
+    ): String {
+        val initDate = SimpleDateFormat("dd:MM:yyyy hh:mm:ss").parse(date) ?: Date()
+        val formatter = SimpleDateFormat("yyyy-MM-dd")
+        return formatter.format(initDate) + " 23:59:59"
+    }
+
+    @SuppressLint("SimpleDateFormat")
+    fun getDateInMillis2(dateTime: String): Long {
         val format = SimpleDateFormat("dd-MM-yyyy hh:mm:ss")
         val date = format.parse(dateTime)
         return date!!.time
+    }
+
+    @SuppressLint("SimpleDateFormat")
+    fun getStartOfDayAsString(): String {
+        val dateFormatter: DateFormat = SimpleDateFormat("yyyy-MM-dd")
+        val today = Date()
+        return dateFormatter.format(today) + " 00:00:00"
+    }
+
+    @SuppressLint("SimpleDateFormat")
+    fun getDateInMilliSecsForLocal(date: String): Long {
+        val dateFormatter = SimpleDateFormat("dd:MM:yyyy HH:mm:ss")
+        val newDate = date.split(" ")[0] + " 00:00:00"
+        Timber.d("DIS_TIME"+newDate.toString())
+        return dateFormatter.parse(newDate)!!.time
+    }
+
+    @SuppressLint("SimpleDateFormat")
+    fun getDateInMilliSecsForLocalForEndOfDay(date: String): Long {
+        val dateFormatter = SimpleDateFormat("dd:MM:yyyy HH:mm:ss")
+        val newDate = date.split(" ")[0] + " 23:59:59"
+        Timber.d("DIS_TIME_end"+newDate.toString())
+        return dateFormatter.parse(newDate)!!.time
+    }
+
+    @SuppressLint("SimpleDateFormat")
+    fun getEndOfDayAsString(): String {
+        val dateFormatter: DateFormat = SimpleDateFormat("yyyy-MM-dd")
+        val today = Date()
+        return dateFormatter.format(today) + " 23:59:59"
     }
 
     fun generateRandomRrn(length: Int): String {
@@ -40,6 +96,13 @@ object RandomNumUtil {
     @SuppressLint("SimpleDateFormat")
     fun getCurrentDateTime(): String {
         val dateFormatter: DateFormat = SimpleDateFormat("yyyy-MM-dd hh:mm:ss")
+        val today = Date()
+        return dateFormatter.format(today)
+    }
+
+    @SuppressLint("SimpleDateFormat")
+    fun getCurrentDate(): String {
+        val dateFormatter: DateFormat = SimpleDateFormat("yyyy-MM-dd")
         val today = Date()
         return dateFormatter.format(today)
     }

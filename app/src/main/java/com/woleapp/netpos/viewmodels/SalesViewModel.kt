@@ -193,6 +193,7 @@ class SalesViewModel(private val transactionResponseDao: TransactionResponseDao)
         val transactionToLog = cardData?.expiryDate?.let {
             customerName.value?.let { it1 ->
                 user?.netplus_id?.let { it2 ->
+                    val newAmount = amount.value!!.toDoubleOrNull()
                     TransactionToLogBeforeConnectingToNibbs(
                         status = "PENDING",
                         TransactionResponseX(
@@ -204,7 +205,7 @@ class SalesViewModel(private val transactionResponseDao: TransactionResponseDao)
                             accountType = isoAccountType!!.name,
                             acquiringInstCode = "",
                             additionalAmount_54 = "",
-                            amount = amount.value!!.toInt(),
+                            amount = newAmount?.toInt() ?: amount.value!!.toInt(),
                             appCryptogram = "",
                             authCode = "",
                             cardExpiry = it,

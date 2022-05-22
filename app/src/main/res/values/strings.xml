@@ -129,4 +129,6 @@
     <string name="address">Address</string>
     <string name="error_loading_states_tap_to_try_again">Error loading states, Tap to try again!</string>
     <string name="give">Give</string>
+    <string name="noTransactionsToView">No transactions to View</string>
+    <string name="noTransactionsToPrint">No transactions to print</string>
 </resources>

@@ -5,6 +5,7 @@ import com.danbamitale.epmslib.entities.TransactionResponse
 import com.danbamitale.epmslib.entities.TransactionType
 import com.danbamitale.epmslib.entities.responseMessage
 import com.danbamitale.epmslib.utils.IsoAccountType
+import com.woleapp.netpos.model.Row
 import com.woleapp.netpos.model.TransactionResponseModelFromGateWay
 import com.woleapp.netpos.util.RandomNumUtil.getDateInMillis
 
@@ -46,7 +47,8 @@ object ModelMapper {
                 RRN = it.RRN
                 accountType = IsoAccountType.parseStringAccountType(it.accountType)
                 acquiringInstCode = it.acquiringInstCode
-                additionalAmount_54 = if (it.additionalAmount != null) it.additionalAmount.toString() else ""
+                additionalAmount_54 =
+                    if (it.additionalAmount != null) it.additionalAmount.toString() else ""
                 amount = it.amount.toLong()
                 authCode = it.authCode
                 cardExpiry = it.cardExpiry
@@ -57,7 +59,33 @@ object ModelMapper {
                 originalForwardingInstCode = it.originalForwardingInstCode
                 responseCode = it.responseCode
                 terminalId = it.terminalId
-                transactionTimeInMillis = if (it.transactionTime.contains("-")) getDateInMillis(it.transactionTime) else it.transactionTime.toLong()
+                transactionTimeInMillis =
+                    if (it.transactionTime.contains("-")) getDateInMillis(it.transactionTime) else it.transactionTime.toLong()
+                transactionType = TransactionType.valueOf(it.transactionType)
+                transmissionDateTime = it.transactionTime
+            }
+        }
+
+    fun List<Row>.mapRowToTransactionResponse() =
+        map {
+            TransactionResponse().apply {
+                RRN = it.rrn
+                accountType = IsoAccountType.parseStringAccountType(it.accountType)
+                acquiringInstCode = it.acquiringInstCode
+                additionalAmount_54 =
+                    if (it.additionalAmount != null) it.additionalAmount.toString() else ""
+                amount = it.amount.toLong()
+                authCode = it.authCode
+                cardExpiry = it.cardExpiry
+                cardHolder = it.cardHolder
+                cardLabel = it.cardLabel
+                errorMessage = it.responseMessage
+                maskedPan = it.maskedPan
+                originalForwardingInstCode = it.originalForwardingInstCode
+                responseCode = it.responseCode
+                terminalId = it.terminalId
+                transactionTimeInMillis =
+                    if (it.transactionTime.contains("-")) getDateInMillis(it.transactionTime) else it.transactionTime.toLong()
                 transactionType = TransactionType.valueOf(it.transactionType)
                 transmissionDateTime = it.transactionTime
             }

@@ -2,11 +2,8 @@ package com.woleapp.netpos.database.dao
 
 import androidx.lifecycle.LiveData
 import androidx.paging.DataSource
-import androidx.room.Dao
-import androidx.room.Insert
+import androidx.room.* // ktlint-disable no-wildcard-imports
 import androidx.room.OnConflictStrategy.IGNORE
-import androidx.room.Query
-import androidx.room.Update
 import com.danbamitale.epmslib.entities.TransactionResponse
 import com.danbamitale.epmslib.entities.TransactionType
 import io.reactivex.Completable
@@ -17,8 +14,8 @@ interface TransactionResponseDao {
     @Insert(onConflict = IGNORE)
     fun insertNewTransaction(transactionResponse: TransactionResponse): Single<Long>
 
-    @Insert(onConflict = IGNORE)
-    fun insertNewTransaction(transactionResponses: List<TransactionResponse>)
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    fun insertNewTransaction(transactionResponses: List<TransactionResponse>): Single<List<Long>>
 
     @Update
     fun updateTransaction(transactionResponse: TransactionResponse): Single<Int>

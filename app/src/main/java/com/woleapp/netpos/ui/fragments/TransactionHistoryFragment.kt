@@ -18,10 +18,7 @@ import com.woleapp.netpos.adapter.TransactionsAdapter
 import com.woleapp.netpos.adapter.TransactionsViewHolder
 import com.woleapp.netpos.database.AppDatabase
 import com.woleapp.netpos.databinding.FragmentTransactionHistoryBinding
-import com.woleapp.netpos.util.HISTORY_ACTION
-import com.woleapp.netpos.util.HISTORY_ACTION_DEFAULT
-import com.woleapp.netpos.util.HISTORY_ACTION_EOD
-import com.woleapp.netpos.util.HISTORY_ACTION_PREAUTH
+import com.woleapp.netpos.util.*
 import com.woleapp.netpos.viewmodels.NetPosViewModelFactories
 import com.woleapp.netpos.viewmodels.TransactionsViewModel
 
@@ -61,6 +58,7 @@ class TransactionHistoryFragment : BaseFragment() {
         val adapterListener = object : TransactionClickListener {
             override fun invoke(p1: TransactionResponse) {
                 viewModel.setSelectedTransaction(p1)
+                viewModel.setAction(HISTORY_ACTION_REPRINT)
                 addFragmentWithoutRemove(TransactionDetailsFragment())
             }
         }
@@ -108,7 +106,6 @@ class TransactionHistoryFragment : BaseFragment() {
                     println("====================================\n")
                 }
                 (adapter as PagedListAdapter<TransactionResponse, *>).submitList(it)
-                // adapter.notifyDataSetChanged()
             }
         else {
             val eodList = viewModel.getEodList()

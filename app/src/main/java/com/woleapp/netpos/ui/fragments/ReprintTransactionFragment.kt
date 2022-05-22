@@ -18,11 +18,13 @@ class ReprintTransactionFragment : BaseFragment() {
         savedInstanceState: Bundle?
     ): View? {
         val binding = FragmentReprintTransactionsBinding.inflate(inflater, container, false)
-        val p = ReceiptBuilder(NetPosSdk.getPrinterManager(requireContext()).apply {
-            cleanCache()
-            setPrintGray(3000)
-            setLineSpace(1)
-        })
+        val p = ReceiptBuilder(
+            NetPosSdk.getPrinterManager(requireContext()).apply {
+                cleanCache()
+                setPrintGray(3000)
+                setLineSpace(1)
+            }
+        )
             .apply {
                 appendAID("sample aid")
 //                appendAddress("Oluwatayo Adegboye")
@@ -44,7 +46,6 @@ class ReprintTransactionFragment : BaseFragment() {
             }.print().subscribeOn(Schedulers.io())
             .observeOn(AndroidSchedulers.mainThread())
             .subscribe { _, _ ->
-
             }
         return binding.root
     }

@@ -4,13 +4,13 @@ import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.os.Handler
 import android.os.Looper
-import androidx.lifecycle.*
+import androidx.lifecycle.* // ktlint-disable no-wildcard-imports
 import androidx.paging.LivePagedListBuilder
 import androidx.paging.PagedList
 import com.google.gson.JsonObject
-import com.woleapp.netpos.model.*
-import com.woleapp.netpos.network.*
-import com.woleapp.netpos.util.*
+import com.woleapp.netpos.model.* // ktlint-disable no-wildcard-imports
+import com.woleapp.netpos.network.* // ktlint-disable no-wildcard-imports
+import com.woleapp.netpos.util.* // ktlint-disable no-wildcard-imports
 import io.reactivex.Single
 import io.reactivex.android.schedulers.AndroidSchedulers
 import io.reactivex.disposables.CompositeDisposable
@@ -19,7 +19,7 @@ import io.reactivex.subjects.PublishSubject
 import retrofit2.HttpException
 import timber.log.Timber
 import java.text.SimpleDateFormat
-import java.util.*
+import java.util.* // ktlint-disable no-wildcard-imports
 import java.util.concurrent.TimeUnit
 
 open class QRViewModel(
@@ -79,7 +79,6 @@ open class QRViewModel(
         }
     }
 
-
     val loadingStateLiveData = _paginationHelper.switchMap {
         it.eventLiveData!!
     }
@@ -92,9 +91,8 @@ open class QRViewModel(
     val zenithQrRegistrationDone: LiveData<Event<Boolean>>
         get() = _zenithQrRegistrationDone
 
-
     val zenithMccList = _paginationHelper.switchMap {
-        Timber.e("size: ${it.data?.value?.size.toString()}")
+        Timber.e("size: ${it.data?.value?.size}")
         if (it.data == null) {
             Timber.e("data is null")
         }
@@ -107,7 +105,6 @@ open class QRViewModel(
         .setPageSize(20)
         .setEnablePlaceholders(false)
         .build()
-
 
     fun getMasterPassQr(amount: Double) {
         Timber.e("Get masterpass")
@@ -159,10 +156,10 @@ open class QRViewModel(
         val range2 = (start..end).random()
         lastNibssOrderNumber.value =
             "${
-                SimpleDateFormat(
-                    "yMM",
-                    Locale.getDefault()
-                ).format(Date(System.currentTimeMillis()))
+            SimpleDateFormat(
+                "yMM",
+                Locale.getDefault()
+            ).format(Date(System.currentTimeMillis()))
             }$range1$range2"
         val jsonObject = JsonObject()
         jsonObject.addProperty("amount", amount.toString())
@@ -271,7 +268,6 @@ open class QRViewModel(
                 }
             }.disposeWith(disposable)
     }
-
 
     val cityLoading = MutableLiveData(false)
     fun getCities(state: String) {

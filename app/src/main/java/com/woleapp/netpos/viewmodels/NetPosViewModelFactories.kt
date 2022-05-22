@@ -3,7 +3,7 @@ package com.woleapp.netpos.viewmodels
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import com.woleapp.netpos.database.AppDatabase
-import com.woleapp.netpos.network.*
+import com.woleapp.netpos.network.* // ktlint-disable no-wildcard-imports
 
 class NetPosViewModelFactories() : ViewModelProvider.Factory {
     var masterPassQRService: MasterPassQRService = StormApiClient.getMasterPassQrServiceInstance()
@@ -26,10 +26,12 @@ class NetPosViewModelFactories() : ViewModelProvider.Factory {
                 blueCodeService
             ) as T
             modelClass.isAssignableFrom(TransactionsViewModel::class.java) -> TransactionsViewModel(appDatabase!!) as T
-            modelClass.isAssignableFrom(BlueCodeViewModel::class.java) -> BlueCodeViewModel(masterPassQRService,
+            modelClass.isAssignableFrom(BlueCodeViewModel::class.java) -> BlueCodeViewModel(
+                masterPassQRService,
                 nibssQRService,
                 zenithQrService,
-                blueCodeService) as T
+                blueCodeService
+            ) as T
             else -> throw IllegalArgumentException("Cannot instantiate viewModel")
         }
     }

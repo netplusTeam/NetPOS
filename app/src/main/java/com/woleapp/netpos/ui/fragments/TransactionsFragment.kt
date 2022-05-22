@@ -51,7 +51,7 @@ class TransactionsFragment : BaseFragment() {
             ) {
                 inputPasswordDialog.cancel()
                 addFragmentWithoutRemove(TransactionHistoryFragment.newInstance(action = HISTORY_ACTION_REPRINT))
-            }else
+            } else
                 Toast.makeText(requireContext(), "Password is incorrect", Toast.LENGTH_SHORT).show()
         }
         inputPasswordDialog.setOnCancelListener {
@@ -113,7 +113,7 @@ class TransactionsFragment : BaseFragment() {
                     null
                 }
                 4 -> {
-                    //showQRBottomSheetDialog()
+                    // showQRBottomSheetDialog()
                     QRFragment()
                 }
                 5 -> TransactionHistoryFragment.newInstance(action = HISTORY_ACTION_REPRINT)
@@ -147,11 +147,12 @@ class TransactionsFragment : BaseFragment() {
                     QRFragment()
                 }
                 5 -> {
-                    if (BuildConfig.FLAVOR == "wema" && Prefs.contains(PREF_REPRINT_PASSWORD)){
+                    if (BuildConfig.FLAVOR == "wema" && Prefs.contains(PREF_REPRINT_PASSWORD)) {
                         inputPasswordDialog.show()
                         return@ServiceAdapter
                     }
-                    TransactionHistoryFragment.newInstance(action = HISTORY_ACTION_REPRINT)
+                    ReprintFragment()
+//                    TransactionHistoryFragment.newInstance(action = HISTORY_ACTION_REPRINT)
                 }
                 6 -> SalesFragment.newInstance(isVend = true)
                 else -> SalesFragment.newInstance(TransactionType.CASH_ADVANCE)
@@ -161,13 +162,13 @@ class TransactionsFragment : BaseFragment() {
             }
         }
         val listOfService = arrayListOf<Service>(
-                Service(0, "Purchase", R.drawable.ic_purchase),
-                Service(1, "Cash", R.drawable.ic_baseline_money_24),
-                Service(2, "PRE AUTHORIZATION", R.drawable.ic_pre_auth),
-                Service(3, "Cash Advance", R.drawable.ic_pay_cash_icon),
-                Service(4, "QR", R.drawable.ic_qr_code),
-                Service(5, "Reprint", R.drawable.ic_print),
-                Service(6, "VEND", R.drawable.ic_vend)
+            Service(0, "Purchase", R.drawable.ic_purchase),
+            Service(1, "Cash", R.drawable.ic_baseline_money_24),
+            Service(2, "PRE AUTHORIZATION", R.drawable.ic_pre_auth),
+            Service(3, "Cash Advance", R.drawable.ic_pay_cash_icon),
+            Service(4, "QR", R.drawable.ic_qr_code),
+            Service(5, "Reprint", R.drawable.ic_print),
+            Service(6, "VEND", R.drawable.ic_vend)
         )
         adapter.submitList(listOfService)
     }

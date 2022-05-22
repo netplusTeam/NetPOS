@@ -1,6 +1,7 @@
 package com.woleapp.netpos.network
 
 import com.woleapp.netpos.model.GateWayTransactionResponse
+import com.woleapp.netpos.model.GetEndOfDayModelFromNewServer
 import io.reactivex.Single
 import okhttp3.OkHttpClient
 import okhttp3.logging.HttpLoggingInterceptor

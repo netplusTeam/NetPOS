@@ -56,11 +56,21 @@ interface StormApiService {
         @Body data: DataToLogAfterConnectingToNibss
     ): Single<LogToBackendResponse>
 
-    @GET("/pos_transaction/partners/{partnerId}/{terminalId}/{page}")
-    fun getEodFromRemote(
-        @Path("partnerId") partnerId: String,
+    @GET("/pos_transactions/terminal/{terminalId}/btw/{from}/{to}/{page}/{pageSize}")
+    fun getTransactionsFromNewService(
+        @Path("terminalId") terminalId: String,
+        @Path("from") from: String,
+        @Path("to") to: String,
+        @Path("page") page: Int,
+        @Path("pageSize") pageSize: Int
+    ): Single<GetEndOfDayModelFromNewServer>
+
+    @GET("/pos_transactions/terminal/{terminalId}/{page}/{pageSize}")
+    fun getTransactionsFromNewServiceByTerminalId(
         @Path("terminalId") terminalId: String,
         @Path("page") page: Int,
-        @Query("pageSize") pageSize: Int,
-    ): Single<LogToBackendResponse>
+        @Path("pageSize") pageSize: Int
+    ): Single<GetEndOfDayModelFromNewServer>
+    // http://localhost:8800/pos_transactions/terminal/2101JJ91/btw/2021-09-24 00:00:00/2021-09-24 23:59:59/1/2
+// https://device.netpluspay.com/pos_transactions/terminal/:terminalId?/:page?/:pageSize
 }

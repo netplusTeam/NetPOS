@@ -1,19 +1,25 @@
 package com.woleapp.netpos.util
 
-import java.time.*
+import java.time.LocalTime
+import java.time.ZoneId
+import java.time.ZonedDateTime
 import java.util.*
 
 fun getBeginningOfDay(timeStamp: Long? = null): Long =
-    (if (timeStamp == null) ZonedDateTime.now() else ZonedDateTime.of(
-        Date(timeStamp).toInstant().atZone(ZoneId.systemDefault()).toLocalDateTime(),
-        ZoneId.systemDefault()
-    )).with(LocalTime.MIN).toEpochSecond() * 1000
+    (
+        if (timeStamp == null) ZonedDateTime.now() else ZonedDateTime.of(
+            Date(timeStamp).toInstant().atZone(ZoneId.systemDefault()).toLocalDateTime(),
+            ZoneId.systemDefault()
+        )
+        ).with(LocalTime.MIN).toEpochSecond() * 1000
 
 fun getEndOfDayTimeStamp(timeStamp: Long? = null): Long =
-    (if (timeStamp == null) ZonedDateTime.now() else ZonedDateTime.of(
-        Date(timeStamp).toInstant().atZone(ZoneId.systemDefault()).toLocalDateTime(),
-        ZoneId.systemDefault()
-    )).with(LocalTime.MAX).toEpochSecond() * 1000
+    (
+        if (timeStamp == null) ZonedDateTime.now() else ZonedDateTime.of(
+            Date(timeStamp).toInstant().atZone(ZoneId.systemDefault()).toLocalDateTime(),
+            ZoneId.systemDefault()
+        )
+        ).with(LocalTime.MAX).toEpochSecond() * 1000
 
 fun playAround(): String {
     val localDateTime =

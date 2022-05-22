@@ -9,7 +9,6 @@ import androidx.lifecycle.ViewModel
 import androidx.paging.LivePagedListBuilder
 import androidx.paging.PagedList
 import com.danbamitale.epmslib.entities.* // ktlint-disable no-wildcard-imports
-import com.danbamitale.epmslib.entities.TransactionResponse
 import com.danbamitale.epmslib.processors.TransactionProcessor
 import com.danbamitale.epmslib.utils.IsoAccountType
 import com.google.gson.JsonObject
@@ -17,8 +16,8 @@ import com.netpluspay.netpossdk.printer.PrinterResponse
 import com.pixplicity.easyprefs.library.Prefs
 import com.woleapp.netpos.database.AppDatabase
 import com.woleapp.netpos.database.TransactionBoundaryCallBack
-import com.woleapp.netpos.model.* // ktlint-disable no-wildcard-imports
-import com.woleapp.netpos.network.NetPOSGatewayApi
+import com.woleapp.netpos.model.GetEodFromNewServiceModel
+import com.woleapp.netpos.model.User
 import com.woleapp.netpos.network.StormApiClient
 import com.woleapp.netpos.nibss.NetPosTerminalConfig
 import com.woleapp.netpos.util.* // ktlint-disable no-wildcard-imports
@@ -89,6 +88,14 @@ class TransactionsViewModel(private val appDatabase: AppDatabase) : ViewModel() 
     val pagedTransaction: LiveData<PagedList<TransactionResponse>>
 
     init {
+        val initialParams =
+            GetEodFromNewServiceModel(
+                terminalId = NetPosTerminalConfig.getTerminalId(),
+                from = "",
+                to = "",
+                page = 1,
+                pageSize = 20
+            )
         user = Singletons.getCurrentlyLoggedInUser()
         val config = PagedList.Config.Builder()
             .setPageSize(20)
@@ -98,7 +105,8 @@ class TransactionsViewModel(private val appDatabase: AppDatabase) : ViewModel() 
             HashMap<String, String>().apply {
                 put("terminalId", NetPosTerminalConfig.getTerminalId())
             },
-            NetPOSGatewayApi.getInstance(),
+            initialParams,
+            StormApiClient.getStormApiLoginInstance(),
             appDatabase.transactionResponseDao()
         )
 
@@ -112,6 +120,22 @@ class TransactionsViewModel(private val appDatabase: AppDatabase) : ViewModel() 
 
     fun setSelectedTransaction(transactionResponse: TransactionResponse) {
         lastTransactionResponse.value = transactionResponse
+    }
+
+    fun insertIntoDatabase(transactionResponse: List<TransactionResponse>) {
+        compositeDisposable.add(
+            appDatabase.transactionResponseDao().insertNewTransaction(transactionResponse)
+                .subscribeOn(Schedulers.io())
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribe { t1, t2 ->
+                    t1?.let {
+                        Timber.d("size" + it.size)
+                    }
+                    t2?.let {
+                        Timber.d(it.localizedMessage)
+                    }
+                }
+        )
     }
 
 //    fun getTransactions() =
@@ -214,7 +238,10 @@ class TransactionsViewModel(private val appDatabase: AppDatabase) : ViewModel() 
             }
 
         if (Build.MODEL.equals("Pro", true) || Build.MODEL.equals("P3", true)) {
-            Log.d("DATAAAA", Prefs.getString(PREF_PRINTER_SETTINGS, PREF_VALUE_PRINT_CUSTOMER_COPY_ONLY))
+            Log.d(
+                "DATAAAA",
+                Prefs.getString(PREF_PRINTER_SETTINGS, PREF_VALUE_PRINT_CUSTOMER_COPY_ONLY)
+            )
             when (Prefs.getString(PREF_PRINTER_SETTINGS, PREF_VALUE_PRINT_CUSTOMER_COPY_ONLY)) {
                 PREF_VALUE_PRINT_CUSTOMER_COPY_ONLY -> startPrintingReceipt(
                     context,

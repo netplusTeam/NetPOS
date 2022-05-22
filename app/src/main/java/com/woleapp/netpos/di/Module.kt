@@ -72,10 +72,6 @@ object Module {
 
     @Provides
     @Singleton
-    fun providesLocalDataBase(@ApplicationContext context: Context) =
-        Room.databaseBuilder(
-            context,
-            AppDatabase::class.java,
-            APP_DB_NAME
-        ).build()
+    fun providesLocalDataBase(@ApplicationContext context: Context): AppDatabase =
+        AppDatabase.getDatabaseInstance(context)
 }

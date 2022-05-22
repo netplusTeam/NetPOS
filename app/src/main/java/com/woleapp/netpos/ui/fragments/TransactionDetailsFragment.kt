@@ -56,7 +56,7 @@ class TransactionDetailsFragment : BaseFragment() {
                 dialogPrintTypeBinding.apply {
                     cancel.setOnClickListener {
                         printTypeDialog.dismiss()
-                        //viewModel.finish()
+                        // viewModel.finish()
                     }
                     customer.setOnClickListener {
                         viewModel.startPrintingReceipt(requireContext(), isMerchantCopy = false)
@@ -76,7 +76,7 @@ class TransactionDetailsFragment : BaseFragment() {
                 }
                 setNegativeButton("Dismiss") { d, _ ->
                     d.cancel()
-                    //viewModel.finish()
+                    // viewModel.finish()
                 }
             }.create()
         progressDialog = ProgressDialog(requireContext())
@@ -118,7 +118,7 @@ class TransactionDetailsFragment : BaseFragment() {
         binding.details.text = viewModel.lastTransactionResponse.value!!.builder().toString()
         viewModel.done.observe(viewLifecycleOwner) {
             if (it) {
-                //Toast.makeText(requireContext(), "Done", Toast.LENGTH_SHORT).show()
+                // Toast.makeText(requireContext(), "Done", Toast.LENGTH_SHORT).show()
                 viewModel.reset()
             }
         }
@@ -126,7 +126,6 @@ class TransactionDetailsFragment : BaseFragment() {
             event.getContentIfNotHandled()?.let {
                 if (it) progressDialog.show() else progressDialog.dismiss()
             }
-
         }
         viewModel.beginGetCardDetails.observe(viewLifecycleOwner) { event ->
             event.getContentIfNotHandled()?.let { startCardReader ->
@@ -192,7 +191,7 @@ class TransactionDetailsFragment : BaseFragment() {
                 }
             }
         }
-        viewModel.shouldRefreshNibssKeys.observe(viewLifecycleOwner){event ->
+        viewModel.shouldRefreshNibssKeys.observe(viewLifecycleOwner) { event ->
             event.getContentIfNotHandled()?.let {
                 if (it)
                     NetPosTerminalConfig.init(requireContext().applicationContext, configureSilently = true)
@@ -258,7 +257,8 @@ class TransactionDetailsFragment : BaseFragment() {
         Snackbar.make(
             requireActivity().findViewById(
                 R.id.container_main
-            ), message, Snackbar.LENGTH_LONG
+            ),
+            message, Snackbar.LENGTH_LONG
         ).show()
     }
 }
