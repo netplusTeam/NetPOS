@@ -49,19 +49,24 @@ class TransactionBoundaryCallBack(
     override fun onItemAtEndLoaded(itemAtEnd: TransactionResponse) {
         queryParams.apply {
             put("count", "20")
-            pageNumberTracker = Prefs.getInt(TRANSACTION_BY_TID_LAST_LOADED_PAGE, 0).plus(1)
             put("page", Prefs.getInt(TRANSACTION_BY_TID_LAST_LOADED_PAGE, 0).plus(1).toString())
         }
         val pageNumber = Prefs.getInt(TRANSACTION_BY_TID_LAST_LOADED_PAGE, 0).plus(1)
         val localParams = GetEodFromNewServiceModel(params.terminalId, "", "", pageNumber, 20)
+        pageNumberTracker = pageNumber
+        Timber.d("TRACK"+pageNumberTracker)
+        Prefs.putInt(TRANSACTION_BY_TID_LAST_LOADED_PAGE, (pageNumberTracker - 1))
         getTransactionByTerminalId(localParams)
     }
 
     private fun getTransaction(
         params: GetEodFromNewServiceModel
     ) {
-        if (dataLoadedFinished || isLoadInProgress)
+        if (dataLoadedFinished || isLoadInProgress){
+            Timber.d("TRACK"+pageNumberTracker)
+            Prefs.putInt(TRANSACTION_BY_TID_LAST_LOADED_PAGE, (pageNumberTracker - 1))
             return
+        }
         isLoadInProgress = true
         stormApiService.getTransactionsFromNewService(
             params.terminalId,
@@ -92,8 +97,8 @@ class TransactionBoundaryCallBack(
             .subscribe { t1, t2 ->
                 t1?.let {
                     loadingState.value = Event(LoadingDone)
-                    Prefs.putInt(TRANSACTION_BY_TID_LAST_LOADED_PAGE, it.toInt())
-                    Timber.e("TCal" + it)
+                    Timber.d("TRACK"+pageNumberTracker)
+                    Prefs.putInt(TRANSACTION_BY_TID_LAST_LOADED_PAGE, (pageNumberTracker - 1))
                 }
                 t2?.let {
                     loadingState.value =
@@ -106,8 +111,11 @@ class TransactionBoundaryCallBack(
     private fun getTransactionByTerminalId(
         params: GetEodFromNewServiceModel
     ) {
-        if (dataLoadedFinished || isLoadInProgress)
+        if (dataLoadedFinished || isLoadInProgress) {
+            Prefs.putInt(TRANSACTION_BY_TID_LAST_LOADED_PAGE, (pageNumberTracker - 1))
             return
+        }
+
         isLoadInProgress = true
         stormApiService.getTransactionsFromNewServiceByTerminalId(
             params.terminalId,
@@ -117,7 +125,8 @@ class TransactionBoundaryCallBack(
             .retry(3)
             .flatMap {
                 if (it.data.rows.isEmpty())
-                    dataLoadedFinished = true
+                    Prefs.putInt(TRANSACTION_BY_TID_LAST_LOADED_PAGE, (pageNumberTracker - 1))
+                dataLoadedFinished = true
                 it.data.rows = it.data.rows.map { transaction ->
                     transaction.amount = if (transaction.amount is Int) (transaction.amount as Int).times(100) else (transaction.amount as Double)
                         .times(100)
@@ -138,8 +147,8 @@ class TransactionBoundaryCallBack(
             .subscribe { t1, t2 ->
                 t1?.let {
                     loadingState.value = Event(LoadingDone)
-                    Prefs.putInt(TRANSACTION_BY_TID_LAST_LOADED_PAGE, it.toInt())
-                    Timber.e("TCal" + it)
+                    Timber.d("TRACK"+pageNumberTracker)
+                    Prefs.putInt(TRANSACTION_BY_TID_LAST_LOADED_PAGE, (pageNumberTracker - 1))
                 }
                 t2?.let {
                     loadingState.value =
