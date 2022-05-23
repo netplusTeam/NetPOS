@@ -11,6 +11,7 @@ import androidx.recyclerview.widget.DividerItemDecoration
 import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
 import com.danbamitale.epmslib.entities.TransactionResponse
+import com.pixplicity.easyprefs.library.Prefs
 import com.woleapp.netpos.R
 import com.woleapp.netpos.adapter.EODAdapter
 import com.woleapp.netpos.adapter.TransactionClickListener
@@ -23,11 +24,13 @@ import com.woleapp.netpos.viewmodels.NetPosViewModelFactories
 import com.woleapp.netpos.viewmodels.TransactionsViewModel
 
 class TransactionHistoryFragment : BaseFragment() {
+    private lateinit var globalAction: String
 
     companion object {
         fun newInstance(action: String = HISTORY_ACTION_DEFAULT) =
             TransactionHistoryFragment().apply {
                 arguments = Bundle().apply {
+                    globalAction = action
                     putString(HISTORY_ACTION, action)
                 }
             }
@@ -59,6 +62,7 @@ class TransactionHistoryFragment : BaseFragment() {
             override fun invoke(p1: TransactionResponse) {
                 viewModel.setSelectedTransaction(p1)
                 viewModel.setAction(HISTORY_ACTION_REPRINT)
+                globalAction = HISTORY_ACTION_REPRINT
                 addFragmentWithoutRemove(TransactionDetailsFragment())
             }
         }
@@ -112,6 +116,14 @@ class TransactionHistoryFragment : BaseFragment() {
             (adapter as ListAdapter<TransactionResponse, TransactionsViewHolder>).submitList(eodList)
         }
         setSelectedTab()
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        if (globalAction == HISTORY_ACTION_REPRINT) {
+            val currentPage = Prefs.getInt(TRANSACTION_BY_TID_LAST_LOADED_PAGE, 1)
+            Prefs.putInt(TRANSACTION_BY_TID_LAST_LOADED_PAGE, (currentPage - 1))
+        }
     }
 
     private fun setSelectedTab(selectedTab: Int = 0) {

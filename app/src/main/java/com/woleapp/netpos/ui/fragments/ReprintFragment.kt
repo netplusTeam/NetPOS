@@ -57,39 +57,6 @@ class ReprintFragment : BaseFragment() {
                     page = 1,
                     pageSize = 20
                 )
-//                stormApiService.getTransactionsFromNewServiceByTerminalId(
-//                    parameters.terminalId,
-//                    parameters.page,
-//                    parameters.pageSize
-//                ).flatMap {
-//
-//                    println("====CHECKING_PAYLOAD" + it.data.rows.toString())
-//
-//                    transactionViewModel.insertIntoDatabase(it.data.rows.mapRowToTransactionResponse())
-//                    Timber.d(it.data.rows.toString())
-//
-//                    it.data.rows = it.data.rows.map { transaction ->
-//                        transaction.amount = transaction.amount.times(100)
-//                        transaction
-//                    }
-//                    Single.just(it)
-//                }.subscribeOn(Schedulers.io())
-//                    .observeOn(AndroidSchedulers.mainThread())
-//                    .doFinally {
-//                        endOfDayProgressDialog.dismiss()
-//                    }
-//                    .subscribe { t1, t2 ->
-//                        t1?.let {
-//                        }
-//                        t2?.let {
-//                            Timber.d(it)
-//                            Toast.makeText(
-//                                requireContext(),
-//                                "An error occurred while fetching end of day, try again",
-//                                Toast.LENGTH_LONG
-//                            ).show()
-//                        }
-//                    }.disposeWith(compositeDisposable)
                 addFragmentWithoutRemove(TransactionHistoryFragment.newInstance(action = HISTORY_ACTION_REPRINT))
             }
 //            else if (it.id == 1)
