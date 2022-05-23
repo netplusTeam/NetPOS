@@ -30,6 +30,7 @@ import com.woleapp.netpos.network.NetPOSGatewayApi
 import com.woleapp.netpos.network.StormApiClient
 import com.woleapp.netpos.nibss.NetPosTerminalConfig
 import com.woleapp.netpos.util.* // ktlint-disable no-wildcard-imports
+import com.woleapp.netpos.util.ModelMapper.mapEntityToTransFromGateWay
 import com.woleapp.netpos.util.ModelMapper.mapRowToTransactionResponse
 import com.woleapp.netpos.util.ModelMapper.mapTransFromGateWayToEntity
 import com.woleapp.netpos.util.RandomNumUtil.getDateInMilliSecsForLocal
@@ -358,7 +359,8 @@ class DashboardFragment : BaseFragment() {
             Timber.d(it.data.rows.toString())
 
             it.data.rows = it.data.rows.map { transaction ->
-                transaction.amount = transaction.amount.times(100)
+                transaction.amount = if (transaction.amount is Int) (transaction.amount as Int).times(100) else (transaction.amount as Double)
+                    .times(100)
                 transaction
             }
             Single.just(it)
@@ -385,11 +387,17 @@ class DashboardFragment : BaseFragment() {
             .subscribe { t1, t2 ->
                 t1?.let {
                     Timber.e("DISCOVER61" + it.toString())
-                    if (it is GetEndOfDayModelFromNewServer) {
-                        Timber.e("DISCOVER6%s", it.data.count.toString())
-                        showEndOfDayBottomSheetDialog(it.data.rows.mapRowToTransactionResponse())
-                    } else {
-                        showEndOfDayBottomSheetDialog(listOf<TransactionResponse>())
+                    when (it) {
+                        is GetEndOfDayModelFromNewServer -> {
+                            Timber.e("DISCOVER6%s", it.data.count.toString())
+                            showEndOfDayBottomSheetDialog(it.data.rows.mapRowToTransactionResponse())
+                        }
+                        is GateWayTransactionResponse -> {
+                            showEndOfDayBottomSheetDialog(mapEntityToTransFromGateWay(it.result))
+                        }
+                        else -> {
+                            showEndOfDayBottomSheetDialog(listOf<TransactionResponse>())
+                        }
                     }
                 }
                 t2?.let {

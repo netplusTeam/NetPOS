@@ -29,6 +29,8 @@ import com.woleapp.netpos.util.RandomNumUtil.formattedTime
 import com.woleapp.netpos.util.RandomNumUtil.generateRandomRrn
 import com.woleapp.netpos.util.RandomNumUtil.getCurrentDateTime
 import com.woleapp.netpos.util.RandomNumUtil.getDate
+import com.woleapp.netpos.util.RandomNumUtil.getDateInMillis
+import com.woleapp.netpos.util.RandomNumUtil.getDateInMillis2
 import com.woleapp.netpos.util.RandomNumUtil.mapDanbamitaleResponseToResponseX
 import io.reactivex.Single
 import io.reactivex.android.schedulers.AndroidSchedulers
@@ -222,7 +224,7 @@ class SalesViewModel(private val transactionResponseDao: TransactionResponseDao)
                             responseCode = "99",
                             responseDE55 = "",
                             terminalId = user!!.terminal_id!!,
-                            transactionTimeInMillis = 0,
+                            transactionTimeInMillis = getDateInMillis2(transDateTime).toInt(),
                             transactionType = requestData.transactionType.name,
                             transmissionDateTime = transDateTime
                         )
@@ -246,14 +248,12 @@ class SalesViewModel(private val transactionResponseDao: TransactionResponseDao)
                     Prefs.remove(PREF_KEYHOLDER)
                     _shouldRefreshNibssKeys.postValue(Event(true))
                 }
-
+                Timber.d("T_ISSU"+it.transmissionDateTime)
+                Timber.d("T_ISSU2"+it.transactionTimeInMillis)
                 it.cardHolder = customerName.value!!
                 it.cardLabel = cardScheme!!
                 it.amount = requestData.amount
                 lastTransactionResponse.postValue(it)
-                Timber.e(it.toString())
-                Timber.e(it.responseCode)
-                Timber.e(it.responseMessage)
                 _message.postValue(Event(if (it.responseCode == "00") "Transaction Approved" else "Transaction Not approved"))
                 transactionResponseDao
                     .insertNewTransaction(it)

@@ -27,6 +27,7 @@ class TransactionBoundaryCallBack(
     private var isLoadInProgress = false
     private var dataLoadedFinished = false
     private var loadingState = MutableLiveData<Event<LoadingState>>()
+    private var pageNumberTracker = 0
 
     override fun onZeroItemsLoaded() {
         queryParams.apply {
@@ -48,6 +49,7 @@ class TransactionBoundaryCallBack(
     override fun onItemAtEndLoaded(itemAtEnd: TransactionResponse) {
         queryParams.apply {
             put("count", "20")
+            pageNumberTracker = Prefs.getInt(TRANSACTION_BY_TID_LAST_LOADED_PAGE, 0).plus(1)
             put("page", Prefs.getInt(TRANSACTION_BY_TID_LAST_LOADED_PAGE, 0).plus(1).toString())
         }
         val pageNumber = Prefs.getInt(TRANSACTION_BY_TID_LAST_LOADED_PAGE, 0).plus(1)
@@ -71,14 +73,14 @@ class TransactionBoundaryCallBack(
             .retry(3)
             .flatMap {
                 if (it.data.rows.isEmpty())
-                    dataLoadedFinished = true
+                    Prefs.putInt(TRANSACTION_BY_TID_LAST_LOADED_PAGE, (pageNumberTracker - 1))
+                dataLoadedFinished = true
                 it.data.rows = it.data.rows.map { transaction ->
                     transaction.amount =
-                        if (transaction.amount is Int) transaction.amount.times(100) else transaction.amount.toInt()
+                        if (transaction.amount is Int) (transaction.amount as Int).times(100) else (transaction.amount as Double)
                             .times(100)
                     transaction
                 }
-                Timber.d("ISOKkk==>" + it.data.rows.mapRowToTransactionResponse().toString())
                 transactionResponseDao.insertNewTransaction(it.data.rows.mapRowToTransactionResponse())
                 Single.just(queryParams["page"])
             }
@@ -117,13 +119,10 @@ class TransactionBoundaryCallBack(
                 if (it.data.rows.isEmpty())
                     dataLoadedFinished = true
                 it.data.rows = it.data.rows.map { transaction ->
-                    transaction.amount = transaction.amount.times(100)
+                    transaction.amount = if (transaction.amount is Int) (transaction.amount as Int).times(100) else (transaction.amount as Double)
+                        .times(100)
                     transaction
                 }
-                Timber.d(
-                    "ISOKkk==>" + it.data.rows.count() + it.data.rows.mapRowToTransactionResponse()
-                        .toString()
-                )
                 transactionResponseDao.insertNewTransaction(it.data.rows.mapRowToTransactionResponse())
             }
             .doFinally {

@@ -42,6 +42,7 @@ object ModelMapper {
     fun mapEntityToTransFromGateWay(trans: List<TransactionResponseModelFromGateWay>) =
         trans.map {
             Log.d("TRANS_MILLIS", it.transactionTime)
+            Log.d("TRANS_MILLISD", it.transactionTime)
             println("TRANS_MILLIS" + it.transactionTime)
             TransactionResponse().apply {
                 RRN = it.RRN
@@ -74,7 +75,8 @@ object ModelMapper {
                 acquiringInstCode = it.acquiringInstCode
                 additionalAmount_54 =
                     if (it.additionalAmount != null) it.additionalAmount.toString() else ""
-                amount = it.amount.toLong()
+                amount =
+                    if (it.amount is Int) (it.amount as Int).toLong() else (it.amount as Double).toLong()
                 authCode = it.authCode
                 cardExpiry = it.cardExpiry
                 cardHolder = it.cardHolder

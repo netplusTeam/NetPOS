@@ -14,7 +14,7 @@ object RandomNumUtil {
     fun getDateInMillis(dateTime: String): Long {
         val format = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'.000Z'")
         val date = format.parse(dateTime)
-        return date!!.time
+        return (date!!.time) + 3600000
     }
 
     @SuppressLint("SimpleDateFormat")
@@ -39,7 +39,7 @@ object RandomNumUtil {
     fun getDateInMillis2(dateTime: String): Long {
         val format = SimpleDateFormat("dd-MM-yyyy hh:mm:ss")
         val date = format.parse(dateTime)
-        return date!!.time
+        return date!!.time + 3600000
     }
 
     @SuppressLint("SimpleDateFormat")

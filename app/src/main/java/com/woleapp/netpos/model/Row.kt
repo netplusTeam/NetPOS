@@ -6,7 +6,7 @@ data class Row(
     var additionalAmount: Any,
     var agentName: String,
     var aid: String,
-    var amount: Int,
+    var amount: Any,
     var appCryptogram: String,
     var authCode: String,
     var cardExpiry: String,
