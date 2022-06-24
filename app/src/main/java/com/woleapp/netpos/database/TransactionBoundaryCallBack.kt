@@ -35,6 +35,7 @@ class TransactionBoundaryCallBack(
             put("page", "1")
         }
         loadingState.value = Event(LoadingInitial)
+        Timber.d("WEIRD_TID ==> ${params.terminalId}")
         val localParams =
             GetEodFromNewServiceModel(params.terminalId, "", "", 1, 20)
         getTransactionByTerminalId(localParams)
@@ -62,6 +63,10 @@ class TransactionBoundaryCallBack(
         if (dataLoadedFinished || isLoadInProgress)
             return
         isLoadInProgress = true
+        Timber.d("WEIRD_TERMINAL ==> ${params.terminalId}")
+        Timber.d("WEIRD_FROM ==> ${params.from}")
+        Timber.d("WEIRD_TO ==> ${params.to}")
+        Timber.d("WEIRD_PAGE ==> ${params.page}")
         stormApiService.getTransactionsFromNewService(
             params.terminalId,
             params.from,

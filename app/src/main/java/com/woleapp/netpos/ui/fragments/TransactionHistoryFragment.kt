@@ -19,7 +19,7 @@ import com.woleapp.netpos.adapter.TransactionsAdapter
 import com.woleapp.netpos.adapter.TransactionsViewHolder
 import com.woleapp.netpos.database.AppDatabase
 import com.woleapp.netpos.databinding.FragmentTransactionHistoryBinding
-import com.woleapp.netpos.util.*
+import com.woleapp.netpos.util.* // ktlint-disable no-wildcard-imports
 import com.woleapp.netpos.viewmodels.NetPosViewModelFactories
 import com.woleapp.netpos.viewmodels.TransactionsViewModel
 

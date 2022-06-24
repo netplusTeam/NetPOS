@@ -70,26 +70,26 @@ object ModelMapper {
     fun List<Row>.mapRowToTransactionResponse() =
         map {
             TransactionResponse().apply {
-                RRN = it.rrn
-                accountType = IsoAccountType.parseStringAccountType(it.accountType)
-                acquiringInstCode = it.acquiringInstCode
+                RRN = it.rrn ?: ""
+                accountType = it.accountType?.let { it1 -> IsoAccountType.parseStringAccountType(it1) } ?: IsoAccountType.DEFAULT_UNSPECIFIED
+                acquiringInstCode = it.acquiringInstCode ?: ""
                 additionalAmount_54 =
                     if (it.additionalAmount != null) it.additionalAmount.toString() else ""
                 amount =
                     if (it.amount is Int) (it.amount as Int).toLong() else (it.amount as Double).toLong()
-                authCode = it.authCode
-                cardExpiry = it.cardExpiry
-                cardHolder = it.cardHolder
-                cardLabel = it.cardLabel
+                authCode = it.authCode ?: ""
+                cardExpiry = it.cardExpiry ?: ""
+                cardHolder = it.cardHolder ?: ""
+                cardLabel = it.cardLabel ?: ""
                 errorMessage = it.responseMessage
-                maskedPan = it.maskedPan
-                originalForwardingInstCode = it.originalForwardingInstCode
-                responseCode = it.responseCode
-                terminalId = it.terminalId
+                maskedPan = it.maskedPan ?: ""
+                originalForwardingInstCode = it.originalForwardingInstCode ?: ""
+                responseCode = it.responseCode ?: ""
+                terminalId = it.terminalId ?: ""
                 transactionTimeInMillis =
-                    if (it.transactionTime.contains("-")) getDateInMillis(it.transactionTime) else it.transactionTime.toLong()
-                transactionType = TransactionType.valueOf(it.transactionType)
-                transmissionDateTime = it.transactionTime
+                    if (it.transactionTime?.contains("-") == true) getDateInMillis(it.transactionTime!!) else it.transactionTime?.toLong() ?: 0L
+                transactionType = it.transactionType?.let { it1 -> TransactionType.valueOf(it1) } ?: TransactionType.PURCHASE
+                transmissionDateTime = it.transactionTime ?: ""
             }
         }
 }

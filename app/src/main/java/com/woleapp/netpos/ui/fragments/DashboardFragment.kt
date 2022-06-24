@@ -340,12 +340,17 @@ class DashboardFragment : BaseFragment() {
         Timber.d(df.format(be1))
 
         val parameters = GetEodFromNewServiceModel(
-            NetPosTerminalConfig.getTerminalId(),
+            NetPosTerminalConfig.getTerminalId().trim(),
             getDateInTheFormatExpectedByTheNewService(df.format(be)),
             getDateInTheFormatExpectedByTheNewServiceForEnd(df.format(be)),
             1,
             1000
         )
+
+        Timber.d("WEIRD_TERMINAL_PARAM ==> ${NetPosTerminalConfig.getTerminalId()}a")
+        Timber.d("WEIRD_FROM_PARAM ==> ${parameters.from}")
+        Timber.d("WEIRD_TO_PARAM ==> ${parameters.to}")
+        Timber.d("WEIRD_PAGE_PARAM ==> ${parameters.page}")
         stormApiService.getTransactionsFromNewService(
             parameters.terminalId,
             parameters.from,

@@ -53,7 +53,9 @@ class SalesFragment : BaseFragment() {
     }
 
     private val viewModel by viewModels<SalesViewModel> {
-        SalesViewModelProvider(AppDatabase.getDatabaseInstance(requireContext()).transactionResponseDao())
+        SalesViewModelProvider(
+            AppDatabase.getDatabaseInstance(requireContext()).transactionResponseDao()
+        )
     }
     private lateinit var transactionType: TransactionType
     private lateinit var alertDialog: AlertDialog

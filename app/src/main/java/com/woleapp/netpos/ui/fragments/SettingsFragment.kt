@@ -92,8 +92,8 @@ class SettingsFragment : PreferenceFragmentCompat() {
             true
         }
         sharedPreferences.registerOnSharedPreferenceChangeListener { _, _ ->
-            //Timber.e(Prefs.contains(key).toString())
-            //Timber.e(Prefs.getString(key, ""))
+            // Timber.e(Prefs.contains(key).toString())
+            // Timber.e(Prefs.getString(key, ""))
         }
     }
 }
