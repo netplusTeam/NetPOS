@@ -109,6 +109,7 @@ fun sendSmS(
     transactionResponse: TransactionResponse,
     number: String,
     _smsSent: MutableLiveData<Event<Boolean>>,
+    _message: MutableLiveData<Event<String>>,
     compositeDisposable: CompositeDisposable
 ) {
 
@@ -132,8 +133,7 @@ fun sendSmS(
             t2?.let {
                 Timber.e(it)
                 val httpException = it as? HttpException
-                httpException?.let { e ->
-                }
+                _message.value = Event(it.message ?: "")
                 //MqttHelper.sendPayload(MqttTopics.SMS_EVENTS, smsEvent)
                 _smsSent.value = Event(false)
             }

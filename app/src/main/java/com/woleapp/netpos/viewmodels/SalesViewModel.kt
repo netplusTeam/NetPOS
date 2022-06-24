@@ -123,11 +123,11 @@ class SalesViewModel(private val transactionResponseDao: TransactionResponseDao)
 
     fun validateField() {
         amountDbl = (
-            amount.value!!.toDoubleOrNull() ?: kotlin.run {
-                _message.value = Event("Enter a valid amount")
-                return
-            }
-            ) * 100
+                amount.value!!.toDoubleOrNull() ?: kotlin.run {
+                    _message.value = Event("Enter a valid amount")
+                    return
+                }
+                ) * 100
         if (BuildConfig.FLAVOR == "konga" && (remark.value.isNullOrEmpty() || remark.value!!.length < 10)) {
             _message.value = Event("Remark too short")
             return
@@ -414,35 +414,9 @@ class SalesViewModel(private val transactionResponseDao: TransactionResponseDao)
     }
 
     fun sendSmS(number: String) {
-        val map = JsonObject().apply {
-            addProperty("from", "NetPlus")
-            addProperty("to", "+234${number.substring(1)}")
-            addProperty(
-                "message",
-                lastTransactionResponse.value!!.buildSMSText(remark.value ?: "").toString()
-            )
-        }
-        Timber.e("payload: $map")
-        val auth = "Bearer ${Prefs.getString(PREF_APP_TOKEN, "")}"
-        val body: RequestBody = map.toString()
-            .toRequestBody("application/json; charset=utf-8".toMediaTypeOrNull())
-
-        StormApiClient.getSmsServiceInstance().sendSms(auth, body)
-            .subscribeOn(Schedulers.io())
-            .observeOn(AndroidSchedulers.mainThread())
-            .subscribe { t1, t2 ->
-                t1?.let {
-                    _smsSent.value = Event(true)
-                    Timber.e("Data $it")
-                }
-                t2?.let {
-                    val httpException = it as? HttpException
-                    httpException?.let { e ->
-                    }
-                    _smsSent.value = Event(false)
-                    _toastMessage.value = Event("Error: ${it.localizedMessage}")
-                }
-            }.disposeWith(compositeDisposable)
+        sendSmS(
+            lastTransactionResponse.value!!, number, _smsSent, _message, compositeDisposable
+        )
     }
 
     fun isVend(vend: Boolean) {
@@ -481,11 +455,11 @@ class SalesViewModel(private val transactionResponseDao: TransactionResponseDao)
 
     fun beginCashPayment() {
         (
-            amount.value!!.toDoubleOrNull() ?: kotlin.run {
-                _message.value = Event("Enter a valid amount")
-                return
-            }
-            )
+                amount.value!!.toDoubleOrNull() ?: kotlin.run {
+                    _message.value = Event("Enter a valid amount")
+                    return
+                }
+                )
         val reqBody = JsonObject().apply {
             addProperty("amount", amount.value!!.toDouble())
         }
