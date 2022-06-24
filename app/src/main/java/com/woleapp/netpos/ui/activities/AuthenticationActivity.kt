@@ -8,13 +8,11 @@ import androidx.fragment.app.Fragment
 import com.pixplicity.easyprefs.library.Prefs
 import com.woleapp.netpos.R
 import com.woleapp.netpos.databinding.ActivityAuthenticationBinding
-import com.woleapp.netpos.mqtt.MqttHelper
 import com.woleapp.netpos.nibss.NetPosTerminalConfig
 import com.woleapp.netpos.ui.fragments.LoginFragment
 import com.woleapp.netpos.util.JWTHelper
 import com.woleapp.netpos.util.PREF_AUTHENTICATED
 import com.woleapp.netpos.util.PREF_USER_TOKEN
-
 
 class AuthenticationActivity : AppCompatActivity() {
     private lateinit var binding: ActivityAuthenticationBinding
@@ -23,22 +21,23 @@ class AuthenticationActivity : AppCompatActivity() {
         setTheme(R.style.AppTheme)
         binding = DataBindingUtil.setContentView(this, R.layout.activity_authentication)
         if (Prefs.getBoolean(PREF_AUTHENTICATED, false) && tokenValid()) {
-            startActivity(Intent(this, MainActivity::class.java).apply {
-                flags =
-                    Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
-            })
-            //MqttHelper.init<Nothing>(applicationContext)
+            startActivity(
+                Intent(this, MainActivity::class.java).apply {
+                    flags =
+                        Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+                }
+            )
+            // MqttHelper.init<Nothing>(applicationContext)
             NetPosTerminalConfig.init(applicationContext)
             finish()
         }
         showFragment(LoginFragment())
     }
 
-    private fun tokenValid(): Boolean{
+    private fun tokenValid(): Boolean {
         val token = Prefs.getString(PREF_USER_TOKEN, null)
         return !(token.isNullOrEmpty() || JWTHelper.isExpired(token))
     }
-
 
     private fun showFragment(targetFragment: Fragment) {
         try {
@@ -55,7 +54,5 @@ class AuthenticationActivity : AppCompatActivity() {
         } catch (e: Exception) {
             e.printStackTrace()
         }
-
     }
-
 }

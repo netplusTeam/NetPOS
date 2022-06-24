@@ -7,7 +7,6 @@ import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.graphics.Color
 import android.util.Base64
-import android.util.Log
 import com.danbamitale.epmslib.entities.NibssAID
 import com.danbamitale.epmslib.entities.NibssCA
 import com.google.zxing.BarcodeFormat
@@ -24,7 +23,7 @@ import okhttp3.ResponseBody
 import retrofit2.HttpException
 import timber.log.Timber
 import java.text.SimpleDateFormat
-import java.util.*
+import java.util.* // ktlint-disable no-wildcard-imports
 
 fun Long.formatDate(): String? =
     SimpleDateFormat("yyyy-MM-dd hh:mm a", Locale.getDefault()).format(Date(this))
@@ -167,7 +166,7 @@ fun String.decodeBase64ToBitmap(): Bitmap? {
 fun String.decodeBase64ToBitmapSingle(): Single<Bitmap> = Single.create {
     try {
         it.onSuccess(this.decodeBase64ToBitmap()!!)
-    }catch (e: Exception){
+    } catch (e: Exception) {
         it.onError(e)
     }
 }

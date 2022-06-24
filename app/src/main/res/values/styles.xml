@@ -80,5 +80,12 @@
         <item name="android:windowIsFloating">true</item>
     </style>
 
+    <style name="AppThemeActionBar1" parent="Base.Theme.AppCompat">
+        <!-- Customize your theme here. -->
+        <item name="colorPrimary">@color/colorPrimary</item>
+        <item name="colorPrimaryDark">@color/colorPrimary</item>
+        <item name="colorAccent">@color/colorPrimaryTint</item>
+    </style>
+
     <dimen name="text_size_12sp">12sp</dimen>
 </resources>

@@ -53,7 +53,7 @@ object RandomNumUtil {
     fun getDateInMilliSecsForLocal(date: String): Long {
         val dateFormatter = SimpleDateFormat("dd:MM:yyyy HH:mm:ss")
         val newDate = date.split(" ")[0] + " 00:00:00"
-        Timber.d("DIS_TIME"+newDate.toString())
+        Timber.d("DIS_TIME" + newDate.toString())
         return dateFormatter.parse(newDate)!!.time
     }
 
@@ -61,7 +61,7 @@ object RandomNumUtil {
     fun getDateInMilliSecsForLocalForEndOfDay(date: String): Long {
         val dateFormatter = SimpleDateFormat("dd:MM:yyyy HH:mm:ss")
         val newDate = date.split(" ")[0] + " 23:59:59"
-        Timber.d("DIS_TIME_end"+newDate.toString())
+        Timber.d("DIS_TIME_end%s", newDate)
         return dateFormatter.parse(newDate)!!.time
     }
 

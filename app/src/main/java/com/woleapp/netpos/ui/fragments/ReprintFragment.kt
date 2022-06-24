@@ -6,27 +6,17 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.widget.Toast
-import androidx.fragment.app.activityViewModels
 import androidx.recyclerview.widget.GridLayoutManager
 import com.netpluspay.netpossdk.NetPosSdk
 import com.woleapp.netpos.R
 import com.woleapp.netpos.adapter.ServiceAdapter
-import com.woleapp.netpos.database.AppDatabase
 import com.woleapp.netpos.databinding.FragmentReprintBinding
 import com.woleapp.netpos.model.GetEodFromNewServiceModel
 import com.woleapp.netpos.model.Service
 import com.woleapp.netpos.network.StormApiClient
 import com.woleapp.netpos.nibss.NetPosTerminalConfig
 import com.woleapp.netpos.util.HISTORY_ACTION_REPRINT
-import com.woleapp.netpos.util.ModelMapper.mapRowToTransactionResponse
-import com.woleapp.netpos.util.disposeWith
-import com.woleapp.netpos.viewmodels.NetPosViewModelFactories
-import com.woleapp.netpos.viewmodels.TransactionsViewModel
-import io.reactivex.Single
-import io.reactivex.android.schedulers.AndroidSchedulers
 import io.reactivex.disposables.CompositeDisposable
-import io.reactivex.schedulers.Schedulers
 import timber.log.Timber
 
 class ReprintFragment : BaseFragment() {

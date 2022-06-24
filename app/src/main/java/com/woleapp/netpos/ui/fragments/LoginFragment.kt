@@ -77,10 +77,12 @@ class LoginFragment : BaseFragment() {
             it.getContentIfNotHandled()?.let { authenticated ->
                 if (authenticated) {
                     activity?.apply {
-                        startActivity(Intent(this, MainActivity::class.java).apply {
-                            flags =
-                                Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
-                        })
+                        startActivity(
+                            Intent(this, MainActivity::class.java).apply {
+                                flags =
+                                    Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+                            }
+                        )
                         NetPosTerminalConfig.init(applicationContext)
                         val event = MqttEvent<AuthenticationEventData>().apply {
                             this.event = MqttEvents.AUTHENTICATION.event
@@ -93,7 +95,7 @@ class LoginFragment : BaseFragment() {
                             )
                             this.status = "SUCCESS"
                         }
-                        //MqttHelper.init(applicationContext, event, MqttTopics.AUTHENTICATION)
+                        // MqttHelper.init(applicationContext, event, MqttTopics.AUTHENTICATION)
                         finish()
                     }
                 }

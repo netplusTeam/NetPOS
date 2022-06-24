@@ -5,6 +5,8 @@
       <map>
         <entry key="../../../../../layout/custom_preview.xml" value="0.3169230769230769" />
         <entry key="../../../../layout/custom_preview.xml" value="0.22395833333333334" />
+        <entry key="app/src/heritage/res/mipmap-anydpi-v26/ic_launcher.xml" value="0.2305" />
+        <entry key="app/src/heritage/res/mipmap-anydpi-v26/ic_launcher_round.xml" value="0.16" />
         <entry key="app/src/main/res/drawable/ic_baseline_money_24.xml" value="0.38125" />
         <entry key="app/src/main/res/drawable/ic_baseline_settings.xml" value="0.2235" />
         <entry key="app/src/main/res/drawable/ic_purchase.xml" value="0.2235" />
@@ -22,12 +24,16 @@
         <entry key="app/src/main/res/layout/fragment_sales.xml" value="0.215625" />
         <entry key="app/src/main/res/layout/fragment_transaction_details.xml" value="0.215625" />
         <entry key="app/src/main/res/layout/fragment_transaction_history.xml" value="0.3651041666666667" />
+        <entry key="app/src/main/res/layout/layout_enter_password.xml" value="0.2953125" />
         <entry key="app/src/main/res/layout/layout_pay_with_transfer.xml" value="0.215625" />
         <entry key="app/src/main/res/layout/layout_print_end_of_day.xml" value="0.246875" />
+        <entry key="app/src/main/res/layout/layout_reprint_password_pref_text.xml" value="0.2953125" />
         <entry key="app/src/main/res/layout/layout_service_item.xml" value="0.19375" />
         <entry key="app/src/main/res/layout/qr_bottom_sheet_dialog.xml" value="0.21666666666666667" />
         <entry key="app/src/main/res/mipmap-anydpi-v26/ic_launcher_round.xml" value="0.37538461538461537" />
         <entry key="app/src/main/res/xml/preferences.xml" value="0.19375" />
+        <entry key="app/src/providus/res/mipmap-anydpi-v26/ic_launcher.xml" value="0.16" />
+        <entry key="app/src/providus/res/mipmap-anydpi-v26/ic_launcher_round.xml" value="0.16" />
         <entry key="app/src/zenith/res/drawable/splash_background.xml" value="0.2235" />
         <entry key="app/src/zenith/res/layout/dialog_select_qr_type_dialog.xml" value="0.3651041666666667" />
         <entry key="app/src/zenith/res/layout/layout_enter_password.xml" value="0.3651041666666667" />

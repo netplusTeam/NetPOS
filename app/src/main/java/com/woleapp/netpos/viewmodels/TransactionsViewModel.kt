@@ -238,10 +238,6 @@ class TransactionsViewModel(private val appDatabase: AppDatabase) : ViewModel() 
             }
 
         if (Build.MODEL.equals("Pro", true) || Build.MODEL.equals("P3", true)) {
-            Log.d(
-                "DATAAAA",
-                Prefs.getString(PREF_PRINTER_SETTINGS, PREF_VALUE_PRINT_CUSTOMER_COPY_ONLY)
-            )
             when (Prefs.getString(PREF_PRINTER_SETTINGS, PREF_VALUE_PRINT_CUSTOMER_COPY_ONLY)) {
                 PREF_VALUE_PRINT_CUSTOMER_COPY_ONLY -> startPrintingReceipt(
                     context,

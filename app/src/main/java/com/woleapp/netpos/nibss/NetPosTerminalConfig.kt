@@ -6,7 +6,7 @@ import android.text.format.DateUtils
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.localbroadcastmanager.content.LocalBroadcastManager
-import com.danbamitale.epmslib.entities.*
+import com.danbamitale.epmslib.entities.* // ktlint-disable no-wildcard-imports
 import com.danbamitale.epmslib.processors.TerminalConfigurator
 import com.netpluspay.netpossdk.NetPosSdk
 import com.netpluspay.netpossdk.NetPosSdk.writeTpkKey
@@ -51,7 +51,7 @@ class NetPosTerminalConfig {
         fun getTerminalId() = terminalId ?: ""
 
         private fun setTerminalId() {
-            terminalId = Singletons.getCurrentlyLoggedInUser()?.terminal_id
+            terminalId = (Singletons.getCurrentlyLoggedInUser()?.terminal_id).toString().trim()
         }
 
         private var keyHolder: KeyHolder? = null

@@ -29,7 +29,6 @@ import com.woleapp.netpos.util.RandomNumUtil.formattedTime
 import com.woleapp.netpos.util.RandomNumUtil.generateRandomRrn
 import com.woleapp.netpos.util.RandomNumUtil.getCurrentDateTime
 import com.woleapp.netpos.util.RandomNumUtil.getDate
-import com.woleapp.netpos.util.RandomNumUtil.getDateInMillis
 import com.woleapp.netpos.util.RandomNumUtil.getDateInMillis2
 import com.woleapp.netpos.util.RandomNumUtil.mapDanbamitaleResponseToResponseX
 import io.reactivex.Single
@@ -110,13 +109,13 @@ class SalesViewModel(private val transactionResponseDao: TransactionResponseDao)
 
     private val _showReceiptTypeMutableLiveData = MutableLiveData<Event<Boolean>>()
 
+    val showReceiptType: LiveData<Event<Boolean>>
+        get() = _showReceiptTypeMutableLiveData
+
     init {
         stormApiService = StormApiClient.getStormApiLoginInstance()
         user = Singletons.getCurrentlyLoggedInUser()
     }
-
-    val showReceiptType: LiveData<Event<Boolean>>
-        get() = _showReceiptTypeMutableLiveData
 
     fun setCustomerName(name: String) {
         customerName.value = name
@@ -248,8 +247,8 @@ class SalesViewModel(private val transactionResponseDao: TransactionResponseDao)
                     Prefs.remove(PREF_KEYHOLDER)
                     _shouldRefreshNibssKeys.postValue(Event(true))
                 }
-                Timber.d("T_ISSU"+it.transmissionDateTime)
-                Timber.d("T_ISSU2"+it.transactionTimeInMillis)
+                Timber.d("T_ISSU" + it.transmissionDateTime)
+                Timber.d("T_ISSU2" + it.transactionTimeInMillis)
                 it.cardHolder = customerName.value!!
                 it.cardLabel = cardScheme!!
                 it.amount = requestData.amount

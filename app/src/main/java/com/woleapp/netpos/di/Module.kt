@@ -1,10 +1,8 @@
 package com.woleapp.netpos.di
 
 import android.content.Context
-import androidx.room.Room
 import com.woleapp.netpos.BuildConfig
 import com.woleapp.netpos.database.AppDatabase
-import com.woleapp.netpos.model.AppConstants.APP_DB_NAME
 import com.woleapp.netpos.model.AppConstants.BASE_URL_FOR_LOGGING_TO_BACKEND
 import com.woleapp.netpos.network.StormApiService
 import dagger.Module
@@ -26,8 +24,6 @@ object Module {
     @Provides
     @Singleton
     fun providesBaseUrl() = BASE_URL_FOR_LOGGING_TO_BACKEND
-
-    fun providesRetrofit() {}
 
     @Singleton
     @Provides
