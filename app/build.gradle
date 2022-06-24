@@ -161,7 +161,7 @@ dependencies {
     implementation 'net.sf.j8583:j8583:1.12.0'
 
     //netpos sdk
-    implementation "com.netpluspay.netpossdk:netpossdk:1.0.24"
+    implementation "com.netpluspay.netpossdk:netpossdk:1.0.25"
     //implementation project(path: ':netpossdk')
 
     //Timber
