@@ -26,7 +26,7 @@ import io.reactivex.Single
 import io.reactivex.SingleEmitter
 import timber.log.Timber
 import java.text.SimpleDateFormat
-import java.util.*
+import java.util.* // ktlint-disable no-wildcard-imports
 
 fun newEndOfDayPrintImplementation(
     index: Int,
@@ -182,7 +182,7 @@ fun List<TransactionResponse>.printEndOfDay(
     drawStraightLine(printerManager, textPrintLine)
 
     textPrintLine.apply {
-        content = "AMOUNT   S          RRN          TIME"
+        content = "    RRN       S  TIME   AMOUNT"
     }
     printerManager.appendTextEntity(textPrintLine)
     textPrintLine.apply {
