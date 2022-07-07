@@ -18,13 +18,82 @@ import com.pos.sdk.printer.models.TextPrintLine
 import com.woleapp.netpos.BuildConfig
 import com.woleapp.netpos.R
 import com.woleapp.netpos.model.NipNotification
+import com.woleapp.netpos.util.DateTimeUtil.getDateFromMilliseconds
+import com.woleapp.netpos.util.RandomNumUtil.formatCurrencyAmountUsingCurrentModule
 import io.reactivex.Observable
 import io.reactivex.ObservableEmitter
 import io.reactivex.Single
 import io.reactivex.SingleEmitter
 import timber.log.Timber
 import java.text.SimpleDateFormat
-import java.util.* // ktlint-disable no-wildcard-imports
+import java.util.*
+
+fun newEndOfDayPrintImplementation(
+    index: Int,
+    it: TransactionResponse,
+    printerManager: POIPrinterManage,
+    textPrintLine: TextPrintLine,
+) {
+    val status = if (it.responseCode == "00") "A" else "D"
+    val formattedAmount = it.amount.div(100).formatCurrencyAmountUsingCurrentModule()
+    val formattedTime =
+        getDateFromMilliseconds(it.transactionTimeInMillis).split("T").last()
+    textPrintLine.apply {
+        content = if (it.RRN.startsWith(
+                "F",
+                true
+            )
+        ) "$formattedAmount  $status   $formattedTime\n${it.RRN}" else "$formattedAmount   $status    ${it.RRN}  $formattedTime"
+    }
+    printerManager.appendTextEntity(textPrintLine)
+
+    if (index >= 9) {
+        if (index == 9) {
+            drawStraightLine(printerManager, textPrintLine)
+        } else {
+            if (index > 10 && index % 10 == 0) {
+                drawStraightLine(printerManager, textPrintLine)
+            }
+        }
+    }
+}
+
+private fun drawStraightLine(
+    printerManager: POIPrinterManage,
+    textPrintLine: TextPrintLine
+) {
+    textPrintLine.apply {
+        content = "-----------------------------------------------"
+    }
+    printerManager.appendTextEntity(textPrintLine)
+}
+
+fun previousEndOfDayPrintImplementation(
+    index: Int,
+    it: TransactionResponse,
+    printerManager: POIPrinterManage,
+    textPrintLine: TextPrintLine
+) {
+    textPrintLine.apply {
+        isBold = true
+        content = if (it.responseCode == "00") "Approved" else "Declined"
+    }
+    printerManager.appendTextEntity(textPrintLine)
+    textPrintLine.apply {
+        isBold = false
+        content = "Amount: ${it.amount.formatCurrencyAmount("\u20A6")}"
+    }
+    printerManager.appendTextEntity(textPrintLine)
+    textPrintLine.apply {
+        content = "RRN: ${it.RRN}"
+    }
+    printerManager.appendTextEntity(textPrintLine)
+    textPrintLine.apply {
+        content = "Date: ${it.transactionTimeInMillis.formatDate()}"
+    }
+    printerManager.appendTextEntity(textPrintLine)
+    drawStraightLine(printerManager, textPrintLine)
+}
 
 fun List<TransactionResponse>.printEndOfDay(
     context: Context,
@@ -82,44 +151,62 @@ fun List<TransactionResponse>.printEndOfDay(
         content = "MID: ${this@printEndOfDay.first().merchantId}"
     }
     printerManager.appendTextEntity(textPrintLine)
+// Old Implementation starts here
+//    forEach {
+//        if (it.responseCode == "00") {
+//            amountApproved = amountApproved.plus(it.amount)
+//        } else
+//            amountDeclined = amountDeclined.plus(it.amount)
+//
+//        textPrintLine.apply {
+//            isBold = true
+//            content = if (it.responseCode == "00") "Approved" else "Declined"
+//        }
+//        printerManager.appendTextEntity(textPrintLine)
+//        textPrintLine.apply {
+//            isBold = false
+//            content = "Amount: ${it.amount.div(100).formatCurrencyAmount("\u20A6")}"
+//        }
+//        printerManager.appendTextEntity(textPrintLine)
+//        textPrintLine.apply {
+//            content = "RRN: ${it.RRN}"
+//        }
+//        printerManager.appendTextEntity(textPrintLine)
+//        textPrintLine.apply {
+//            content = "Date: ${it.transactionTimeInMillis.formatDate()}"
+//        }
+//    }
+//    Old implementation ends here
+
+    // New EOD implementation starts here
+    drawStraightLine(printerManager, textPrintLine)
 
     textPrintLine.apply {
+        content = "AMOUNT   S          RRN          TIME"
+    }
+    printerManager.appendTextEntity(textPrintLine)
+    textPrintLine.apply {
+        position = PrintLine.LEFT
         content = "-----------------------------------------------"
     }
     printerManager.appendTextEntity(textPrintLine)
 
-    forEach {
-        if (it.responseCode == "00") {
-            amountApproved = amountApproved.plus(it.amount)
-        } else
-            amountDeclined = amountDeclined.plus(it.amount)
-
-        textPrintLine.apply {
-            isBold = true
-            content = if (it.responseCode == "00") "Approved" else "Declined"
-        }
-        printerManager.appendTextEntity(textPrintLine)
-        textPrintLine.apply {
-            isBold = false
-            content = "Amount: ${it.amount.div(100).formatCurrencyAmount("\u20A6")}"
-        }
-        printerManager.appendTextEntity(textPrintLine)
-        textPrintLine.apply {
-            content = "RRN: ${it.RRN}"
-        }
-        printerManager.appendTextEntity(textPrintLine)
-        textPrintLine.apply {
-            content = "Date: ${it.transactionTimeInMillis.formatDate()}"
-        }
-        printerManager.appendTextEntity(textPrintLine)
-        textPrintLine.apply {
-            content = "-----------------------------------------------"
-        }
-        printerManager.appendTextEntity(textPrintLine)
+    forEachIndexed { index, it ->
+        if (it.responseCode == "00") amountApproved =
+            amountApproved.plus(it.amount) else amountDeclined =
+            amountDeclined.plus(it.amount)
+        newEndOfDayPrintImplementation(
+            index,
+            it,
+            printerManager,
+            textPrintLine
+        )
     }
+    // New EOD implementation ends here
+
     textPrintLine.apply {
         position = PrintLine.CENTER
-        content = "SUMMARY"
+        content = "\nSUMMARY"
     }
     printerManager.appendTextEntity(textPrintLine)
     textPrintLine.apply {
@@ -138,7 +225,7 @@ fun List<TransactionResponse>.printEndOfDay(
     printerManager.appendTextEntity(textPrintLine)
 
     textPrintLine.apply {
-        content = "\n\n"
+        content = "\n\n\n\n"
     }
     printerManager.appendTextEntity(textPrintLine)
 

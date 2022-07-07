@@ -5,6 +5,7 @@ import com.danbamitale.epmslib.entities.TransactionResponse
 import com.woleapp.netpos.model.TransactionResponseX
 import timber.log.Timber
 import java.text.DateFormat
+import java.text.DecimalFormat
 import java.text.SimpleDateFormat
 import java.util.* // ktlint-disable no-wildcard-imports
 
@@ -15,6 +16,15 @@ object RandomNumUtil {
         val format = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'.000Z'")
         val date = format.parse(dateTime)
         return (date!!.time) + 3600000
+    }
+
+    fun Number.formatAmount(): String {
+        return DecimalFormat("#.##.00").format(this)
+    }
+
+    fun Number.formatCurrencyAmountUsingCurrentModule(currencySymbol: String = "\u20A6"): String {
+        val format = DecimalFormat("#,###.00")
+        return "$currencySymbol${format.format(this)}"
     }
 
     @SuppressLint("SimpleDateFormat")
@@ -53,7 +63,7 @@ object RandomNumUtil {
     fun getDateInMilliSecsForLocal(date: String): Long {
         val dateFormatter = SimpleDateFormat("dd:MM:yyyy HH:mm:ss")
         val newDate = date.split(" ")[0] + " 00:00:00"
-        Timber.d("DIS_TIME" + newDate.toString())
+        Timber.d("DIS_TIME%s", newDate.toString())
         return dateFormatter.parse(newDate)!!.time
     }
 

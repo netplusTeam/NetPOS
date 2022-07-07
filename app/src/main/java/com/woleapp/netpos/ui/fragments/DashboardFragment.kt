@@ -324,11 +324,7 @@ class DashboardFragment : BaseFragment() {
         endOfDayProgressDialog.show()
         val be: Long = getBeginningOfDay(timestamp)
         val be1: Long = Timestamp.from(Instant.ofEpochMilli(be).plusSeconds(86400)).time
-        Timber.e("DISCOVER2%s", be.toString())
-        Timber.e("DISCOVER3%s", be1.toString())
         val df = SimpleDateFormat("dd:MM:yyyy hh:mm:ss", Locale.getDefault())
-        Timber.e("DISCOVER4%s", df.format(be))
-        Timber.e("DISCOVER5%s", df.format(be1))
 
         val data = HashMap<String, String>().apply {
             put("terminalId", NetPosTerminalConfig.getTerminalId())
@@ -336,8 +332,6 @@ class DashboardFragment : BaseFragment() {
             put("from", df.format(be))
             put("to", df.format(be1))
         }
-        Timber.d(df.format(be))
-        Timber.d(df.format(be1))
 
         val parameters = GetEodFromNewServiceModel(
             NetPosTerminalConfig.getTerminalId().trim(),
@@ -346,11 +340,6 @@ class DashboardFragment : BaseFragment() {
             1,
             1000
         )
-
-        Timber.d("WEIRD_TERMINAL_PARAM ==> ${NetPosTerminalConfig.getTerminalId()}a")
-        Timber.d("WEIRD_FROM_PARAM ==> ${parameters.from}")
-        Timber.d("WEIRD_TO_PARAM ==> ${parameters.to}")
-        Timber.d("WEIRD_PAGE_PARAM ==> ${parameters.page}")
         stormApiService.getTransactionsFromNewService(
             parameters.terminalId,
             parameters.from,
@@ -358,10 +347,6 @@ class DashboardFragment : BaseFragment() {
             parameters.page,
             parameters.pageSize
         ).flatMap {
-
-            Timber.d("ISOK==>" + it.data.rows.mapRowToTransactionResponse().toString())
-            println("====CHECKING_PAYLOAD" + it.data.rows.toString())
-            Timber.d(it.data.rows.toString())
 
             it.data.rows = it.data.rows.map { transaction ->
                 transaction.amount = if (transaction.amount is Int) (transaction.amount as Int).times(100) else (transaction.amount as Double)
@@ -378,7 +363,6 @@ class DashboardFragment : BaseFragment() {
             Single.just(it)
         }.retry(2)
             .onErrorResumeNext {
-                Timber.e("error resume next ${it.localizedMessage}")
                 getEndOfDayLocal(
                     getDateInMilliSecsForLocal(df.format(be)),
                     getDateInMilliSecsForLocalForEndOfDay(df.format(be))
@@ -391,10 +375,8 @@ class DashboardFragment : BaseFragment() {
             }
             .subscribe { t1, t2 ->
                 t1?.let {
-                    Timber.e("DISCOVER61" + it.toString())
                     when (it) {
                         is GetEndOfDayModelFromNewServer -> {
-                            Timber.e("DISCOVER6%s", it.data.count.toString())
                             showEndOfDayBottomSheetDialog(it.data.rows.mapRowToTransactionResponse())
                         }
                         is GateWayTransactionResponse -> {
@@ -432,8 +414,6 @@ class DashboardFragment : BaseFragment() {
             .transactionResponseDao()
             .getEndOfDayTransactionSingle(be, be1, NetPosTerminalConfig.getTerminalId())
             .flatMap { transactionList ->
-                Timber.d("NN_TIME1" + be.toString())
-                Timber.d("NN_TIME2" + be1.toString())
                 Single.just(
                     GateWayTransactionResponse(
                         mapTransFromGateWayToEntity(transactionList),
