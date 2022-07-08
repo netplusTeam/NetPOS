@@ -43,7 +43,7 @@ fun newEndOfDayPrintImplementation(
                 "F",
                 true
             )
-        ) "$formattedAmount  $status   $formattedTime\n${it.RRN}" else "$formattedAmount   $status    ${it.RRN}  $formattedTime"
+        ) "${it.RRN}  $status  $formattedTime  $formattedAmount" else "${it.RRN}  $status  $formattedTime  $formattedAmount"
     }
     printerManager.appendTextEntity(textPrintLine)
 
@@ -182,7 +182,7 @@ fun List<TransactionResponse>.printEndOfDay(
     drawStraightLine(printerManager, textPrintLine)
 
     textPrintLine.apply {
-        content = "    RRN       S  TIME   AMOUNT"
+        content = STRING_EOD_TITLE_HEADER
     }
     printerManager.appendTextEntity(textPrintLine)
     textPrintLine.apply {

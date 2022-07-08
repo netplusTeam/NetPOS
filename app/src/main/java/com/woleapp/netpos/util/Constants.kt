@@ -5,6 +5,7 @@ import com.woleapp.netpos.BuildConfig
 const val STATE_PAYMENT_STAND_BY = 0
 const val STATE_PAYMENT_STARTED = 1
 const val STATE_PAYMENT_APPROVED = 2
+const val STRING_EOD_TITLE_HEADER = "         RRN           ST  TIME  AMOUNT"
 const val HISTORY_ACTION = "history_action"
 const val HISTORY_ACTION_DEFAULT = "Default"
 const val HISTORY_ACTION_REPRINT = "Reprint"
