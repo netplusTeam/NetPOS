@@ -247,8 +247,6 @@ class SalesViewModel(private val transactionResponseDao: TransactionResponseDao)
                     Prefs.remove(PREF_KEYHOLDER)
                     _shouldRefreshNibssKeys.postValue(Event(true))
                 }
-                Timber.d("T_ISSU" + it.transmissionDateTime)
-                Timber.d("T_ISSU2" + it.transactionTimeInMillis)
                 it.cardHolder = customerName.value!!
                 it.cardLabel = cardScheme!!
                 it.amount = requestData.amount
@@ -259,7 +257,6 @@ class SalesViewModel(private val transactionResponseDao: TransactionResponseDao)
             }.flatMap {
                 val resp = lastTransactionResponse.value!!
                 if (resp.responseCode == "00") {
-                    Log.d("dataToSave", Singletons.gson.toJson(it))
                     logTransactionAfterConnectingToNibss(
                         customRrn,
                         mapDanbamitaleResponseToResponseX(resp),

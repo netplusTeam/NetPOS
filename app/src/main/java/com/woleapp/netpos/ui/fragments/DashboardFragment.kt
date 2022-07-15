@@ -13,7 +13,8 @@ import android.view.ViewGroup
 import android.widget.Toast
 import androidx.fragment.app.activityViewModels
 import androidx.recyclerview.widget.GridLayoutManager
-import com.danbamitale.epmslib.entities.* // ktlint-disable no-wildcard-imports
+import androidx.recyclerview.widget.RecyclerView
+import com.danbamitale.epmslib.entities.*
 import com.danbamitale.epmslib.extensions.formatCurrencyAmount
 import com.danbamitale.epmslib.processors.TransactionProcessor
 import com.danbamitale.epmslib.utils.IsoAccountType
@@ -25,11 +26,10 @@ import com.woleapp.netpos.adapter.ServiceAdapter
 import com.woleapp.netpos.database.AppDatabase
 import com.woleapp.netpos.databinding.FragmentDashboardBinding
 import com.woleapp.netpos.databinding.LayoutPrintEndOfDayBinding
-import com.woleapp.netpos.model.* // ktlint-disable no-wildcard-imports
-import com.woleapp.netpos.network.NetPOSGatewayApi
+import com.woleapp.netpos.model.*
 import com.woleapp.netpos.network.StormApiClient
 import com.woleapp.netpos.nibss.NetPosTerminalConfig
-import com.woleapp.netpos.util.* // ktlint-disable no-wildcard-imports
+import com.woleapp.netpos.util.*
 import com.woleapp.netpos.util.ModelMapper.mapEntityToTransFromGateWay
 import com.woleapp.netpos.util.ModelMapper.mapRowToTransactionResponse
 import com.woleapp.netpos.util.ModelMapper.mapTransFromGateWayToEntity
@@ -47,7 +47,7 @@ import timber.log.Timber
 import java.sql.Timestamp
 import java.text.SimpleDateFormat
 import java.time.Instant
-import java.util.* // ktlint-disable no-wildcard-imports
+import java.util.*
 
 class DashboardFragment : BaseFragment() {
 
@@ -55,7 +55,6 @@ class DashboardFragment : BaseFragment() {
     private lateinit var binding: FragmentDashboardBinding
     private lateinit var adapter: ServiceAdapter
     private var compositeDisposable = CompositeDisposable()
-    private val gateWayService = NetPOSGatewayApi.getInstance()
     private val stormApiService = StormApiClient.getStormApiLoginInstance()
     private lateinit var endOfDayProgressDialog: ProgressDialog
     private val transactionViewModel by activityViewModels<TransactionsViewModel> {
@@ -105,6 +104,50 @@ class DashboardFragment : BaseFragment() {
             // add(Service(3, "Pay Bills", R.drawable.ic_bill))
             Service(4, "View End Of Day Transactions", R.drawable.ic_print)
         )
+        adapter.submitList(listOfServices)
+    }
+
+    private fun setUpAdapterForAellaCredit() {
+        adapter = ServiceAdapter {
+            when (it.id) {
+                0 -> addFragmentWithoutRemove(TransactionsFragment())
+                1 -> getBalance()
+                2 -> {
+                    if (BuildConfig.FLAVOR == "zenith")
+                        showPayWithTransferDialog(requireContext())
+                    else
+                        addFragmentWithoutRemove(NipNotificationFragment.newInstance())
+                }
+                3 -> addFragmentWithoutRemove(BillsFragment())
+                4 -> showCalendarDialog()
+                5 -> {
+                    parentFragmentManager.beginTransaction()
+                        .replace(R.id.container_main, SettingsFragment())
+                        .addToBackStack(null)
+                        .commit()
+                }
+                else -> {
+                    sendPayload()
+                }
+            }
+            // addFragmentWithoutRemove(nextFrag)
+        }
+        val listOfServices = ArrayList<Service>()
+            .apply {
+                add(Service(0, "Transaction", R.drawable.ic_trans))
+//                add(Service(1, "Balance Inquiry", R.drawable.ic_write))
+                if (BuildConfig.FLAVOR.equals("wemacashout", true).not())
+                    add(
+                        Service(
+                            2,
+                            if (BuildConfig.FLAVOR == "zenith") "Pay With Transfer" else "Bank Transfer",
+                            R.drawable.ic_lending
+                        )
+                    )
+//                add(Service(3, "Pay Bills", R.drawable.ic_bill))
+                add(Service(4, "View End Of Day Transactions", R.drawable.ic_print))
+                add(Service(5, "Settings", R.drawable.ic_baseline_settings))
+            }
         adapter.submitList(listOfServices)
     }
 
@@ -349,8 +392,9 @@ class DashboardFragment : BaseFragment() {
         ).flatMap {
 
             it.data.rows = it.data.rows.map { transaction ->
-                transaction.amount = if (transaction.amount is Int) (transaction.amount as Int).times(100) else (transaction.amount as Double)
-                    .times(100)
+                transaction.amount =
+                    if (transaction.amount is Int) (transaction.amount as Int).times(100) else (transaction.amount as Double)
+                        .times(100)
                 transaction
             }
             Single.just(it)
@@ -452,14 +496,13 @@ class DashboardFragment : BaseFragment() {
             this.geo = "lat:51.507351-long:-0.127758"
             this.data = authEventData
         }
-        // MqttHelper.sendPayload(MqttTopics.AUTHENTICATION, event)
-        // Timber.e(Singletons.gson.toJson(event))
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         when (BuildConfig.FLAVOR) {
             "konga" -> setupKongaAdapter()
+            "aellacredit" -> setUpAdapterForAellaCredit()
             else -> setUpDefaultAdapter()
         }
         binding.rvDashboard.layoutManager = GridLayoutManager(context, 2)
