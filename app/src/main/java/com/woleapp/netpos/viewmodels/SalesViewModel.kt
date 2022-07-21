@@ -61,9 +61,7 @@ class SalesViewModelProvider(private val transactionResponseDao: TransactionResp
 class SalesViewModel(private val transactionResponseDao: TransactionResponseDao) : ViewModel() {
     private val _partnerThreshold: MutableLiveData<GetPartnerInterSwitchThresholdResponse> =
         MutableLiveData()
-    val partnerThreshold: LiveData<GetPartnerInterSwitchThresholdResponse> get() = _partnerThreshold
     private val stormPID = Singletons.getCurrentlyLoggedInUser()?.netplus_id ?: ""
-    private val stormPID2 = Singletons.getCurrentlyLoggedInUser()?.partnerId ?: ""
     private val partnerId =
         if (BuildConfig.FLAVOR.contains("wemacashout", true)) WEMA_AGENCY_PD else stormPID
     private val serialNumber = NetPosSdk.getDeviceSerial() /*"1142016190002868"*/
