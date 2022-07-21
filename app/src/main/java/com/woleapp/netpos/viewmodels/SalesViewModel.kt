@@ -9,20 +9,23 @@ import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import com.danbamitale.epmslib.entities.* // ktlint-disable no-wildcard-imports
-import com.danbamitale.epmslib.entities.TransactionResponse
-import com.danbamitale.epmslib.entities.TransactionType
 import com.danbamitale.epmslib.processors.TransactionProcessor
 import com.danbamitale.epmslib.utils.IsoAccountType
 import com.danbamitale.epmslib.utils.MessageReasonCode
+import com.google.gson.Gson
 import com.google.gson.JsonObject
+import com.isw.gateway.TransactionProcessorWrapper
+import com.isw.iswclient.request.IswParameters
+import com.netpluspay.netpossdk.NetPosSdk
 import com.netpluspay.netpossdk.printer.PrinterResponse
 import com.pixplicity.easyprefs.library.Prefs
 import com.woleapp.netpos.BuildConfig
+import com.woleapp.netpos.R
 import com.woleapp.netpos.database.dao.TransactionResponseDao
 import com.woleapp.netpos.model.* // ktlint-disable no-wildcard-imports
-import com.woleapp.netpos.network.NetPOSCashService
-import com.woleapp.netpos.network.StormApiClient
-import com.woleapp.netpos.network.StormApiService
+import com.woleapp.netpos.model.Alerter.showToast
+import com.woleapp.netpos.model.AppConstants.ISW_TOKEN
+import com.woleapp.netpos.network.* // ktlint-disable no-wildcard-imports
 import com.woleapp.netpos.nibss.NetPosTerminalConfig
 import com.woleapp.netpos.util.* // ktlint-disable no-wildcard-imports
 import com.woleapp.netpos.util.RandomNumUtil.formattedTime
@@ -30,15 +33,14 @@ import com.woleapp.netpos.util.RandomNumUtil.generateRandomRrn
 import com.woleapp.netpos.util.RandomNumUtil.getCurrentDateTime
 import com.woleapp.netpos.util.RandomNumUtil.getDate
 import com.woleapp.netpos.util.RandomNumUtil.getDateInMillis2
+import com.woleapp.netpos.util.RandomNumUtil.getTransactionResponseToLog
 import com.woleapp.netpos.util.RandomNumUtil.mapDanbamitaleResponseToResponseX
+import com.woleapp.netpos.util.Singletons.getKeyHolder
+import com.woleapp.netpos.util.Singletons.gson
 import io.reactivex.Single
 import io.reactivex.android.schedulers.AndroidSchedulers
 import io.reactivex.disposables.CompositeDisposable
 import io.reactivex.schedulers.Schedulers
-import okhttp3.MediaType.Companion.toMediaTypeOrNull
-import okhttp3.RequestBody
-import okhttp3.RequestBody.Companion.toRequestBody
-import retrofit2.HttpException
 import timber.log.Timber
 import java.io.BufferedReader
 import java.io.InputStreamReader
@@ -57,6 +59,17 @@ class SalesViewModelProvider(private val transactionResponseDao: TransactionResp
 }
 
 class SalesViewModel(private val transactionResponseDao: TransactionResponseDao) : ViewModel() {
+    private val _partnerThreshold: MutableLiveData<GetPartnerInterSwitchThresholdResponse> =
+        MutableLiveData()
+    val partnerThreshold: LiveData<GetPartnerInterSwitchThresholdResponse> get() = _partnerThreshold
+    private val stormPID = Singletons.getCurrentlyLoggedInUser()?.netplus_id ?: ""
+    private val stormPID2 = Singletons.getCurrentlyLoggedInUser()?.partnerId ?: ""
+    private val partnerId =
+        if (BuildConfig.FLAVOR.contains("wemacashout", true)) WEMA_AGENCY_PD else stormPID
+    private val serialNumber = NetPosSdk.getDeviceSerial() /*"1142016190002868"*/
+    private val terminalId = Singletons.getCurrentlyLoggedInUser()?.terminal_id ?: "" /*"2033ALWE"*/
+    private val newStormService: NewStormApiService =
+        NewStormApiClientForThreshold.getStormApiLoginInstance()
     var stormApiService: StormApiService? = null
     var transResp: TransactionResponse? = null
     private var isVend: Boolean = false
@@ -115,6 +128,7 @@ class SalesViewModel(private val transactionResponseDao: TransactionResponseDao)
     init {
         stormApiService = StormApiClient.getStormApiLoginInstance()
         user = Singletons.getCurrentlyLoggedInUser()
+        getThreshold()
     }
 
     fun setCustomerName(name: String) {
@@ -123,11 +137,11 @@ class SalesViewModel(private val transactionResponseDao: TransactionResponseDao)
 
     fun validateField() {
         amountDbl = (
-                amount.value!!.toDoubleOrNull() ?: kotlin.run {
-                    _message.value = Event("Enter a valid amount")
-                    return
-                }
-                ) * 100
+            amount.value!!.toDoubleOrNull() ?: kotlin.run {
+                _message.value = Event("Enter a valid amount")
+                return
+            }
+            ) * 100
         if (BuildConfig.FLAVOR == "konga" && (remark.value.isNullOrEmpty() || remark.value!!.length < 10)) {
             _message.value = Event("Remark too short")
             return
@@ -236,6 +250,42 @@ class SalesViewModel(private val transactionResponseDao: TransactionResponseDao)
         logTransactionBeforeConnectingToNibss(transactionToLog!!)
         val processor = TransactionProcessor(hostConfig)
         transactionState.value = STATE_PAYMENT_STARTED
+
+        if (BuildConfig.FLAVOR == "wemacashout") {
+            makePaymentViaIswMethodImplementation(context, requestData, customRrn)
+        } else {
+            makePaymentViaNibss(processor, context, requestData, customRrn)
+        }
+    }
+
+    private fun makePaymentViaIswMethodDeclaration(context: Context): Single<TransactionResponse?> {
+
+        val makePaymentParams = MakePaymentParams(
+            action = "makePayment",
+            terminalId = terminalId,
+            amount = amountLong,
+            otherAmount = 0,
+            cardData = cardData!!
+        )
+
+        return processTransactionViaInterSwitchMakePayment(
+            context,
+            TransactionType.PURCHASE.name,
+            terminalId,
+            Gson().toJson(makePaymentParams),
+            cardScheme!!,
+            customerName.value!!
+        ).flatMap {
+            Single.just(mapToTransactionResponse(it))
+        }
+    }
+
+    private fun makePaymentViaNibss(
+        processor: TransactionProcessor,
+        context: Context,
+        requestData: TransactionRequestData,
+        customRrn: String
+    ) {
         processor.processTransaction(context, requestData, cardData!!)
             .onErrorResumeNext {
                 processor.rollback(context, MessageReasonCode.Timeout)
@@ -246,6 +296,59 @@ class SalesViewModel(private val transactionResponseDao: TransactionResponseDao)
                     Prefs.remove(PREF_CONFIG_DATA)
                     Prefs.remove(PREF_KEYHOLDER)
                     _shouldRefreshNibssKeys.postValue(Event(true))
+                }
+                it.cardHolder = customerName.value!!
+                it.cardLabel = cardScheme!!
+                it.amount = requestData.amount
+                lastTransactionResponse.postValue(it)
+                _message.postValue(Event(if (it.responseCode == "00") "Transaction Approved" else "Transaction Not approved"))
+                transactionResponseDao
+                    .insertNewTransaction(it)
+            }.flatMap {
+                val resp = lastTransactionResponse.value!!
+                if (resp.responseCode == "00") {
+                    logTransactionAfterConnectingToNibss(
+                        customRrn,
+                        mapDanbamitaleResponseToResponseX(resp),
+                        "APPROVED"
+                    )
+                } else {
+                    logTransactionAfterConnectingToNibss(
+                        rrn = customRrn,
+                        transactionResponse = mapDanbamitaleResponseToResponseX(resp),
+                        status = resp.responseMessage
+                    )
+                }
+            }
+            .subscribeOn(Schedulers.io())
+            .observeOn(AndroidSchedulers.mainThread())
+            .doFinally {
+                transactionState.value = STATE_PAYMENT_STAND_BY
+                printReceipt(context)
+            }.subscribe { t1, throwable ->
+                t1?.let {
+                    // _finish.value = Event(true)
+                }
+                throwable?.let {
+                    _message.value = Event("Error: ${it.localizedMessage}")
+                    Timber.e(it)
+                }
+            }.disposeWith(compositeDisposable)
+    }
+
+    private fun makePaymentViaIswMethodImplementation(
+        context: Context,
+        requestData: TransactionRequestData,
+        customRrn: String
+    ) {
+        val makePaymentTransResult = makePaymentViaIswMethodDeclaration(context)
+        makePaymentTransResult
+            .flatMap {
+                transResp = it
+                if (it.responseCode == "A3") {
+                    Prefs.remove(PREF_CONFIG_DATA)
+                    Prefs.remove(PREF_KEYHOLDER)
+                    getIswToken(context)
                 }
                 it.cardHolder = customerName.value!!
                 it.cardLabel = cardScheme!!
@@ -452,11 +555,11 @@ class SalesViewModel(private val transactionResponseDao: TransactionResponseDao)
 
     fun beginCashPayment() {
         (
-                amount.value!!.toDoubleOrNull() ?: kotlin.run {
-                    _message.value = Event("Enter a valid amount")
-                    return
-                }
-                )
+            amount.value!!.toDoubleOrNull() ?: kotlin.run {
+                _message.value = Event("Enter a valid amount")
+                return
+            }
+            )
         val reqBody = JsonObject().apply {
             addProperty("amount", amount.value!!.toDouble())
         }
@@ -477,5 +580,196 @@ class SalesViewModel(private val transactionResponseDao: TransactionResponseDao)
                     Timber.e(it)
                 }
             }.disposeWith(compositeDisposable)
+    }
+
+    private fun getIswToken(context: Context): String {
+        val req = TokenPassportRequest(context.getString(R.string.wemaAgencyMD), terminalId)
+        return try {
+            var iswToken = ""
+            getTokenClient.getToken(req)
+                .doOnError {
+                    Timber.d("TOKEN_ERROR==>${it.localizedMessage}")
+                }
+                .subscribeOn(Schedulers.io())
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribe { t1, t2 ->
+                    t1?.let {
+                        if (it.responseCode != "00") {
+                            Toast.makeText(
+                                context,
+                                context.getString(R.string.terminal_val_failed),
+                                Toast.LENGTH_LONG
+                            ).show()
+                            return@subscribe
+                        }
+                        Prefs.putString(ISW_TOKEN, it.token)
+                        iswToken = it.token
+                    }
+                    t2?.let {
+                    }
+                }.disposeWith(compositeDisposable)
+            iswToken
+        } catch (e: Exception) {
+            "RUBISH"
+        }
+    }
+
+    private fun getThreshold() {
+        newStormService.getPartnerInterSwitchThreshold(
+            partnerId
+        )
+            .subscribeOn(Schedulers.io())
+            .observeOn(AndroidSchedulers.mainThread())
+            .subscribe(
+                { data ->
+                    // Save the threshold to sharedPrefs
+                    val thresholdObjectInString = gson.toJson(data)
+                    Prefs.putString(
+                        partnerId + "iswThreshold",
+                        thresholdObjectInString
+                    )
+                    _partnerThreshold.postValue(data)
+                },
+                { throwable ->
+                    Timber.e(throwable)
+                }
+            ).disposeWith(compositeDisposable)
+    }
+
+    private fun processTransactionViaInterSwitchMakePayment(
+        context: Context,
+        inputTransactionType: String? = null,
+        terminalId: String,
+        makePaymentParams: String,
+        cardScheme: String,
+        cardHolder: String
+    ): Single<TransactionResponseX?> {
+        val customRrn = generateRandomRrn(12)
+        val params = gson.fromJson(makePaymentParams, MakePaymentParams::class.java)
+        val transactionType =
+            inputTransactionType?.let { TransactionType.valueOf(it) } ?: TransactionType.PURCHASE
+
+        val configData: ConfigData = Singletons.getConfigData() ?: kotlin.run {
+            showToast(
+                "Terminal has not been configured, restart the application to configure",
+                context
+            )
+            return Single.just(null)
+        }
+
+        val keyHolder = getKeyHolder()
+
+        getIswToken(context)
+
+        // IsoAccountType.
+        this.amountLong = amountDbl.toLong()
+        val requestData =
+            TransactionRequestData(
+                transactionType,
+                amountLong,
+                0L,
+                accountType = isoAccountType!!
+            )
+
+        if (Prefs.getString(partnerId + "iswThreshold", "")
+            .isEmpty()
+        ) {
+            Toast.makeText(context, "Unable to identify partner", Toast.LENGTH_LONG).show()
+        }
+        val interSwitchObject =
+            Prefs.getString(partnerId + "iswThreshold", "")
+        val destinationAcc = if (interSwitchObject.isNotEmpty()) gson.fromJson(
+            interSwitchObject,
+            GetPartnerInterSwitchThresholdResponse::class.java
+        ).bankAccountNumber else {
+            getIswToken(context)
+            getThreshold()
+            _partnerThreshold.value?.bankAccountNumber ?: ""
+        }
+
+        val institutionCode = if (interSwitchObject.isNotEmpty()) gson.fromJson(
+            interSwitchObject,
+            GetPartnerInterSwitchThresholdResponse::class.java
+        ).institutionalCode else {
+            getIswToken(context)
+            getThreshold()
+            _partnerThreshold.value?.institutionalCode ?: ""
+        }
+
+        if (destinationAcc.isNullOrEmpty()) {
+            Toast.makeText(context, "No destination account found", Toast.LENGTH_LONG).show()
+        }
+
+        val iswParam = IswParameters(
+            context.getString(R.string.wemaAgencyMD),
+            user?.business_address ?: "Wema Bank",
+            token = Prefs.getString(ISW_TOKEN, "error2"),
+            "",
+            terminalId = terminalId,
+            terminalSerial = serialNumber,
+            receivingInstitutionId = institutionCode,
+            destinationAccountNumber = destinationAcc
+        )
+
+        requestData.iswParameters = iswParam
+
+        val iswPaymentProcessorObject =
+            TransactionProcessorWrapper(
+                context.getString(R.string.userMD),
+                terminalId,
+                requestData.amount,
+                transactionRequestData = requestData,
+                keyHolder = keyHolder,
+                configData = configData
+            )
+
+        val transactionToLog = params.getTransactionResponseToLog(
+            cardScheme,
+            requestData,
+            cardHolder,
+            terminalId,
+            partnerId
+        )
+
+        // Send to backend first
+        logTransactionBeforeConnectingToNibss(transactionToLog)
+        return cardData?.let { cardData ->
+            iswPaymentProcessorObject.processIswTransaction(cardData)
+                .flatMap {
+                    transResp = it
+                    if (it.responseCode == "A3") {
+                        Prefs.remove(PREF_CONFIG_DATA)
+                        Prefs.remove(PREF_KEYHOLDER)
+                        _shouldRefreshNibssKeys.postValue(Event(true))
+                    }
+
+                    it.cardHolder = cardHolder
+                    it.cardLabel = cardScheme
+                    it.amount = requestData.amount
+                    lastTransactionResponse.postValue(it)
+                    val message =
+                        (if (it.responseCode == "00") "Transaction Approved" else "Transaction Not approved")
+                    Timber.d("RESPONSE=>$it")
+                    transactionResponseDao
+                        .insertNewTransaction(it)
+                }.flatMap {
+                    val resp: TransactionResponse = lastTransactionResponse.value!!
+                    if (resp.responseCode == "00") {
+                        logTransactionAfterConnectingToNibss(
+                            transactionToLog.transactionResponse.rrn,
+                            mapDanbamitaleResponseToResponseX(resp),
+                            "APPROVED"
+                        )
+                    } else {
+                        logTransactionAfterConnectingToNibss(
+                            transactionToLog.transactionResponse.rrn,
+                            mapDanbamitaleResponseToResponseX(resp),
+                            resp.responseMessage
+                        )
+                    }
+
+                    Single.just(mapDanbamitaleResponseToResponseX(resp))
+                }
+        }!!
     }
 }

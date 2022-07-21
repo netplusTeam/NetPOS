@@ -9,6 +9,7 @@ buildscript {
         room_version = "2.4.2"
     }
     repositories {
+        maven { url 'https://maven.google.com' }
         mavenLocal()
         google()
         jcenter()
@@ -31,6 +32,7 @@ buildscript {
 
 allprojects {
     repositories {
+        maven { url 'https://maven.google.com' }
         mavenLocal()
         google()
         jcenter()

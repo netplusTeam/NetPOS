@@ -1,13 +1,14 @@
 package com.woleapp.netpos.model
 
 import com.danbamitale.epmslib.entities.TransactionResponse
+import com.danbamitale.epmslib.entities.TransactionType
+import com.danbamitale.epmslib.utils.IsoAccountType
 
 data class DataToLogAfterConnectingToNibss(
     val status: String,
     val transactionResponse: TransactionResponseX,
     val rrn: String
 )
-
 
 data class LogToBackendResponse(
     val `data`: List<Int>,
@@ -49,6 +50,40 @@ data class TransactionResponseX(
     val transactionType: String,
     val transmissionDateTime: String
 )
+
+fun mapToTransactionResponse(transRespX: TransactionResponseX): TransactionResponse =
+    TransactionResponse().apply {
+        transactionType = TransactionType.PURCHASE
+        maskedPan = transRespX.maskedPan
+        amount = transRespX.amount.toLong()
+
+        transmissionDateTime = transRespX.transmissionDateTime
+        STAN = transRespX.STAN
+        RRN = transRespX.rrn
+        localTime_12 = transRespX.localTime_12
+        localDate_13 = transRespX.localDate_13
+        otherAmount = transRespX.otherAmount.toLong()
+        acquiringInstCode = transRespX.acquiringInstCode
+        originalForwardingInstCode = transRespX.originalForwardingInstCode
+        authCode = transRespX.authCode
+        responseCode = transRespX.responseCode
+        additionalAmount_54 = transRespX.additionalAmount_54
+
+        cardLabel = transRespX.cardLabel
+        cardExpiry = transRespX.cardExpiry
+        cardHolder = transRespX.cardHolder
+        TVR = transRespX.TVR
+        TSI = transRespX.TSI
+        AID = transRespX.AID
+        appCryptogram = transRespX.appCryptogram
+        transactionTimeInMillis = transRespX.transactionTimeInMillis.toLong()
+        accountType = IsoAccountType.valueOf(transRespX.accountType)
+
+        terminalId = transRespX.terminalId
+        merchantId = transRespX.merchantId
+        otherId = transRespX.otherId
+        responseDE55 = transRespX.responseDE55
+    }
 
 data class TransactionToLogAfterSuccessfulTransaction(
     val rrn: String,

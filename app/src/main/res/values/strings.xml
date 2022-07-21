@@ -131,4 +131,8 @@
     <string name="give">Give</string>
     <string name="noTransactionsToView">No transactions to View</string>
     <string name="noTransactionsToPrint">No transactions to print</string>
+    <string name="userDataNotSet">User data not supplied</string>
+    <string name="userMD">2033LAGPOOO7885</string>
+    <string name="wemaAgencyMD">2035LA207031072</string>
+    <string name="terminal_val_failed">Terminal validation failed</string>
 </resources>

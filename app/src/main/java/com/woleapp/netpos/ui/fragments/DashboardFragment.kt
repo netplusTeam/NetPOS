@@ -5,6 +5,7 @@ package com.woleapp.netpos.ui.fragments
 import android.app.AlertDialog
 import android.app.DatePickerDialog
 import android.app.ProgressDialog
+import android.content.Context
 import android.content.DialogInterface
 import android.os.Bundle
 import android.view.LayoutInflater
@@ -13,7 +14,6 @@ import android.view.ViewGroup
 import android.widget.Toast
 import androidx.fragment.app.activityViewModels
 import androidx.recyclerview.widget.GridLayoutManager
-import androidx.recyclerview.widget.RecyclerView
 import com.danbamitale.epmslib.entities.*
 import com.danbamitale.epmslib.extensions.formatCurrencyAmount
 import com.danbamitale.epmslib.processors.TransactionProcessor
@@ -28,6 +28,8 @@ import com.woleapp.netpos.databinding.FragmentDashboardBinding
 import com.woleapp.netpos.databinding.LayoutPrintEndOfDayBinding
 import com.woleapp.netpos.model.*
 import com.woleapp.netpos.network.StormApiClient
+import com.woleapp.netpos.network.TokenPassportRequest
+import com.woleapp.netpos.network.getTokenClient
 import com.woleapp.netpos.nibss.NetPosTerminalConfig
 import com.woleapp.netpos.util.*
 import com.woleapp.netpos.util.ModelMapper.mapEntityToTransFromGateWay
@@ -66,6 +68,7 @@ class DashboardFragment : BaseFragment() {
         container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View {
+
         binding = FragmentDashboardBinding.inflate(inflater, container, false)
         progressDialog = ProgressDialog(requireContext())
         endOfDayProgressDialog = ProgressDialog(requireContext()).apply {
@@ -76,6 +79,7 @@ class DashboardFragment : BaseFragment() {
                 dialog.cancel()
             }
         }
+        getIswToken(requireContext())
         return binding.root
     }
 
@@ -149,6 +153,33 @@ class DashboardFragment : BaseFragment() {
                 add(Service(5, "Settings", R.drawable.ic_baseline_settings))
             }
         adapter.submitList(listOfServices)
+    }
+
+    private fun getIswToken(context: Context) {
+        Timber.d("CALLED")
+        val req = TokenPassportRequest(context.getString(R.string.userMD), Singletons.getCurrentlyLoggedInUser()!!.terminal_id!!)
+        try {
+            val disposable = CompositeDisposable()
+            disposable.add(
+                getTokenClient.getToken(req)
+                    .doOnError {
+                        Timber.d("TOKEN_ERROR==>${it.localizedMessage}")
+                    }
+                    .subscribeOn(Schedulers.io())
+                    .observeOn(AndroidSchedulers.mainThread())
+                    .subscribe { t1, t2 ->
+                        t1?.let {
+                            Timber.d("TOKEN_RESPONSE==>${it.token}")
+                            Prefs.putString(AppConstants.ISW_TOKEN, it.token)
+                        }
+                        t2?.let {
+                        }
+                    }
+            )
+            disposable.clear()
+        } catch (e: Exception) {
+            "RUBISH"
+        }
     }
 
     private fun setUpDefaultAdapter() {

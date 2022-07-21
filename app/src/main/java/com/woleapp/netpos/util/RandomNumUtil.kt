@@ -1,13 +1,17 @@
 package com.woleapp.netpos.util
 
 import android.annotation.SuppressLint
+import com.danbamitale.epmslib.entities.TransactionRequestData
 import com.danbamitale.epmslib.entities.TransactionResponse
+import com.danbamitale.epmslib.utils.IsoTimeManager
+import com.woleapp.netpos.model.MakePaymentParams
 import com.woleapp.netpos.model.TransactionResponseX
+import com.woleapp.netpos.model.TransactionToLogBeforeConnectingToNibbs
 import timber.log.Timber
 import java.text.DateFormat
 import java.text.DecimalFormat
 import java.text.SimpleDateFormat
-import java.util.* // ktlint-disable no-wildcard-imports
+import java.util.*
 
 object RandomNumUtil {
 
@@ -169,4 +173,121 @@ object RandomNumUtil {
             )
         }
     }
+
+//    fun mapDanbamitaleResponseToResponseWithRrn(
+//        input: TransactionResponse,
+//        remark: String
+//    ): TransactionWithRemark {
+//        with(input) {
+//            return TransactionWithRemark(
+//                AID = AID,
+//                rrn = RRN,
+//                STAN = STAN,
+//                TSI = TSI,
+//                TVR = TVR,
+//                accountType = accountType.name,
+//                acquiringInstCode = acquiringInstCode,
+//                additionalAmount_54 = additionalAmount_54,
+//                amount = amount.toInt(),
+//                appCryptogram = appCryptogram,
+//                authCode = authCode,
+//                cardExpiry = cardExpiry,
+//                cardHolder = cardHolder,
+//                cardLabel = cardLabel,
+//                id = id.toInt(),
+//                localDate_13 = localDate_13,
+//                localTime_12 = localTime_12,
+//                maskedPan = maskedPan,
+//                merchantId = merchantId,
+//                originalForwardingInstCode = originalForwardingInstCode,
+//                otherAmount = otherAmount.toInt(),
+//                otherId = otherId,
+//                responseCode = responseCode,
+//                responseDE55 = responseDE55 ?: "",
+//                responseMessage = responseMessage,
+//                terminalId = terminalId,
+//                transactionTimeInMillis = transactionTimeInMillis,
+//                transactionType = transactionType.name,
+//                transmissionDateTime = RandomNumUtil.getCurrentDateTime(),
+//                remark = remark
+//            )
+//        }
+//    }
+//
+//    fun toTransactionResponse(input: TransactionWithRemark) =
+//        TransactionResponse().apply {
+//            AID = input.AID
+//            this.RRN = input.rrn
+//            STAN = input.STAN
+//            TSI = input.TSI
+//            TVR = input.TVR
+//            accountType = IsoAccountType.valueOf(input.accountType)
+//            acquiringInstCode = input.acquiringInstCode
+//            additionalAmount_54 = input.additionalAmount_54
+//            amount = input.amount.toLong()
+//            appCryptogram = input.appCryptogram
+//            authCode = input.authCode
+//            cardExpiry = input.cardExpiry
+//            cardHolder = input.cardHolder
+//            cardLabel = input.cardLabel
+//            id = input.id.toLong()
+//            localDate_13 = input.localDate_13
+//            localTime_12 = input.localTime_12
+//            maskedPan = input.maskedPan
+//            merchantId = input.merchantId
+//            originalForwardingInstCode = input.originalForwardingInstCode
+//            otherAmount = input.otherAmount.toLong()
+//            otherId = input.otherId
+//            responseCode = input.responseCode
+//            responseDE55 = input.responseDE55 ?: ""
+//            terminalId = input.terminalId
+//            transactionTimeInMillis = input.transactionTimeInMillis
+//            transactionType = TransactionType.valueOf(input.transactionType)
+//            transmissionDateTime = RandomNumUtil.getCurrentDateTime()
+//        }
+
+    fun getCustomRrn() = IsoTimeManager().fullDate.substring(2, 14)
+
+    fun MakePaymentParams.getTransactionResponseToLog(
+        cardScheme: String,
+        requestData: TransactionRequestData,
+        customerName: String,
+        terminal_id: String,
+        partnerId: String
+    ) =
+        this.cardData.expiryDate.let {
+            TransactionToLogBeforeConnectingToNibbs(
+                status = "PENDING",
+                TransactionResponseX(
+                    AID = "",
+                    rrn = getCustomRrn(),
+                    STAN = generateRandomRrn(6),
+                    TSI = "",
+                    TVR = "",
+                    accountType = accountType.name,
+                    acquiringInstCode = "",
+                    additionalAmount_54 = "",
+                    amount = amount.toInt(),
+                    appCryptogram = "",
+                    authCode = "",
+                    cardExpiry = it,
+                    cardHolder = customerName,
+                    cardLabel = cardScheme.toString(),
+                    id = 0,
+                    localDate_13 = getDate(),
+                    localTime_12 = formattedTime.replace(":", ""),
+                    maskedPan = cardData.pan,
+                    merchantId = partnerId,
+                    originalForwardingInstCode = "",
+                    otherAmount = requestData.otherAmount.toInt(),
+                    otherId = "",
+                    responseCode = "99",
+                    responseDE55 = "",
+                    terminalId = terminal_id,
+                    transactionTimeInMillis = 0,
+                    transactionType = requestData.transactionType.name,
+                    transmissionDateTime = getCurrentDateTime()
+                )
+            )
+        }
 }

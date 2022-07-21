@@ -167,6 +167,9 @@ dependencies {
     implementation project(path: ':epmslib-release')
     implementation 'net.sf.j8583:j8583:1.12.0'
 
+    // Nibss Direct
+//    implementation project (path: ':nibssDirect')
+
     //netpos sdk
     implementation "com.netpluspay.netpossdk:netpossdk:1.0.24"
     //implementation project(path: ':netpossdk')
@@ -190,7 +193,14 @@ dependencies {
     implementation 'com.squareup.retrofit2:retrofit:2.9.0'
     implementation 'com.squareup.retrofit2:converter-gson:2.9.0'
     implementation 'com.squareup.retrofit2:adapter-rxjava2:2.9.0'
-    implementation("com.squareup.okhttp3:logging-interceptor:4.9.0")
+    implementation("com.squareup.okhttp3:logging-interceptor:5.0.0-alpha.2")
+
+    // xml Converter
+    implementation('com.squareup.retrofit2:converter-simplexml:2.5.0') {
+        exclude group: 'stax', module: 'stax-api'
+        exclude group: 'stax', module: 'stax'
+        exclude group: 'xpp3', module: 'xpp3'
+    }
 
     //easyprefs
     implementation 'com.pixplicity.easyprefs:library:1.9.0'

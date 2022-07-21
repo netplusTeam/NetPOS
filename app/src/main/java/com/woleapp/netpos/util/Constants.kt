@@ -7,6 +7,7 @@ const val STATE_PAYMENT_STARTED = 1
 const val STATE_PAYMENT_APPROVED = 2
 const val STRING_EOD_TITLE_HEADER = "         RRN           ST  TIME  AMOUNT"
 const val HISTORY_ACTION = "history_action"
+const val WEMA_AGENCY_PD = "CEF5A9E7-97EE-492A-8EB6-8981FE88CC46"
 const val HISTORY_ACTION_DEFAULT = "Default"
 const val HISTORY_ACTION_REPRINT = "Reprint"
 const val HISTORY_ACTION_REFUND = "Refund"

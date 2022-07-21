@@ -71,7 +71,9 @@ object ModelMapper {
         map {
             TransactionResponse().apply {
                 RRN = it.rrn ?: ""
-                accountType = it.accountType?.let { it1 -> IsoAccountType.parseStringAccountType(it1) } ?: IsoAccountType.DEFAULT_UNSPECIFIED
+                accountType =
+                    it.accountType?.let { it1 -> IsoAccountType.parseStringAccountType(it1) }
+                        ?: IsoAccountType.DEFAULT_UNSPECIFIED
                 acquiringInstCode = it.acquiringInstCode ?: ""
                 additionalAmount_54 =
                     if (it.additionalAmount != null) it.additionalAmount.toString() else ""
@@ -87,8 +89,10 @@ object ModelMapper {
                 responseCode = it.responseCode ?: ""
                 terminalId = it.terminalId ?: ""
                 transactionTimeInMillis =
-                    if (it.transactionTime?.contains("-") == true) getDateInMillis(it.transactionTime!!) else it.transactionTime?.toLong() ?: 0L
-                transactionType = it.transactionType?.let { it1 -> TransactionType.valueOf(it1) } ?: TransactionType.PURCHASE
+                    if (it.transactionTime?.contains("-") == true) getDateInMillis(it.transactionTime!!) else it.transactionTime?.toLong()
+                        ?: 0L
+                transactionType = it.transactionType?.let { it1 -> TransactionType.valueOf(it1) }
+                    ?: TransactionType.PURCHASE
                 transmissionDateTime = it.transactionTime ?: ""
             }
         }
