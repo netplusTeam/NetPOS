@@ -14,7 +14,7 @@ import android.view.ViewGroup
 import android.widget.Toast
 import androidx.fragment.app.activityViewModels
 import androidx.recyclerview.widget.GridLayoutManager
-import com.danbamitale.epmslib.entities.*
+import com.danbamitale.epmslib.entities.* // ktlint-disable no-wildcard-imports
 import com.danbamitale.epmslib.extensions.formatCurrencyAmount
 import com.danbamitale.epmslib.processors.TransactionProcessor
 import com.danbamitale.epmslib.utils.IsoAccountType
@@ -26,12 +26,12 @@ import com.woleapp.netpos.adapter.ServiceAdapter
 import com.woleapp.netpos.database.AppDatabase
 import com.woleapp.netpos.databinding.FragmentDashboardBinding
 import com.woleapp.netpos.databinding.LayoutPrintEndOfDayBinding
-import com.woleapp.netpos.model.*
+import com.woleapp.netpos.model.* // ktlint-disable no-wildcard-imports
 import com.woleapp.netpos.network.StormApiClient
 import com.woleapp.netpos.network.TokenPassportRequest
 import com.woleapp.netpos.network.getTokenClient
 import com.woleapp.netpos.nibss.NetPosTerminalConfig
-import com.woleapp.netpos.util.*
+import com.woleapp.netpos.util.* // ktlint-disable no-wildcard-imports
 import com.woleapp.netpos.util.ModelMapper.mapEntityToTransFromGateWay
 import com.woleapp.netpos.util.ModelMapper.mapRowToTransactionResponse
 import com.woleapp.netpos.util.ModelMapper.mapTransFromGateWayToEntity
@@ -49,7 +49,7 @@ import timber.log.Timber
 import java.sql.Timestamp
 import java.text.SimpleDateFormat
 import java.time.Instant
-import java.util.*
+import java.util.* // ktlint-disable no-wildcard-imports
 
 class DashboardFragment : BaseFragment() {
 
@@ -138,7 +138,7 @@ class DashboardFragment : BaseFragment() {
         }
         val listOfServices = ArrayList<Service>()
             .apply {
-                add(Service(0, "Transaction", R.drawable.ic_trans))
+                add(Service(0, "Purchase", R.drawable.ic_trans))
 //                add(Service(1, "Balance Inquiry", R.drawable.ic_write))
                 if (BuildConfig.FLAVOR.equals("wemacashout", true).not())
                     add(
@@ -157,7 +157,10 @@ class DashboardFragment : BaseFragment() {
 
     private fun getIswToken(context: Context) {
         Timber.d("CALLED")
-        val req = TokenPassportRequest(context.getString(R.string.userMD), Singletons.getCurrentlyLoggedInUser()!!.terminal_id!!)
+        val req = TokenPassportRequest(
+            context.getString(R.string.userMD),
+            Singletons.getCurrentlyLoggedInUser()!!.terminal_id!!
+        )
         try {
             val disposable = CompositeDisposable()
             disposable.add(
@@ -267,7 +270,7 @@ class DashboardFragment : BaseFragment() {
         progressDialog.show()
         val processor = TransactionProcessor(hostConfig)
         // processor.
-        val disposable = processor.processTransaction(requireContext(), requestData, cardData)
+        processor.processTransaction(requireContext(), requestData, cardData)
             .subscribeOn(Schedulers.io())
             .observeOn(AndroidSchedulers.mainThread())
             .subscribe { response, error ->

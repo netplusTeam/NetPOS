@@ -321,7 +321,7 @@ fun TransactionResponse.builder() = StringBuilder().apply {
     append("Merchant Name: ").append(Singletons.getCurrentlyLoggedInUser()!!.business_name)
     append("\nTERMINAL ID: ").append(terminalId).append("\n")
     append(transactionType).append("\n")
-    append("DATE/TIME: ").append(transactionTimeInMillis.formatDate()).append("\n")
+    append("DATE/TIME: ").append("\n${transactionTimeInMillis.formatDate()}").append("\n")
     append("AMOUNT: ").append(amount.div(100).formatCurrencyAmount("\u20A6")).append("\n")
     append(cardLabel).append(" Ending with ").append(maskedPan.substring(maskedPan.length - 4))
         .append("\n")
@@ -349,7 +349,7 @@ fun TransactionResponse.buildSMSText(s: String? = null): StringBuilder = StringB
         }\n"
     )
     append("Amount: ${amount.div(100).formatCurrencyAmount("\u20A6")}\n")
-    append("Date/Time: ${transactionTimeInMillis.formatDate()}\n")
+    append("Date/Time: \n${transactionTimeInMillis.formatDate()}\n")
     s?.let {
         append("Remark: $it\n")
     }
@@ -395,7 +395,7 @@ fun TransactionResponse.buildReceipt(
         builder.appendCardHolderName(cardHolder)
         builder.appendCardNumber(maskedPan)
         builder.appendCardScheme(cardLabel)
-        builder.appendDateTime(transactionTimeInMillis.formatDate())
+        builder.appendDateTime("\n${transactionTimeInMillis.formatDate()}")
         builder.appendRRN(RRN)
         builder.appendStan(STAN)
         builder.appendTerminalId(terminalId)

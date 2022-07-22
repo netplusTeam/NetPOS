@@ -215,8 +215,8 @@ class TransactionsFragment : BaseFragment() {
         }
         val listOfService =
             arrayListOf(
-                Service(0, "Purchase", R.drawable.ic_purchase),
-                Service(1, "Cash", R.drawable.ic_baseline_money_24),
+                Service(0, "New", R.drawable.ic_purchase),
+//                Service(1, "Cash", R.drawable.ic_baseline_money_24),
 //                Service(2, "PRE AUTHORIZATION", R.drawable.ic_pre_auth),
 //                Service(3, "Cash Advance", R.drawable.ic_pay_cash_icon),
 //                Service(4, "QR", R.drawable.ic_qr_code),

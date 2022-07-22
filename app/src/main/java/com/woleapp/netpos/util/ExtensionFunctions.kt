@@ -26,7 +26,7 @@ import java.text.SimpleDateFormat
 import java.util.* // ktlint-disable no-wildcard-imports
 
 fun Long.formatDate(): String? =
-    SimpleDateFormat("yyyy-MM-dd hh:mm a", Locale.getDefault()).format(Date(this))
+    SimpleDateFormat("yyyy-MM-dd hh:mm:ss a", Locale.getDefault()).format(Date(this))
 
 fun Disposable.disposeWith(compositeDisposable: CompositeDisposable) {
     compositeDisposable.add(this)
