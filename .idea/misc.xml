@@ -5,6 +5,9 @@
       <map>
         <entry key="../../../../../layout/custom_preview.xml" value="0.3169230769230769" />
         <entry key="../../../../layout/custom_preview.xml" value="0.22395833333333334" />
+        <entry key="app/src/aellacredit/res/mipmap-anydpi-v26/ic_launcher.xml" value="0.148" />
+        <entry key="app/src/aellacredit/res/mipmap-anydpi-v26/ic_launcher_aella.xml" value="0.148" />
+        <entry key="app/src/aellacredit/res/mipmap-anydpi-v26/ic_launcher_round.xml" value="0.148" />
         <entry key="app/src/heritage/res/mipmap-anydpi-v26/ic_launcher.xml" value="0.2305" />
         <entry key="app/src/heritage/res/mipmap-anydpi-v26/ic_launcher_round.xml" value="0.16" />
         <entry key="app/src/main/res/drawable/cardview_background.xml" value="0.1965" />

@@ -320,12 +320,13 @@ fun TransactionResponse.print(
 fun TransactionResponse.builder() = StringBuilder().apply {
     append("Merchant Name: ").append(Singletons.getCurrentlyLoggedInUser()!!.business_name)
     append("\nTERMINAL ID: ").append(terminalId).append("\n")
-    append(transactionType).append("\n")
+    append("Account Type: ${accountType.name}\n")
+    append("Transaction Type: $transactionType").append("\n")
     append("DATE/TIME: ").append("\n${transactionTimeInMillis.formatDate()}").append("\n")
     append("AMOUNT: ").append(amount.div(100).formatCurrencyAmount("\u20A6")).append("\n")
     append(cardLabel).append(" Ending with ").append(maskedPan.substring(maskedPan.length - 4))
         .append("\n")
-    append("RESPONSE CODE: ").append(responseCode).append("\n").append(
+    append("RESPONSE CODE: ").append(responseCode).append("\nResponse Message").append(
         " : ${
         try {
             responseMessage
@@ -381,23 +382,23 @@ fun TransactionResponse.buildReceipt(
                 R.drawable.ic_print_logo
             )
         )
-        builder.appendAID(AID)
+        if (AID.isNotEmpty()) builder.appendAID(AID)
         builder.appendMerchantName(Singletons.getCurrentlyLoggedInUser()!!.business_name)
         builder.appendAmount(
             amount.div(100).formatCurrencyAmount("\u20A6")
         )
         remark?.let {
-            builder.appendRemark(it)
+            if (it.isNotEmpty()) builder.appendRemark(it)
         }
-        builder.appendAppName("NetPOS")
+        builder.appendAppName(BuildConfig.FLAVOR.uppercase())
         builder.appendAppVersion(BuildConfig.VERSION_NAME)
         builder.appendAuthorizationCode(authCode)
-        builder.appendCardHolderName(cardHolder)
-        builder.appendCardNumber(maskedPan)
-        builder.appendCardScheme(cardLabel)
+        builder.appendCardHolderName("Card Holder: $cardHolder")
+        builder.appendCardNumber("Masked Pan: $maskedPan")
+        builder.appendCardScheme("Card Type: $cardLabel")
         builder.appendDateTime("\n${transactionTimeInMillis.formatDate()}")
-        builder.appendRRN(RRN)
-        builder.appendStan(STAN)
+        builder.appendRRN("$RRN \nAccount Type: ${accountType.name}")
+        if (STAN.isNotEmpty()) builder.appendStan(STAN)
         builder.appendTerminalId(terminalId)
         builder.appendTransactionType(transactionType.name)
         builder.appendTransactionStatus(if (responseCode == "00") "Approved" else "Declined")
