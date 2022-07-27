@@ -307,7 +307,7 @@ class DashboardFragment : BaseFragment() {
 
                     showMessage(if (it.isApproved) "Approved" else "Declined", messageString)
                 }
-            }
+            }.disposeWith(compositeDisposable)
     }
 
     private fun showMessage(s: String, messageString: String) {
