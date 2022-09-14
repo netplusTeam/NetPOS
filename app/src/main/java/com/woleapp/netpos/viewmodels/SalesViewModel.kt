@@ -22,6 +22,7 @@ import com.pixplicity.easyprefs.library.Prefs
 import com.woleapp.netpos.BuildConfig
 import com.woleapp.netpos.R
 import com.woleapp.netpos.database.dao.TransactionResponseDao
+import com.woleapp.netpos.database.dao.TransactionTrackingTableDao
 import com.woleapp.netpos.model.* // ktlint-disable no-wildcard-imports
 import com.woleapp.netpos.model.Alerter.showToast
 import com.woleapp.netpos.model.AppConstants.ISW_TOKEN
@@ -48,19 +49,27 @@ import java.io.PrintWriter
 import java.net.InetSocketAddress
 import java.net.Socket
 
-class SalesViewModelProvider(private val transactionResponseDao: TransactionResponseDao) :
+class SalesViewModelProvider(
+    private val transactionResponseDao: TransactionResponseDao,
+    private val trackingTableDao: TransactionTrackingTableDao
+) :
     ViewModelProvider.Factory {
     @Suppress("UNCHECKED_CAST")
     override fun <T : ViewModel> create(modelClass: Class<T>): T {
-        if (modelClass.isAssignableFrom(SalesViewModel::class.java))
-            return SalesViewModel(transactionResponseDao) as T
+        if (modelClass.isAssignableFrom(SalesViewModel::class.java)) {
+            return SalesViewModel(transactionResponseDao, trackingTableDao) as T
+        }
         throw IllegalArgumentException("Cannot provide viewmodel")
     }
 }
 
-class SalesViewModel(private val transactionResponseDao: TransactionResponseDao) : ViewModel() {
+class SalesViewModel(
+    private val transactionResponseDao: TransactionResponseDao,
+    private val transactionTrackingTableDao: TransactionTrackingTableDao
+) : ViewModel() {
     private val _partnerThreshold: MutableLiveData<GetPartnerInterSwitchThresholdResponse> =
         MutableLiveData()
+    private val temporalRrnForLastTransaction: MutableLiveData<String> = MutableLiveData("")
     private val stormPID = Singletons.getCurrentlyLoggedInUser()?.netplus_id ?: ""
     private val partnerId =
         if (BuildConfig.FLAVOR.contains("wemacashout", true)) WEMA_AGENCY_PD else stormPID
@@ -172,6 +181,19 @@ class SalesViewModel(private val transactionResponseDao: TransactionResponseDao)
     }
 
     fun makePayment(context: Context, transactionType: TransactionType = TransactionType.PURCHASE) {
+        // First save the last transaction
+        lastTransactionResponse.value?.let {
+            mapDanbamitaleResponseToResponseX(
+                it
+            )
+        }?.let {
+            temporalRrnForLastTransaction.value?.let { it1 ->
+                TransactionResponseXForTracking(
+                    it1,
+                    it
+                )
+            }?.let { it2 -> saveTransactionForTracking(it2) }
+        }
         Timber.e(cardData.toString())
         val configData: ConfigData = NetPosTerminalConfig.getConfigData() ?: kotlin.run {
             _message.value =
@@ -206,7 +228,7 @@ class SalesViewModel(private val transactionResponseDao: TransactionResponseDao)
         val transactionToLog = cardData?.expiryDate?.let {
             customerName.value?.let { it1 ->
                 user?.netplus_id?.let { it2 ->
-                    val newAmount = amount.value!!.toDoubleOrNull()
+                    val newAmount = amountLong.toDouble()/*amount.value!!.toDoubleOrNull() */
                     TransactionToLogBeforeConnectingToNibbs(
                         status = "PENDING",
                         TransactionResponseX(
@@ -218,7 +240,7 @@ class SalesViewModel(private val transactionResponseDao: TransactionResponseDao)
                             accountType = isoAccountType!!.name,
                             acquiringInstCode = "",
                             additionalAmount_54 = "",
-                            amount = newAmount?.toInt() ?: amount.value!!.toInt(),
+                            amount = newAmount.toInt() ?: amount.value!!.toInt(),
                             appCryptogram = "",
                             authCode = "",
                             cardExpiry = it,
@@ -256,8 +278,20 @@ class SalesViewModel(private val transactionResponseDao: TransactionResponseDao)
         }
     }
 
-    private fun makePaymentViaIswMethodDeclaration(context: Context): Single<TransactionResponse?> {
+    private fun saveTransactionForTracking(transactionResponse: TransactionResponseXForTracking) {
+        transactionTrackingTableDao.insertTransactionForTracking(transactionResponse)
+            .subscribeOn(Schedulers.io())
+            .observeOn(AndroidSchedulers.mainThread())
+            .subscribe { t1, t2 ->
+                t1?.let {
+                }
+                t2?.let {
+                    Timber.d(it.localizedMessage)
+                }
+            }
+    }
 
+    private fun makePaymentViaIswMethodDeclaration(context: Context): Single<TransactionResponse?> {
         val makePaymentParams = MakePaymentParams(
             action = "makePayment",
             terminalId = terminalId,
@@ -299,6 +333,7 @@ class SalesViewModel(private val transactionResponseDao: TransactionResponseDao)
                 it.cardLabel = cardScheme!!
                 it.amount = requestData.amount
                 lastTransactionResponse.postValue(it)
+                temporalRrnForLastTransaction.postValue(customRrn)
                 _message.postValue(Event(if (it.responseCode == "00") "Transaction Approved" else "Transaction Not approved"))
                 transactionResponseDao
                     .insertNewTransaction(it)
@@ -352,6 +387,7 @@ class SalesViewModel(private val transactionResponseDao: TransactionResponseDao)
                 it.cardLabel = cardScheme!!
                 it.amount = requestData.amount
                 lastTransactionResponse.postValue(it)
+                temporalRrnForLastTransaction.postValue(customRrn)
                 _message.postValue(Event(if (it.responseCode == "00") "Transaction Approved" else "Transaction Not approved"))
                 transactionResponseDao
                     .insertNewTransaction(it)
@@ -422,7 +458,8 @@ class SalesViewModel(private val transactionResponseDao: TransactionResponseDao)
             when (Prefs.getString(PREF_PRINTER_SETTINGS, PREF_VALUE_PRINT_CUSTOMER_COPY_ONLY)) {
                 PREF_VALUE_PRINT_CUSTOMER_COPY_ONLY -> printReceipt(context, isMerchantCopy = false)
                 PREF_VALUE_PRINT_CUSTOMER_AND_MERCHANT_COPY -> printReceipt(
-                    context, printBoth = true
+                    context,
+                    printBoth = true
                 )
                 PREF_VALUE_PRINT_SMS -> _showPrintDialog.postValue(
                     Event(transactionResponse.buildSMSText(remark.value ?: "").toString())
@@ -431,10 +468,11 @@ class SalesViewModel(private val transactionResponseDao: TransactionResponseDao)
                     Event(true)
                 )
             }
-        } else
+        } else {
             _showPrintDialog.postValue(
                 Event(transactionResponse.buildSMSText(remark.value ?: "").toString())
             )
+        }
     }
 
     fun printReceipt(
@@ -444,7 +482,8 @@ class SalesViewModel(private val transactionResponseDao: TransactionResponseDao)
         selected: Boolean = false
     ) {
         lastTransactionResponse.value?.print(
-            context, remark = remark.value ?: "",
+            context,
+            remark = remark.value ?: "",
             isMerchantCopy = isMerchantCopy
         )
             ?.subscribeOn(Schedulers.io())?.observeOn(AndroidSchedulers.mainThread())
@@ -457,8 +496,9 @@ class SalesViewModel(private val transactionResponseDao: TransactionResponseDao)
                             printReceipt(context, isMerchantCopy = true, printBoth = true)
                         }
                     } else {
-                        if (selected.not())
+                        if (selected.not()) {
                             finish()
+                        }
                     }
                 }
                 t2?.let {
@@ -513,7 +553,11 @@ class SalesViewModel(private val transactionResponseDao: TransactionResponseDao)
 
     fun sendSmS(number: String) {
         sendSmS(
-            lastTransactionResponse.value!!, number, _smsSent, _message, compositeDisposable
+            lastTransactionResponse.value!!,
+            number,
+            _smsSent,
+            _message,
+            compositeDisposable
         )
     }
 
@@ -745,6 +789,7 @@ class SalesViewModel(private val transactionResponseDao: TransactionResponseDao)
                     it.cardLabel = cardScheme
                     it.amount = requestData.amount
                     lastTransactionResponse.postValue(it)
+                    temporalRrnForLastTransaction.postValue(transactionToLog.transactionResponse.rrn)
                     val message =
                         (if (it.responseCode == "00") "Transaction Approved" else "Transaction Not approved")
                     Timber.d("RESPONSE=>$it")

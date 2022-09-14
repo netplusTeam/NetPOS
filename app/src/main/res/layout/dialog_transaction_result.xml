@@ -49,6 +49,7 @@
                 style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
+                android:visibility="gone"
                 android:layout_marginHorizontal="16dp"
                 android:layout_marginTop="@dimen/dimen_16dp"
                 android:hint="@string/email_address"

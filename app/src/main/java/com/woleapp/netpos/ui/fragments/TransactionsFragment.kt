@@ -8,6 +8,10 @@ import android.view.ViewGroup
 import android.widget.Toast
 import androidx.fragment.app.Fragment
 import androidx.recyclerview.widget.GridLayoutManager
+import androidx.work.Constraints
+import androidx.work.NetworkType
+import androidx.work.OneTimeWorkRequestBuilder
+import androidx.work.WorkManager
 import com.danbamitale.epmslib.entities.TransactionType
 import com.pixplicity.easyprefs.library.Prefs
 import com.woleapp.netpos.BuildConfig
@@ -21,13 +25,19 @@ import com.woleapp.netpos.util.HISTORY_ACTION_PREAUTH
 import com.woleapp.netpos.util.HISTORY_ACTION_REFUND
 import com.woleapp.netpos.util.HISTORY_ACTION_REPRINT
 import com.woleapp.netpos.util.PREF_REPRINT_PASSWORD
+import com.woleapp.netpos.worker.RepushFailedTransactionToBackendWorker
 
 class TransactionsFragment : BaseFragment() {
-
+    private lateinit var workManager: WorkManager
     private lateinit var adapter: ServiceAdapter
     private lateinit var binding: FragmentTransactionsBinding
     private lateinit var inputPasswordDialog: androidx.appcompat.app.AlertDialog
     private lateinit var passwordDialogBinding: LayoutEnterPasswordBinding
+
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        workManager = WorkManager.getInstance(requireActivity().applicationContext)
+    }
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -46,13 +56,15 @@ class TransactionsFragment : BaseFragment() {
             .create()
         passwordDialogBinding.proceed.setOnClickListener {
             if (passwordDialogBinding.passwordEdittext.text.toString() == Prefs.getString(
-                    PREF_REPRINT_PASSWORD, ""
+                    PREF_REPRINT_PASSWORD,
+                    ""
                 )
             ) {
                 inputPasswordDialog.cancel()
                 addFragmentWithoutRemove(TransactionHistoryFragment.newInstance(action = HISTORY_ACTION_REPRINT))
-            } else
+            } else {
                 Toast.makeText(requireContext(), "Password is incorrect", Toast.LENGTH_SHORT).show()
+            }
         }
         inputPasswordDialog.setOnCancelListener {
             passwordDialogBinding.passwordEdittext.setText("")
@@ -102,6 +114,18 @@ class TransactionsFragment : BaseFragment() {
                 }
         dialog.setView(preAuthDialogBinding.root)
         dialog.show()
+    }
+
+    override fun onResume() {
+        super.onResume()
+        val workRequest = OneTimeWorkRequestBuilder<RepushFailedTransactionToBackendWorker>()
+            .setConstraints(
+                Constraints.Builder()
+                    .setRequiredNetworkType(
+                        NetworkType.CONNECTED
+                    ).build()
+            ).build()
+        workManager.enqueue(workRequest)
     }
 
     private fun setUpKongaAdapter() {
@@ -220,7 +244,7 @@ class TransactionsFragment : BaseFragment() {
 //                Service(2, "PRE AUTHORIZATION", R.drawable.ic_pre_auth),
 //                Service(3, "Cash Advance", R.drawable.ic_pay_cash_icon),
 //                Service(4, "QR", R.drawable.ic_qr_code),
-                Service(5, "Reprint", R.drawable.ic_print),
+                Service(5, "Reprint", R.drawable.ic_print)
 //                Service(6, "VEND", R.drawable.ic_vend)
             )
 

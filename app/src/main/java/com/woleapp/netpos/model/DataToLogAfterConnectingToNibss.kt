@@ -1,5 +1,7 @@
 package com.woleapp.netpos.model
 
+import androidx.room.Entity
+import androidx.room.PrimaryKey
 import com.danbamitale.epmslib.entities.TransactionResponse
 import com.danbamitale.epmslib.entities.TransactionType
 import com.danbamitale.epmslib.utils.IsoAccountType
@@ -49,6 +51,13 @@ data class TransactionResponseX(
     val transactionTimeInMillis: Int,
     val transactionType: String,
     val transmissionDateTime: String
+)
+
+@Entity(tableName = "transactionTrackingTable")
+data class TransactionResponseXForTracking(
+    @PrimaryKey(autoGenerate = false)
+    val temporalRRN: String,
+    val transRespX: TransactionResponseX
 )
 
 fun mapToTransactionResponse(transRespX: TransactionResponseX): TransactionResponse =

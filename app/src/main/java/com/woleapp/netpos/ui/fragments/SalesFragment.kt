@@ -54,7 +54,8 @@ class SalesFragment : BaseFragment() {
 
     private val viewModel by viewModels<SalesViewModel> {
         SalesViewModelProvider(
-            AppDatabase.getDatabaseInstance(requireContext()).transactionResponseDao()
+            AppDatabase.getDatabaseInstance(requireContext()).transactionResponseDao(),
+            AppDatabase.getDatabaseInstance(requireContext()).transactionTrackingTableDao()
         )
     }
     private lateinit var transactionType: TransactionType
@@ -144,7 +145,7 @@ class SalesFragment : BaseFragment() {
         }*/
         viewModel.getCardData.observe(viewLifecycleOwner) { event ->
             event.getContentIfNotHandled()?.let { shouldGetCardData ->
-                if (shouldGetCardData)
+                if (shouldGetCardData) {
                     showCardDialog(
                         requireActivity(),
                         viewLifecycleOwner,
@@ -171,6 +172,7 @@ class SalesFragment : BaseFragment() {
                             }
                         }
                     }
+                }
             }
         }
         viewModel.showReceiptType.observe(viewLifecycleOwner) { event ->
@@ -196,16 +198,19 @@ class SalesFragment : BaseFragment() {
         }
         viewModel.finish.observe(viewLifecycleOwner) { event ->
             event.getContentIfNotHandled()?.let {
-                if (it)
+                if (it) {
                     requireActivity().onBackPressed()
+                }
             }
         }
         viewModel.showPrinterError.observe(viewLifecycleOwner) { event ->
             event.getContentIfNotHandled()?.let {
-                if (printTypeDialog.isShowing)
+                if (printTypeDialog.isShowing) {
                     printTypeDialog.cancel()
-                if (printerErrorDialog.isShowing)
+                }
+                if (printerErrorDialog.isShowing) {
                     printerErrorDialog.cancel()
+                }
                 printerErrorDialog.apply {
                     setMessage(it)
                 }.show()
@@ -238,10 +243,12 @@ class SalesFragment : BaseFragment() {
         alertDialog.window?.setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_ADJUST_PAN)
         viewModel.showPrintDialog.observe(viewLifecycleOwner) { event ->
             event.getContentIfNotHandled()?.let {
-                if (printTypeDialog.isShowing)
+                if (printTypeDialog.isShowing) {
                     printTypeDialog.cancel()
-                if (printerErrorDialog.isShowing)
+                }
+                if (printerErrorDialog.isShowing) {
                     printerErrorDialog.cancel()
+                }
                 alertDialog.apply {
                     receiptDialogBinding.transactionContent.text = it
                     show()
@@ -254,23 +261,25 @@ class SalesFragment : BaseFragment() {
         }
         viewModel.shouldRefreshNibssKeys.observe(viewLifecycleOwner) { event ->
             event.getContentIfNotHandled()?.let {
-                if (it)
+                if (it) {
                     NetPosTerminalConfig.init(
                         requireContext().applicationContext,
                         configureSilently = true
                     )
+                }
             }
         }
         binding.process.setOnClickListener {
-            if (transactionType == TransactionType.DEPOSIT)
+            if (transactionType == TransactionType.DEPOSIT) {
                 viewModel.beginCashPayment()
-            else
+            } else {
                 viewModel.validateField()
+            }
         }
 
         viewModel.cashTransactionCompleted.observe(viewLifecycleOwner) { event ->
             event.getContentIfNotHandled()?.let {
-                if (it)
+                if (it) {
                     AlertDialog.Builder(requireContext())
                         .apply {
                             setTitle("Cash Payment")
@@ -282,6 +291,7 @@ class SalesFragment : BaseFragment() {
                                 viewModel.finish()
                             }
                         }.show()
+                }
             }
         }
         return binding.root
@@ -301,7 +311,8 @@ class SalesFragment : BaseFragment() {
             requireActivity().findViewById(
                 R.id.container_main
             ),
-            message, Snackbar.LENGTH_LONG
+            message,
+            Snackbar.LENGTH_LONG
         ).show()
     }
 

@@ -437,7 +437,7 @@ class UtilitiesViewModel : ViewModel() {
             addProperty("message", lastTransactionResponse.value!!.buildSMSText(remark).toString())
         }
         Timber.e("payload: $map")
-        val auth = "Bearer ${Prefs.getString(PREF_APP_TOKEN, "")}"
+        val auth = "Bearer ${Prefs.getString(PREF_USER_TOKEN, "")}"
         val body: RequestBody = map.toString()
             .toRequestBody("application/json; charset=utf-8".toMediaTypeOrNull())
         StormApiClient.getSmsServiceInstance().sendSms(auth, body)

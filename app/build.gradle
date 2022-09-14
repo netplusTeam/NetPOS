@@ -35,8 +35,8 @@ android {
         applicationId "com.woleapp.netpos"
         minSdkVersion 21
         targetSdkVersion 30
-        versionCode 125
-        versionName "1.1.125"
+        versionCode 126
+        versionName "1.1.126"
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         def environmentPath
         if (appModeProd == "true")
@@ -50,6 +50,10 @@ android {
         for (String key : envProperties.keySet()) {
             buildConfigField "String", key.replaceAll("\\.", "_").toUpperCase(), envProperties[key]
         }
+        Properties netPosProperties = new Properties()
+        netPosProperties.load(rootProject.file("local.properties").newDataInputStream())
+        buildConfigField("String", "STRING_DEFAULT_BASE_URL", "\"${netPosProperties.getProperty("STRING_DEFAULT_BASE_URL")}\"")
+        buildConfigField("String", "STRING_ZENITH_BASE_URL", "\"${netPosProperties.getProperty("STRING_ZENITH_BASE_URL")}\"")
     }
 
     buildTypes {
@@ -236,6 +240,10 @@ dependencies {
 
     //preference
     implementation("androidx.preference:preference-ktx:1.2.0")
+
+    //workmanager
+    def work_version = "2.5.0"
+    implementation "androidx.work:work-runtime-ktx:$work_version"
 
     //firebase
     implementation platform('com.google.firebase:firebase-bom:29.1.0')

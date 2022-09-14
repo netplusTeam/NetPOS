@@ -3,6 +3,8 @@ package com.woleapp.netpos.util
 import androidx.room.TypeConverter
 import com.danbamitale.epmslib.entities.TransactionType
 import com.danbamitale.epmslib.utils.IsoAccountType
+import com.google.gson.Gson
+import com.woleapp.netpos.model.TransactionResponseX
 
 class RoomTypeConverters {
     companion object {
@@ -16,10 +18,21 @@ class RoomTypeConverters {
 
         @JvmStatic
         @TypeConverter
-        fun convertTransactionResponseEnumToString(transactionType: TransactionType) = transactionType.name
+        fun convertTransactionResponseEnumToString(transactionType: TransactionType) =
+            transactionType.name
 
         @JvmStatic
         @TypeConverter
         fun convertTransactionResponseToEnum(value: String) = TransactionType.valueOf(value)
+
+        @JvmStatic
+        @TypeConverter
+        fun convertTransactionResponseXtoString(transRespX: TransactionResponseX) =
+            Gson().toJson(transRespX)
+
+        @JvmStatic
+        @TypeConverter
+        fun convertStringToTransactionResponseX(tranRespXInJson: String) =
+            Gson().fromJson(tranRespXInJson, TransactionResponseX::class.java)
     }
 }

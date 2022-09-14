@@ -135,4 +135,6 @@
     <string name="userMD">2033LAGPOOO7885</string>
     <string name="wemaAgencyMD">2035LA207031072</string>
     <string name="terminal_val_failed">Terminal validation failed</string>
+    <!-- TODO: Remove or change this placeholder text -->
+    <string name="hello_blank_fragment">Hello blank fragment</string>
 </resources>

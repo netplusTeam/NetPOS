@@ -8,13 +8,15 @@ import androidx.room.TypeConverters
 import com.danbamitale.epmslib.entities.TransactionResponse
 import com.woleapp.netpos.database.dao.MqttLocalDao
 import com.woleapp.netpos.database.dao.TransactionResponseDao
+import com.woleapp.netpos.database.dao.TransactionTrackingTableDao
 import com.woleapp.netpos.model.AppConstants.APP_DB_NAME
 import com.woleapp.netpos.model.MqttEventsLocal
+import com.woleapp.netpos.model.TransactionResponseXForTracking
 import com.woleapp.netpos.util.RoomTypeConverters
 
 @Database(
-    entities = [TransactionResponse::class, MqttEventsLocal::class],
-    version = 9,
+    entities = [TransactionResponse::class, MqttEventsLocal::class, TransactionResponseXForTracking::class],
+    version = 10,
     exportSchema = false
 )
 @TypeConverters(
@@ -22,6 +24,7 @@ import com.woleapp.netpos.util.RoomTypeConverters
 )
 abstract class AppDatabase : RoomDatabase() {
 
+    abstract fun transactionTrackingTableDao(): TransactionTrackingTableDao
     abstract fun transactionResponseDao(): TransactionResponseDao
     abstract fun mqttLocalDao(): MqttLocalDao
 

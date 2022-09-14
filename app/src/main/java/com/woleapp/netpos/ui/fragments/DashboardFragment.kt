@@ -68,7 +68,6 @@ class DashboardFragment : BaseFragment() {
         container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View {
-
         binding = FragmentDashboardBinding.inflate(inflater, container, false)
         progressDialog = ProgressDialog(requireContext())
         endOfDayProgressDialog = ProgressDialog(requireContext()).apply {
@@ -117,10 +116,11 @@ class DashboardFragment : BaseFragment() {
                 0 -> addFragmentWithoutRemove(TransactionsFragment())
                 1 -> getBalance()
                 2 -> {
-                    if (BuildConfig.FLAVOR == "zenith")
+                    if (BuildConfig.FLAVOR == "zenith") {
                         showPayWithTransferDialog(requireContext())
-                    else
+                    } else {
                         addFragmentWithoutRemove(NipNotificationFragment.newInstance())
+                    }
                 }
                 3 -> addFragmentWithoutRemove(BillsFragment())
                 4 -> showCalendarDialog()
@@ -140,7 +140,7 @@ class DashboardFragment : BaseFragment() {
             .apply {
                 add(Service(0, "Purchase", R.drawable.ic_trans))
 //                add(Service(1, "Balance Inquiry", R.drawable.ic_write))
-                if (BuildConfig.FLAVOR.equals("wemacashout", true).not())
+                if (BuildConfig.FLAVOR.equals("wemacashout", true).not()) {
                     add(
                         Service(
                             2,
@@ -148,6 +148,7 @@ class DashboardFragment : BaseFragment() {
                             R.drawable.ic_lending
                         )
                     )
+                }
 //                add(Service(3, "Pay Bills", R.drawable.ic_bill))
                 add(Service(4, "View End Of Day Transactions", R.drawable.ic_print))
                 add(Service(5, "Settings", R.drawable.ic_baseline_settings))
@@ -191,10 +192,11 @@ class DashboardFragment : BaseFragment() {
                 0 -> addFragmentWithoutRemove(TransactionsFragment())
                 1 -> getBalance()
                 2 -> {
-                    if (BuildConfig.FLAVOR == "zenith")
+                    if (BuildConfig.FLAVOR == "zenith") {
                         showPayWithTransferDialog(requireContext())
-                    else
+                    } else {
                         addFragmentWithoutRemove(NipNotificationFragment.newInstance())
+                    }
                 }
                 3 -> addFragmentWithoutRemove(BillsFragment())
                 4 -> showCalendarDialog()
@@ -214,7 +216,7 @@ class DashboardFragment : BaseFragment() {
             .apply {
                 add(Service(0, "Transaction", R.drawable.ic_trans))
                 add(Service(1, "Balance Inquiry", R.drawable.ic_write))
-                if (BuildConfig.FLAVOR.equals("wemacashout", true).not())
+                if (BuildConfig.FLAVOR.equals("wemacashout", true).not()) {
                     add(
                         Service(
                             2,
@@ -222,6 +224,7 @@ class DashboardFragment : BaseFragment() {
                             R.drawable.ic_lending
                         )
                     )
+                }
                 add(Service(3, "Pay Bills", R.drawable.ic_bill))
                 add(Service(4, "View End Of Day Transactions", R.drawable.ic_print))
                 add(Service(5, "Settings", R.drawable.ic_baseline_settings))
@@ -274,8 +277,9 @@ class DashboardFragment : BaseFragment() {
             .subscribeOn(Schedulers.io())
             .observeOn(AndroidSchedulers.mainThread())
             .subscribe { response, error ->
-                if (progressDialog.isShowing)
+                if (progressDialog.isShowing) {
                     progressDialog.dismiss()
+                }
                 error?.let {
                     it.printStackTrace()
                     Toast.makeText(
@@ -424,7 +428,6 @@ class DashboardFragment : BaseFragment() {
             parameters.page,
             parameters.pageSize
         ).flatMap {
-
             it.data.rows = it.data.rows.map { transaction ->
                 transaction.amount =
                     if (transaction.amount is Int) (transaction.amount as Int).times(100) else (transaction.amount as Double)
@@ -433,11 +436,12 @@ class DashboardFragment : BaseFragment() {
             }
             Single.just(it)
         }.flatMap {
-            if (it.data.rows.isEmpty())
+            if (it.data.rows.isEmpty()) {
                 return@flatMap getEndOfDayLocal(
                     getDateInMilliSecsForLocal(df.format(be)),
                     getDateInMilliSecsForLocalForEndOfDay(df.format(be))
                 )
+            }
             Single.just(it)
         }.retry(2)
             .onErrorResumeNext {

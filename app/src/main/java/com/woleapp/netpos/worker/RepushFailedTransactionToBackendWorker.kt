@@ -1,0 +1,76 @@
+package com.woleapp.netpos.worker
+
+import android.content.Context
+import androidx.work.Worker
+import androidx.work.WorkerParameters
+import com.woleapp.netpos.database.AppDatabase
+import com.woleapp.netpos.model.DataToLogAfterConnectingToNibss
+import com.woleapp.netpos.model.TransactionResponseXForTracking
+import com.woleapp.netpos.network.StormApiClient
+import io.reactivex.android.schedulers.AndroidSchedulers
+import io.reactivex.disposables.CompositeDisposable
+import io.reactivex.schedulers.Schedulers
+import timber.log.Timber
+
+class RepushFailedTransactionToBackendWorker(
+    context: Context,
+    workParams: WorkerParameters
+) : Worker(context, workParams) {
+    private val stormApiService = StormApiClient.getStormApiLoginInstance()
+    private val compositeDisposable = CompositeDisposable()
+    private val transactionTrackingTableDao =
+        AppDatabase.getDatabaseInstance(context).transactionTrackingTableDao()
+
+    override fun doWork(): Result {
+        val yetToBeUpdatedTransactions =
+            transactionTrackingTableDao.getAllYetToBeUpdatedTransactions()
+        var counter = yetToBeUpdatedTransactions.size
+        yetToBeUpdatedTransactions.forEach {
+            repushTransactionTransaction(it) {
+                --counter
+            }
+        }
+
+        return if (transactionTrackingTableDao.getAllYetToBeUpdatedTransactions()
+            .isEmpty() && counter == 0
+        ) {
+            Result.success()
+        } else Result.retry()
+    }
+
+    override fun onStopped() {
+        super.onStopped()
+        compositeDisposable.clear()
+    }
+
+    private fun repushTransactionTransaction(
+        transactionToRepush: TransactionResponseXForTracking,
+        decrementCounter: () -> Unit
+    ) {
+        val transStatus =
+            if (transactionToRepush.transRespX.responseCode == "00") "APPROVED" else "DECLINED"
+        val transactionResponse = DataToLogAfterConnectingToNibss(
+            transStatus,
+            transactionToRepush.transRespX,
+            transactionToRepush.temporalRRN
+        )
+        stormApiService.updateLogAfterConnectingToNibss(
+            transactionToRepush.temporalRRN,
+            transactionResponse
+        ).subscribeOn(Schedulers.io())
+            .observeOn(AndroidSchedulers.mainThread())
+            .subscribe { t1, t2 ->
+                t1?.let {
+                    if (it.status == "success") {
+                        transactionTrackingTableDao.deleteTransactionAfterSuccessfulUpdateAtBackend(
+                            transactionToRepush
+                        )
+                        decrementCounter()
+                    }
+                }
+                t2?.let {
+                    Timber.d("SEND_TRANS_TO_BACKEND_ERROR%s", it.localizedMessage)
+                }
+            }
+    }
+}
