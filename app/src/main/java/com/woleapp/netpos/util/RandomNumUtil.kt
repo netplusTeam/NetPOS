@@ -63,6 +63,12 @@ object RandomNumUtil {
         return dateFormatter.format(today) + " 00:00:00"
     }
 
+    fun getDateInMillisFromZenithPbtTransDate(dateTime: String): Long {
+        val format = SimpleDateFormat("yyyy-MM-dd hh:mm:ss")
+        val date = format.parse(dateTime.replace("T", " ").removeSuffix(".000Z"))
+        return date!!.time
+    }
+
     @SuppressLint("SimpleDateFormat")
     fun getDateInMilliSecsForLocal(date: String): Long {
         val dateFormatter = SimpleDateFormat("dd:MM:yyyy HH:mm:ss")

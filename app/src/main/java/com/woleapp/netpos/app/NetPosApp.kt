@@ -12,12 +12,14 @@ import com.pixplicity.easyprefs.library.Prefs
 import com.woleapp.netpos.BuildConfig
 import com.woleapp.netpos.network.StormApiClient
 import com.woleapp.netpos.util.* // ktlint-disable no-wildcard-imports
+import dagger.hilt.android.HiltAndroidApp
 import io.reactivex.android.schedulers.AndroidSchedulers
 import io.reactivex.disposables.CompositeDisposable
 import io.reactivex.plugins.RxJavaPlugins
 import io.reactivex.schedulers.Schedulers
 import timber.log.Timber
 
+@HiltAndroidApp
 class NetPosApp : Application() {
 
     @SuppressLint("BinaryOperationInTimber")

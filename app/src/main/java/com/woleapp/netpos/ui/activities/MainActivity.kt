@@ -1,5 +1,3 @@
-@file:Suppress("DEPRECATION")
-
 package com.woleapp.netpos.ui.activities
 
 import android.Manifest
@@ -29,11 +27,12 @@ import com.woleapp.netpos.receivers.BatteryReceiver
 import com.woleapp.netpos.ui.fragments.DashboardFragment
 import com.woleapp.netpos.util.* // ktlint-disable no-wildcard-imports
 import com.woleapp.netpos.util.Singletons.gson
+import dagger.hilt.android.AndroidEntryPoint
 import io.reactivex.disposables.CompositeDisposable
 import pub.devrel.easypermissions.EasyPermissions
 import timber.log.Timber
 
-@Suppress("DEPRECATION")
+@AndroidEntryPoint
 class MainActivity : AppCompatActivity(), EasyPermissions.PermissionCallbacks {
 
     private var progressDialog: ProgressDialog? = null

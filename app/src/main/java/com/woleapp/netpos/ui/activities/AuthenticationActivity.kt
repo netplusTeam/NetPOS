@@ -13,13 +13,16 @@ import com.woleapp.netpos.ui.fragments.LoginFragment
 import com.woleapp.netpos.util.JWTHelper
 import com.woleapp.netpos.util.PREF_AUTHENTICATED
 import com.woleapp.netpos.util.PREF_USER_TOKEN
+import dagger.hilt.android.AndroidEntryPoint
 
+@AndroidEntryPoint
 class AuthenticationActivity : AppCompatActivity() {
     private lateinit var binding: ActivityAuthenticationBinding
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setTheme(R.style.AppTheme)
         binding = DataBindingUtil.setContentView(this, R.layout.activity_authentication)
+//        NetPosTerminalConfig.init(applicationContext)
         if (Prefs.getBoolean(PREF_AUTHENTICATED, false) && tokenValid()) {
             startActivity(
                 Intent(this, MainActivity::class.java).apply {

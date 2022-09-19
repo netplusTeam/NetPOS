@@ -12,6 +12,7 @@ import android.view.ViewGroup
 import android.view.WindowManager
 import android.widget.AdapterView
 import android.widget.Toast
+import androidx.fragment.app.activityViewModels
 import androidx.fragment.app.viewModels
 import com.google.android.material.bottomsheet.BottomSheetDialog
 import com.woleapp.netpos.R
@@ -26,15 +27,17 @@ import com.woleapp.netpos.network.StormUtilitiesApiClient
 import com.woleapp.netpos.nibss.NetPosTerminalConfig
 import com.woleapp.netpos.util.* // ktlint-disable no-wildcard-imports
 import com.woleapp.netpos.viewmodels.UtilitiesViewModel
+import dagger.hilt.android.AndroidEntryPoint
 import timber.log.Timber
 
+@AndroidEntryPoint
 class UtilitiesPaymentFragment : BaseFragment() {
 
     private lateinit var binding: LayoutPowerOrElectricityBinding
     private lateinit var cableBinding: LayoutCableTvBinding
     private lateinit var internetSubscriptionBinding: LayoutInternetSubscriptionBinding
     private lateinit var airtimeOrDataBinding: LayoutAirtimeOrDataBinding
-    private val viewModel by viewModels<UtilitiesViewModel>()
+    private val viewModel by activityViewModels<UtilitiesViewModel>()
     private var progressDialog: ProgressDialog? = null
     private var alertDialog: AlertDialog? = null
     private var verifyBillDialog: BottomSheetDialog? = null

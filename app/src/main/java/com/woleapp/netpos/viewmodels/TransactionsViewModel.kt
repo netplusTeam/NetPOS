@@ -8,10 +8,9 @@ import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.paging.LivePagedListBuilder
 import androidx.paging.PagedList
-import com.danbamitale.epmslib.entities.* // ktlint-disable no-wildcard-imports
+import com.danbamitale.epmslib.entities.*
 import com.danbamitale.epmslib.processors.TransactionProcessor
 import com.danbamitale.epmslib.utils.IsoAccountType
-import com.google.gson.JsonObject
 import com.netpluspay.netpossdk.printer.PrinterResponse
 import com.pixplicity.easyprefs.library.Prefs
 import com.woleapp.netpos.database.AppDatabase
@@ -20,14 +19,11 @@ import com.woleapp.netpos.model.GetEodFromNewServiceModel
 import com.woleapp.netpos.model.User
 import com.woleapp.netpos.network.StormApiClient
 import com.woleapp.netpos.nibss.NetPosTerminalConfig
-import com.woleapp.netpos.util.* // ktlint-disable no-wildcard-imports
+import com.woleapp.netpos.util.*
 import io.reactivex.Single
 import io.reactivex.android.schedulers.AndroidSchedulers
 import io.reactivex.disposables.CompositeDisposable
 import io.reactivex.schedulers.Schedulers
-import okhttp3.MediaType.Companion.toMediaTypeOrNull
-import okhttp3.RequestBody
-import okhttp3.RequestBody.Companion.toRequestBody
 import timber.log.Timber
 
 class TransactionsViewModel(private val appDatabase: AppDatabase) : ViewModel() {
@@ -191,8 +187,9 @@ class TransactionsViewModel(private val appDatabase: AppDatabase) : ViewModel() 
             requestData,
             cardData!!
         ).flatMap {
-            if (it.responseCode == "A3")
+            if (it.responseCode == "A3") {
                 _shouldRefreshNibssKeys.postValue(Event(true))
+            }
             _message.postValue(Event("Transaction: ${it.responseMessage}"))
             it.cardHolder = cardHolderName
             it.cardLabel = cardScheme!!
@@ -244,7 +241,8 @@ class TransactionsViewModel(private val appDatabase: AppDatabase) : ViewModel() 
                     isMerchantCopy = false
                 )
                 PREF_VALUE_PRINT_CUSTOMER_AND_MERCHANT_COPY -> startPrintingReceipt(
-                    context, printBoth = true
+                    context,
+                    printBoth = true
                 )
                 PREF_VALUE_PRINT_SMS -> _showPrintDialog.postValue(
                     Event(transactionResponse.buildSMSText().toString())
@@ -253,10 +251,11 @@ class TransactionsViewModel(private val appDatabase: AppDatabase) : ViewModel() 
                     Event(true)
                 )
             }
-        } else
+        } else {
             _showPrintDialog.postValue(
                 Event(transactionResponse.buildSMSText().toString())
             )
+        }
 
 //        if (Build.MODEL.equals("Pro", true) || Build.MODEL.equals(
 //                "P3",
@@ -389,11 +388,13 @@ class TransactionsViewModel(private val appDatabase: AppDatabase) : ViewModel() 
 
         _showProgressDialog.value = Event(true)
         TransactionProcessor(hostConfig).processTransaction(
-            context, requestData,
+            context,
+            requestData,
             cardData!!
         ).flatMap {
-            if (it.responseCode == "A3")
+            if (it.responseCode == "A3") {
                 _shouldRefreshNibssKeys.postValue(Event(true))
+            }
             _showProgressDialog.postValue(Event(false))
             _message.postValue(Event("Transaction: ${it.responseMessage}"))
             it.cardHolder = cardHolderName
@@ -435,8 +436,9 @@ class TransactionsViewModel(private val appDatabase: AppDatabase) : ViewModel() 
         _showProgressDialog.value = Event(true)
         TransactionProcessor(hostConfig).processTransaction(context, requestData, cardData!!)
             .flatMap {
-                if (it.responseCode == "A3")
+                if (it.responseCode == "A3") {
                     _shouldRefreshNibssKeys.postValue(Event(true))
+                }
                 _showProgressDialog.postValue(Event(false))
                 _message.postValue(Event("Transaction: ${it.responseMessage}"))
                 it.cardHolder = cardHolderName
@@ -461,7 +463,11 @@ class TransactionsViewModel(private val appDatabase: AppDatabase) : ViewModel() 
 
     fun sendSmS(number: String) {
         sendSmS(
-            lastTransactionResponse.value!!, number, _smsSent, _message, compositeDisposable
+            lastTransactionResponse.value!!,
+            number,
+            _smsSent,
+            _message,
+            compositeDisposable
         )
     }
 

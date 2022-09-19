@@ -2,6 +2,9 @@
 
 package com.woleapp.netpos.ui.fragments
 
+// ktlint-disable no-wildcard-imports
+// ktlint-disable no-wildcard-imports
+// ktlint-disable no-wildcard-imports
 import android.app.AlertDialog
 import android.app.DatePickerDialog
 import android.app.ProgressDialog
@@ -19,6 +22,7 @@ import com.danbamitale.epmslib.extensions.formatCurrencyAmount
 import com.danbamitale.epmslib.processors.TransactionProcessor
 import com.danbamitale.epmslib.utils.IsoAccountType
 import com.google.android.material.bottomsheet.BottomSheetDialog
+import com.google.gson.Gson
 import com.pixplicity.easyprefs.library.Prefs
 import com.woleapp.netpos.BuildConfig
 import com.woleapp.netpos.R
@@ -40,7 +44,9 @@ import com.woleapp.netpos.util.RandomNumUtil.getDateInMilliSecsForLocalForEndOfD
 import com.woleapp.netpos.util.RandomNumUtil.getDateInTheFormatExpectedByTheNewService
 import com.woleapp.netpos.util.RandomNumUtil.getDateInTheFormatExpectedByTheNewServiceForEnd
 import com.woleapp.netpos.viewmodels.NetPosViewModelFactories
+import com.woleapp.netpos.viewmodels.PayByZenithViewModel
 import com.woleapp.netpos.viewmodels.TransactionsViewModel
+import dagger.hilt.android.AndroidEntryPoint
 import io.reactivex.Single
 import io.reactivex.android.schedulers.AndroidSchedulers
 import io.reactivex.disposables.CompositeDisposable
@@ -49,10 +55,11 @@ import timber.log.Timber
 import java.sql.Timestamp
 import java.text.SimpleDateFormat
 import java.time.Instant
-import java.util.* // ktlint-disable no-wildcard-imports
+import java.util.*
+import javax.inject.Inject
 
+@AndroidEntryPoint
 class DashboardFragment : BaseFragment() {
-
     private lateinit var progressDialog: ProgressDialog
     private lateinit var binding: FragmentDashboardBinding
     private lateinit var adapter: ServiceAdapter
@@ -62,6 +69,11 @@ class DashboardFragment : BaseFragment() {
     private val transactionViewModel by activityViewModels<TransactionsViewModel> {
         NetPosViewModelFactories(AppDatabase.getDatabaseInstance(requireContext()))
     }
+    private val zenithPbtViewModel by activityViewModels<PayByZenithViewModel>()
+    private var userZenithPbtVirtualAccount: GetPayByTransferUserAccountModel? = null
+
+    @Inject
+    lateinit var gson: Gson
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -84,6 +96,15 @@ class DashboardFragment : BaseFragment() {
 
     override fun onResume() {
         super.onResume()
+        val savedUserVirtualAccount = Prefs.getString(PREF_ZENITH_PBT_USER_ACCOUNT, "")
+        userZenithPbtVirtualAccount =
+            gson.fromJson(savedUserVirtualAccount, GetPayByTransferUserAccountModel::class.java)
+        if (savedUserVirtualAccount.trim().isEmpty()) {
+            zenithPbtViewModel.getZenithPbtUserAccount()
+            val virtualAccount = Prefs.getString(PREF_ZENITH_PBT_USER_ACCOUNT, "")
+            userZenithPbtVirtualAccount =
+                gson.fromJson(virtualAccount, GetPayByTransferUserAccountModel::class.java)
+        }
     }
 
     private fun setupKongaAdapter() {
@@ -117,7 +138,7 @@ class DashboardFragment : BaseFragment() {
                 1 -> getBalance()
                 2 -> {
                     if (BuildConfig.FLAVOR == "zenith") {
-                        showPayWithTransferDialog(requireContext())
+                        addFragmentWithoutRemove(ZenithPayByTransferFragment())
                     } else {
                         addFragmentWithoutRemove(NipNotificationFragment.newInstance())
                     }
@@ -193,7 +214,7 @@ class DashboardFragment : BaseFragment() {
                 1 -> getBalance()
                 2 -> {
                     if (BuildConfig.FLAVOR == "zenith") {
-                        showPayWithTransferDialog(requireContext())
+                        addFragmentWithoutRemove(ZenithPayByTransferFragment())
                     } else {
                         addFragmentWithoutRemove(NipNotificationFragment.newInstance())
                     }

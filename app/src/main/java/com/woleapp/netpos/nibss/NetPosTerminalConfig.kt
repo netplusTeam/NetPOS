@@ -76,8 +76,9 @@ class NetPosTerminalConfig {
             keyHolder = Singletons.getKeyHolder()
             configData = Singletons.getConfigData()
             val localBroadcastManager = LocalBroadcastManager.getInstance(context)
-            if (isConfigurationInProcess)
+            if (isConfigurationInProcess) {
                 return
+            }
             configurationStatus = 0
             sendIntent.putExtra(CONFIGURATION_STATUS, configurationStatus)
             localBroadcastManager.sendBroadcast(sendIntent)
@@ -108,7 +109,9 @@ class NetPosTerminalConfig {
                 }
                 .doFinally { isConfigurationInProcess = false }
                 .subscribe { pair, error ->
+                    Timber.d("TEST_CONFIGURATION%s", "REQUEST_MADE")
                     error?.let {
+                        Timber.d("TEST_CONFIGURATION_ERROR%s", "${it.localizedMessage}")
                         // TerminalManager.getInstance().beep(context, TerminalManager.BEEP_MODE_FAILURE)
                         configurationStatus = -1
                         if (configureSilently.not()) {
@@ -120,6 +123,7 @@ class NetPosTerminalConfig {
                         Timber.e(it)
                     }
                     pair?.let {
+                        Timber.d("TEST_CONFIGURATION_SUCCESS%s", "CALLED_CALLED")
                         pair.first?.let {
                             Prefs.putLong(LAST_POS_CONFIGURATION_TIME, System.currentTimeMillis())
                             Prefs.putString(PREF_CONFIG_DATA, gson.toJson(pair.second))
@@ -150,15 +154,16 @@ class NetPosTerminalConfig {
                 NetPosSdk.getDeviceSerial()
             ).flatMap {
                 Timber.e("call home result $it")
-                if (it == "00")
+                if (it == "00") {
                     return@flatMap Single.just(Pair(null, null))
-                else Single.error(Exception("call home failed"))
+                } else Single.error(Exception("call home failed"))
             }
         }
 
         private fun configureTerminal(context: Context): Single<Pair<KeyHolder?, ConfigData?>> =
             terminalConfigurator.downloadNibssKeys(context, getTerminalId())
                 .flatMap { nibssKeyHolder ->
+                    Timber.d("TEST_CONFIGURATION_CONFIG%s", "CALLED_CALLED")
                     keyHolder = nibssKeyHolder
                     terminalConfigurator.downloadTerminalParameters(
                         context,

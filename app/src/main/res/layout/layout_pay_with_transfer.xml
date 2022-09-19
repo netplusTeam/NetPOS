@@ -4,7 +4,9 @@
     xmlns:tools="http://schemas.android.com/tools">
 
     <data>
-
+<!--        <variable-->
+<!--            name="userAccount"-->
+<!--            type="com.woleapp.netpos.model.GetPayByTransferUserAccount" />-->
     </data>
 
     <androidx.constraintlayout.widget.ConstraintLayout
@@ -21,10 +23,10 @@
             android:textColor="@color/colorPrimary"
             android:textSize="24sp"
             android:textStyle="bold"
+            tools:text="@string/zenith_bank"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toTopOf="parent"
-            tools:text="Diamond Bank" />
+            app:layout_constraintTop_toTopOf="parent" />
 
         <TextView
             android:id="@+id/account_number"

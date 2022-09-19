@@ -1,10 +1,13 @@
 package com.woleapp.netpos.di
 
 import android.content.Context
+import com.google.gson.Gson
+import com.pixplicity.easyprefs.library.Prefs
 import com.woleapp.netpos.BuildConfig
 import com.woleapp.netpos.database.AppDatabase
 import com.woleapp.netpos.network.StormApiService
 import com.woleapp.netpos.network.ZenithPayByTransferService
+import com.woleapp.netpos.util.PREF_USER_TOKEN
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -37,35 +40,68 @@ object Module {
 
     @Provides
     @Singleton
+    @Named("loginInterceptor")
     fun providesLoginInterceptor(): Interceptor = HttpLoggingInterceptor().apply {
         setLevel(HttpLoggingInterceptor.Level.BODY)
     }
 
+    @Provides
+    @Singleton
+    @Named("zenithPayByTransferHeaderInterceptor")
+    fun providesZenithPayByTransferHeaderInterceptor(): Interceptor = Interceptor { chain ->
+        val originalRequest = chain.request()
+        val requestHeaderInterceptor = originalRequest.newBuilder()
+            .addHeader("Authorization", "Bearer ${Prefs.getString(PREF_USER_TOKEN, "")}")
+            .build()
+        chain.proceed(requestHeaderInterceptor)
+    }
+
     @Singleton
     @Provides
-    fun providesOKHTTPClient(
-        @ApplicationContext context: Context,
-        loggingInterceptor: Interceptor
+    @Named("defaultOkHttpClient")
+    fun providesDefaultOkHttpClient(
+        @Named("loginInterceptor") loggingInterceptor: Interceptor
     ): OkHttpClient {
-        val cacheSize = (5 * 1024 * 1024).toLong()
-        val mCache = Cache(context.cacheDir, cacheSize)
         return if (BuildConfig.DEBUG) {
             OkHttpClient().newBuilder()
-                .cache(mCache)
-                .retryOnConnectionFailure(true)
                 .connectTimeout(20, TimeUnit.SECONDS)
                 .readTimeout(20, TimeUnit.SECONDS)
+                .retryOnConnectionFailure(true)
                 .addInterceptor(loggingInterceptor)
-                .followRedirects(true)
-                .followSslRedirects(true)
                 .build()
         } else {
             OkHttpClient().newBuilder()
                 .connectTimeout(20, TimeUnit.SECONDS)
                 .readTimeout(20, TimeUnit.SECONDS)
                 .retryOnConnectionFailure(true)
-                .followRedirects(true)
-                .followSslRedirects(true)
+                .addInterceptor(loggingInterceptor)
+                .build()
+        }
+    }
+
+    @Singleton
+    @Provides
+    @Named("zenithPayByTransferOkHttp")
+    fun providesZenithOkHttpClient(
+        @ApplicationContext context: Context,
+        @Named("loginInterceptor") loggingInterceptor: Interceptor,
+        @Named("zenithPayByTransferHeaderInterceptor") zenithPayByTransferHeaderInterceptor: Interceptor
+    ): OkHttpClient {
+        return if (BuildConfig.DEBUG) {
+            OkHttpClient().newBuilder()
+                .connectTimeout(20, TimeUnit.SECONDS)
+                .readTimeout(20, TimeUnit.SECONDS)
+                .retryOnConnectionFailure(true)
+                .addInterceptor(zenithPayByTransferHeaderInterceptor)
+                .addInterceptor(loggingInterceptor)
+                .build()
+        } else {
+            OkHttpClient().newBuilder()
+                .connectTimeout(20, TimeUnit.SECONDS)
+                .readTimeout(20, TimeUnit.SECONDS)
+                .retryOnConnectionFailure(true)
+                .addInterceptor(zenithPayByTransferHeaderInterceptor)
+                .addInterceptor(loggingInterceptor)
                 .build()
         }
     }
@@ -74,7 +110,7 @@ object Module {
     @Singleton
     @Named("defaultRetrofit")
     fun providesDefaultRetrofit(
-        okhttp: OkHttpClient,
+        @Named("defaultOkHttpClient") okhttp: OkHttpClient,
         @Named("defaultBaseUrl") baseUrl: String
     ): Retrofit =
         Retrofit.Builder()
@@ -88,7 +124,7 @@ object Module {
     @Singleton
     @Named("zenithPayByTransferRetrofit")
     fun providesPayByTransferRetrofit(
-        okhttp: OkHttpClient,
+        @Named("zenithPayByTransferOkHttp") okhttp: OkHttpClient,
         @Named("payByTransferBaseUrl") baseUrl: String
     ): Retrofit =
         Retrofit.Builder()
@@ -125,4 +161,8 @@ object Module {
         appDatabase: AppDatabase
     ) =
         appDatabase.transactionResponseDao()
+
+    @Singleton
+    @Provides
+    fun providesGson() = Gson()
 }

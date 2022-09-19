@@ -5,7 +5,7 @@ import android.os.Build
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
-import com.danbamitale.epmslib.entities.*
+import com.danbamitale.epmslib.entities.* // ktlint-disable no-wildcard-imports
 import com.danbamitale.epmslib.processors.TransactionProcessor
 import com.danbamitale.epmslib.utils.IsoAccountType
 import com.google.gson.Gson
@@ -19,8 +19,10 @@ import com.woleapp.netpos.model.UtilitiesPayload
 import com.woleapp.netpos.model.ValidateBillResponse
 import com.woleapp.netpos.network.StormApiClient
 import com.woleapp.netpos.network.StormUtilitiesApiService
+import com.woleapp.netpos.network.ZenithPayByTransferRepository
 import com.woleapp.netpos.nibss.NetPosTerminalConfig
-import com.woleapp.netpos.util.*
+import com.woleapp.netpos.util.* // ktlint-disable no-wildcard-imports
+import dagger.hilt.android.lifecycle.HiltViewModel
 import io.reactivex.Single
 import io.reactivex.SingleObserver
 import io.reactivex.android.schedulers.AndroidSchedulers
@@ -32,8 +34,9 @@ import okhttp3.RequestBody
 import okhttp3.RequestBody.Companion.toRequestBody
 import retrofit2.HttpException
 import timber.log.Timber
+import javax.inject.Inject
 
-class UtilitiesViewModel : ViewModel() {
+class UtilitiesViewModel: ViewModel() {
     var cardData: CardData? = null
     private val customerName = MutableLiveData("")
     private var amountLong = 0L
@@ -46,7 +49,9 @@ class UtilitiesViewModel : ViewModel() {
     private val _initiateBillsPayment = MutableLiveData<Event<Long>>()
     val initiateBillsPayment: LiveData<Event<Long>>
         get() = _initiateBillsPayment
-    private val gson = Gson()
+
+    @Inject
+    lateinit var gson: Gson
     val payloadMutableLiveData: MutableLiveData<UtilitiesPayload> by lazy {
         MutableLiveData<UtilitiesPayload>().also {
             it.value = UtilitiesPayload()
@@ -154,8 +159,9 @@ class UtilitiesViewModel : ViewModel() {
             _message.value = Event("Please enter the destination number")
             return
         }
-        if (utilitiesPayload?.stringAmount.isNullOrEmpty())
+        if (utilitiesPayload?.stringAmount.isNullOrEmpty()) {
             utilitiesPayload?.stringAmount = "0"
+        }
         utilitiesPayload?.amount = utilitiesPayload?.stringAmount?.replace(",", "")?.toFloat() ?: 0f
         if (utilitiesPayload?.billType == "POWER" && utilitiesPayload.amount < 1000) {
             _message.value = Event("Amount should not be less than \u20A61000")
@@ -280,9 +286,9 @@ class UtilitiesViewModel : ViewModel() {
                     Timber.e(data?.reference!!)
                     remark.plus("\n${utilitiesPayload.billType} Payment Success")
                     if (utilitiesPayload.billType == "POWER") {
-                        it.message = if (data.token.isNullOrEmpty())
+                        it.message = if (data.token.isNullOrEmpty()) {
                             "Your power payment was successful but no token was generated, please contact support"
-                        else {
+                        } else {
                             "${it.message}\n\nMeter Token: ${data.token}"
                             remark.plus("\nMeter Token: ${data.token}")
                         }
@@ -298,8 +304,9 @@ class UtilitiesViewModel : ViewModel() {
                                 Event("${utilitiesPayload.billType} request failed, reversing transaction 😂")
                             val error = it.getResponseBody()
                             gson.fromJson(error, ErrorNetworkResponse::class.java)
-                        } else
+                        } else {
                             ErrorNetworkResponse(it.localizedMessage ?: "")
+                        }
 
                     remark.plus("\n${utilitiesPayload.billType} Payment Failed")
                     Timber.e(it.toString())
