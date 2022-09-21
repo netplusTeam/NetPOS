@@ -118,14 +118,7 @@ class TransactionsFragment : BaseFragment() {
 
     override fun onResume() {
         super.onResume()
-        val workRequest = OneTimeWorkRequestBuilder<RepushFailedTransactionToBackendWorker>()
-            .setConstraints(
-                Constraints.Builder()
-                    .setRequiredNetworkType(
-                        NetworkType.CONNECTED
-                    ).build()
-            ).build()
-        workManager.enqueue(workRequest)
+        repushTransactionsToBackend()
     }
 
     private fun setUpKongaAdapter() {
@@ -249,5 +242,16 @@ class TransactionsFragment : BaseFragment() {
             )
 
         adapter.submitList(listOfService)
+    }
+
+    private fun repushTransactionsToBackend() {
+        val workRequest = OneTimeWorkRequestBuilder<RepushFailedTransactionToBackendWorker>()
+            .setConstraints(
+                Constraints.Builder()
+                    .setRequiredNetworkType(
+                        NetworkType.CONNECTED
+                    ).build()
+            ).build()
+        workManager.enqueue(workRequest)
     }
 }

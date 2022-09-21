@@ -54,7 +54,7 @@ interface StormApiService {
     fun updateLogAfterConnectingToNibss(
         @Path("rrn") rrn: String,
         @Body data: DataToLogAfterConnectingToNibss
-    ): Single<LogToBackendResponse>
+    ): Single<Response<LogToBackendResponse>>
 
     @GET("/pos_transactions/terminal/{terminalId}/btw/{from}/{to}/{page}/{pageSize}")
     fun getTransactionsFromNewService(

@@ -61,7 +61,7 @@ class RepushFailedTransactionToBackendWorker(
             .observeOn(AndroidSchedulers.mainThread())
             .subscribe { t1, t2 ->
                 t1?.let {
-                    if (it.status == "success") {
+                    if (it.code() in 200..299 || it.code() == 409) {
                         transactionTrackingTableDao.deleteTransactionAfterSuccessfulUpdateAtBackend(
                             transactionToRepush
                         )

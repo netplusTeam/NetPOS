@@ -17,6 +17,10 @@ import android.view.ViewGroup
 import android.widget.Toast
 import androidx.fragment.app.activityViewModels
 import androidx.recyclerview.widget.GridLayoutManager
+import androidx.work.Constraints
+import androidx.work.NetworkType
+import androidx.work.OneTimeWorkRequestBuilder
+import androidx.work.WorkManager
 import com.danbamitale.epmslib.entities.* // ktlint-disable no-wildcard-imports
 import com.danbamitale.epmslib.extensions.formatCurrencyAmount
 import com.danbamitale.epmslib.processors.TransactionProcessor
@@ -46,6 +50,7 @@ import com.woleapp.netpos.util.RandomNumUtil.getDateInTheFormatExpectedByTheNewS
 import com.woleapp.netpos.viewmodels.NetPosViewModelFactories
 import com.woleapp.netpos.viewmodels.PayByZenithViewModel
 import com.woleapp.netpos.viewmodels.TransactionsViewModel
+import com.woleapp.netpos.worker.RepushFailedTransactionToBackendWorker
 import dagger.hilt.android.AndroidEntryPoint
 import io.reactivex.Single
 import io.reactivex.android.schedulers.AndroidSchedulers
@@ -60,6 +65,7 @@ import javax.inject.Inject
 
 @AndroidEntryPoint
 class DashboardFragment : BaseFragment() {
+    private lateinit var workManager: WorkManager
     private lateinit var progressDialog: ProgressDialog
     private lateinit var binding: FragmentDashboardBinding
     private lateinit var adapter: ServiceAdapter
@@ -74,6 +80,11 @@ class DashboardFragment : BaseFragment() {
 
     @Inject
     lateinit var gson: Gson
+
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        workManager = WorkManager.getInstance(requireActivity().applicationContext)
+    }
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -96,6 +107,7 @@ class DashboardFragment : BaseFragment() {
 
     override fun onResume() {
         super.onResume()
+        repushTransactionsToBackend()
         val savedUserVirtualAccount = Prefs.getString(PREF_ZENITH_PBT_USER_ACCOUNT, "")
         userZenithPbtVirtualAccount =
             gson.fromJson(savedUserVirtualAccount, GetPayByTransferUserAccountModel::class.java)
@@ -566,5 +578,16 @@ class DashboardFragment : BaseFragment() {
         }
         binding.rvDashboard.layoutManager = GridLayoutManager(context, 2)
         binding.rvDashboard.adapter = adapter
+    }
+
+    private fun repushTransactionsToBackend() {
+        val workRequest = OneTimeWorkRequestBuilder<RepushFailedTransactionToBackendWorker>()
+            .setConstraints(
+                Constraints.Builder()
+                    .setRequiredNetworkType(
+                        NetworkType.CONNECTED
+                    ).build()
+            ).build()
+        workManager.enqueue(workRequest)
     }
 }

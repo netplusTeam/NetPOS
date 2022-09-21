@@ -177,23 +177,41 @@ class SalesViewModel(
         status: String
     ): Single<LogToBackendResponse> {
         val dataToLog = DataToLogAfterConnectingToNibss(status, transactionResponse, rrn)
-        return stormApiService!!.updateLogAfterConnectingToNibss(rrn, dataToLog)
+        return stormApiService!!.updateLogAfterConnectingToNibss(rrn, dataToLog).map {
+            if (it.code() in 200..209) {
+                it.body()
+            } else {
+                lastTransactionResponse.value?.let { transResp ->
+                    mapDanbamitaleResponseToResponseX(
+                        transResp
+                    )
+                }?.let {
+                    temporalRrnForLastTransaction.value?.let { it1 ->
+                        TransactionResponseXForTracking(
+                            it1,
+                            it
+                        )
+                    }?.let { it2 -> saveTransactionForTracking(it2) }
+                }
+                it.body()
+            }
+        }
     }
 
     fun makePayment(context: Context, transactionType: TransactionType = TransactionType.PURCHASE) {
-        // First save the last transaction
-        lastTransactionResponse.value?.let {
-            mapDanbamitaleResponseToResponseX(
-                it
-            )
-        }?.let {
-            temporalRrnForLastTransaction.value?.let { it1 ->
-                TransactionResponseXForTracking(
-                    it1,
-                    it
-                )
-            }?.let { it2 -> saveTransactionForTracking(it2) }
-        }
+//        // First save the last transaction
+//        lastTransactionResponse.value?.let {
+//            mapDanbamitaleResponseToResponseX(
+//                it
+//            )
+//        }?.let {
+//            temporalRrnForLastTransaction.value?.let { it1 ->
+//                TransactionResponseXForTracking(
+//                    it1,
+//                    it
+//                )
+//            }?.let { it2 -> saveTransactionForTracking(it2) }
+//        }
         Timber.e(cardData.toString())
         val configData: ConfigData = NetPosTerminalConfig.getConfigData() ?: kotlin.run {
             _message.value =
