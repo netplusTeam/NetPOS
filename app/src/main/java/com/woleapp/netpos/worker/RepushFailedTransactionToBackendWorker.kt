@@ -47,10 +47,8 @@ class RepushFailedTransactionToBackendWorker(
         transactionToRepush: TransactionResponseXForTracking,
         decrementCounter: () -> Unit
     ) {
-        val transStatus =
-            if (transactionToRepush.transRespX.responseCode == "00") "APPROVED" else "DECLINED"
         val transactionResponse = DataToLogAfterConnectingToNibss(
-            transStatus,
+            transactionToRepush.status,
             transactionToRepush.transRespX,
             transactionToRepush.temporalRRN
         )
@@ -61,7 +59,7 @@ class RepushFailedTransactionToBackendWorker(
             .observeOn(AndroidSchedulers.mainThread())
             .subscribe { t1, t2 ->
                 t1?.let {
-                    if (it.code() in 200..299 || it.code() == 409) {
+                    if (it.code() in 200..299 || it.code() == 409 || it.message().contains("There is an error") || it.code() == 404 || it.code() == 500) {
                         transactionTrackingTableDao.deleteTransactionAfterSuccessfulUpdateAtBackend(
                             transactionToRepush
                         )

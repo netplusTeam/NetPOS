@@ -57,7 +57,8 @@ data class TransactionResponseX(
 data class TransactionResponseXForTracking(
     @PrimaryKey(autoGenerate = false)
     val temporalRRN: String,
-    val transRespX: TransactionResponseX
+    val transRespX: TransactionResponseX,
+    val status: String
 )
 
 fun mapToTransactionResponse(transRespX: TransactionResponseX): TransactionResponse =

@@ -181,18 +181,21 @@ class SalesViewModel(
             if (it.code() in 200..209) {
                 it.body()
             } else {
-                lastTransactionResponse.value?.let { transResp ->
-                    mapDanbamitaleResponseToResponseX(
-                        transResp
-                    )
-                }?.let {
-                    temporalRrnForLastTransaction.value?.let { it1 ->
-                        TransactionResponseXForTracking(
-                            it1,
-                            it
-                        )
-                    }?.let { it2 -> saveTransactionForTracking(it2) }
-                }
+                val data = TransactionResponseXForTracking(rrn, transactionResponse, status)
+                saveTransactionForTracking(data)
+//                lastTransactionResponse.value?.let { transResp ->
+//                    mapDanbamitaleResponseToResponseX(
+//                        transResp
+//                    )
+//                }?.let {
+//                    temporalRrnForLastTransaction.value?.let { it1 ->
+//                        TransactionResponseXForTracking(
+//                            it1,
+//                            it
+//                        )
+//                    }?.let { it2 -> saveTransactionForTracking(it2) }
+//                }
+//                it.body()
                 it.body()
             }
         }

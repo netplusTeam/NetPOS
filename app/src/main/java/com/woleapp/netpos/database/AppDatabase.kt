@@ -16,7 +16,7 @@ import com.woleapp.netpos.util.RoomTypeConverters
 
 @Database(
     entities = [TransactionResponse::class, MqttEventsLocal::class, TransactionResponseXForTracking::class],
-    version = 10,
+    version = 11,
     exportSchema = false
 )
 @TypeConverters(
