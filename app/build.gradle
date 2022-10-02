@@ -27,7 +27,7 @@ android {
         }
     }
     compileSdkVersion 31
-    buildToolsVersion "29.0.3"
+//    buildToolsVersion "29.0.3"
     buildFeatures.dataBinding = true
     ndkVersion "21.3.6528147"
     defaultConfig {
@@ -35,8 +35,8 @@ android {
         applicationId "com.woleapp.netpos"
         minSdkVersion 21
         targetSdkVersion 30
-        versionCode 129
-        versionName "1.1.129"
+        versionCode 130
+        versionName "1.1.130"
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         def environmentPath
         if (appModeProd == "true")
@@ -245,10 +245,15 @@ dependencies {
     def work_version = "2.5.0"
     implementation "androidx.work:work-runtime-ktx:$work_version"
 
-    //firebase
-    implementation platform('com.google.firebase:firebase-bom:29.1.0')
-    implementation 'com.google.firebase:firebase-messaging'
+//    //firebase
+//    implementation platform('com.google.firebase:firebase-bom:29.1.0')
+//    implementation 'com.google.firebase:firebase-messaging'
+//    implementation 'com.google.firebase:firebase-messaging-ktx'
+    // Firebase
+    implementation platform('com.google.firebase:firebase-bom:30.4.1')
+    implementation 'com.google.firebase:firebase-analytics-ktx'
     implementation 'com.google.firebase:firebase-messaging-ktx'
+    implementation 'com.google.firebase:firebase-analytics-ktx'
 
     // Declare the dependencies for the Crashlytics and Analytics libraries
     // When using the BoM, you don't specify versions in Firebase library dependencies

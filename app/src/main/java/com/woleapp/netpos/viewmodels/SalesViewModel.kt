@@ -29,6 +29,7 @@ import com.woleapp.netpos.model.AppConstants.ISW_TOKEN
 import com.woleapp.netpos.network.* // ktlint-disable no-wildcard-imports
 import com.woleapp.netpos.nibss.NetPosTerminalConfig
 import com.woleapp.netpos.util.* // ktlint-disable no-wildcard-imports
+import com.woleapp.netpos.util.ModelMapper.mapRequestDataToTransactionResponse
 import com.woleapp.netpos.util.RandomNumUtil.formattedTime
 import com.woleapp.netpos.util.RandomNumUtil.generateRandomRrn
 import com.woleapp.netpos.util.RandomNumUtil.getCurrentDateTime
@@ -341,6 +342,7 @@ class SalesViewModel(
     ) {
         processor.processTransaction(context, requestData, cardData!!)
             .onErrorResumeNext {
+                saveReversalTransaction(requestData)
                 processor.rollback(context, MessageReasonCode.Timeout)
             }
             .flatMap {
@@ -835,5 +837,25 @@ class SalesViewModel(
                     Single.just(mapDanbamitaleResponseToResponseX(resp))
                 }
         }!!
+    }
+
+    private fun saveReversalTransaction(requestData: TransactionRequestData) {
+        cardData?.let { cardData ->
+            transactionResponseDao.insertNewTransaction(
+                requestData.mapRequestDataToTransactionResponse(
+                    cardData,
+                    customerName.value ?: "",
+                    cardScheme ?: "",
+                    "REVERSAL",
+                    System.currentTimeMillis(),
+                    null
+                )
+            ).subscribeOn(Schedulers.io())
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribe { t1, t2 ->
+                    t1?.let { Timber.d(it.toString()) }
+                    t2?.let { Timber.e(it.localizedMessage) }
+                }
+        }
     }
 }

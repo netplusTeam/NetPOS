@@ -9,14 +9,16 @@ import com.danbamitale.epmslib.entities.TransactionResponse
 import com.woleapp.netpos.database.dao.MqttLocalDao
 import com.woleapp.netpos.database.dao.TransactionResponseDao
 import com.woleapp.netpos.database.dao.TransactionTrackingTableDao
+import com.woleapp.netpos.database.dao.ZenithPayByTransferUserTransactionsDao
 import com.woleapp.netpos.model.AppConstants.APP_DB_NAME
+import com.woleapp.netpos.model.GetZenithPayByTransferUserTransactionsModel
 import com.woleapp.netpos.model.MqttEventsLocal
 import com.woleapp.netpos.model.TransactionResponseXForTracking
 import com.woleapp.netpos.util.RoomTypeConverters
 
 @Database(
-    entities = [TransactionResponse::class, MqttEventsLocal::class, TransactionResponseXForTracking::class],
-    version = 11,
+    entities = [TransactionResponse::class, MqttEventsLocal::class, TransactionResponseXForTracking::class, GetZenithPayByTransferUserTransactionsModel::class],
+    version = 12,
     exportSchema = false
 )
 @TypeConverters(
@@ -27,6 +29,7 @@ abstract class AppDatabase : RoomDatabase() {
     abstract fun transactionTrackingTableDao(): TransactionTrackingTableDao
     abstract fun transactionResponseDao(): TransactionResponseDao
     abstract fun mqttLocalDao(): MqttLocalDao
+    abstract fun getZenithPayByTransferDao(): ZenithPayByTransferUserTransactionsDao
 
     companion object {
         @Volatile

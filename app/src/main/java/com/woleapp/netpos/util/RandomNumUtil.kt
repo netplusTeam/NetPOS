@@ -1,6 +1,9 @@
 package com.woleapp.netpos.util
 
 import android.annotation.SuppressLint
+import android.os.Build
+import android.text.Html
+import android.text.Spanned
 import com.danbamitale.epmslib.entities.TransactionRequestData
 import com.danbamitale.epmslib.entities.TransactionResponse
 import com.danbamitale.epmslib.utils.IsoTimeManager
@@ -67,6 +70,19 @@ object RandomNumUtil {
         val format = SimpleDateFormat("yyyy-MM-dd hh:mm:ss")
         val date = format.parse(dateTime.replace("T", " ").removeSuffix(".000Z"))
         return date!!.time
+    }
+
+    fun getDateFromZenithPbtTransDate(dateTime: String): String {
+        val format = SimpleDateFormat("yyyy-MM-dd HH:mm:ss")
+        return dateTime.replace("T", " ").removeSuffix(".000Z")
+    }
+
+    fun formatHtml(htmlText: String): Spanned? {
+        return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+            Html.fromHtml(htmlText, Html.FROM_HTML_MODE_COMPACT)
+        } else {
+            Html.fromHtml(htmlText)
+        }
     }
 
     @SuppressLint("SimpleDateFormat")

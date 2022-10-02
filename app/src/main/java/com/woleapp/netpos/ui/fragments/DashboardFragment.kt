@@ -91,6 +91,7 @@ class DashboardFragment : BaseFragment() {
         container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View {
+        zenithPbtViewModel.saveTestTransactions(testPbtTransactions)
         binding = FragmentDashboardBinding.inflate(inflater, container, false)
         progressDialog = ProgressDialog(requireContext())
         endOfDayProgressDialog = ProgressDialog(requireContext()).apply {
@@ -107,6 +108,7 @@ class DashboardFragment : BaseFragment() {
 
     override fun onResume() {
         super.onResume()
+        getIntentDataSentInFromFirebaseService()
         repushTransactionsToBackend()
         val savedUserVirtualAccount = Prefs.getString(PREF_ZENITH_PBT_USER_ACCOUNT, "")
         userZenithPbtVirtualAccount =
@@ -215,7 +217,7 @@ class DashboardFragment : BaseFragment() {
             )
             disposable.clear()
         } catch (e: Exception) {
-            "RUBISH"
+            Timber.d("GET_ISW_TOKEN_ERROR===>%s$e")
         }
     }
 
@@ -434,7 +436,7 @@ class DashboardFragment : BaseFragment() {
         }
     }
 
-    private fun getEndOfDayTransactions(timestamp: Long? = null) {
+    private fun getEndOfDayTransactionsSecondImplementaion(timestamp: Long? = null) {
         endOfDayProgressDialog.show()
         val be: Long = getBeginningOfDay(timestamp)
         val be1: Long = Timestamp.from(Instant.ofEpochMilli(be).plusSeconds(86400)).time
@@ -589,5 +591,102 @@ class DashboardFragment : BaseFragment() {
                     ).build()
             ).build()
         workManager.enqueue(workRequest)
+    }
+
+    private fun getIntentDataSentInFromFirebaseService() {
+        requireActivity().intent?.action?.let { intentAction ->
+            requireActivity().intent.getBooleanExtra(TAG_NOTIFICATION_RECEIVED_FROM_BACKEND, false)
+                .let { intentExtra ->
+                    if (intentAction == STRING_FIREBASE_INTENT_ACTION) {
+                        if (intentExtra) {
+                            addFragmentWithoutRemove(ZenithPayByTransferTransactionPage())
+                        }
+                    }
+                }
+        }
+    }
+
+    private fun getEndOfDayTransactions(timestamp: Long? = null) {
+        endOfDayProgressDialog.show()
+        val be: Long = getBeginningOfDay(timestamp)
+        val be1: Long = Timestamp.from(Instant.ofEpochMilli(be).plusSeconds(86400)).time
+        val df = SimpleDateFormat("dd:MM:yyyy hh:mm:ss", Locale.getDefault())
+
+        val data = HashMap<String, String>().apply {
+            put("terminalId", NetPosTerminalConfig.getTerminalId())
+            put("count", "1000")
+            put("from", df.format(be))
+            put("to", df.format(be1))
+        }
+
+        val parameters = GetEodFromNewServiceModel(
+            NetPosTerminalConfig.getTerminalId().trim(),
+            getDateInTheFormatExpectedByTheNewService(df.format(be)),
+            getDateInTheFormatExpectedByTheNewServiceForEnd(df.format(be)),
+            1,
+            1000
+        )
+
+        getEndOfDayLocal(
+            getDateInMilliSecsForLocal(df.format(be)),
+            getDateInMilliSecsForLocalForEndOfDay(df.format(be))
+        ).flatMap {
+            if (it.result.isEmpty()) {
+                return@flatMap stormApiService.getTransactionsFromNewService(
+                    parameters.terminalId,
+                    parameters.from,
+                    parameters.to,
+                    parameters.page,
+                    parameters.pageSize
+                )
+            } else {
+                Single.just(it)
+            }
+        }.retry(2)
+            .onErrorResumeNext {
+                getEndOfDayLocal(
+                    getDateInMilliSecsForLocal(df.format(be)),
+                    getDateInMilliSecsForLocalForEndOfDay(df.format(be))
+                )
+            }
+            .subscribeOn(Schedulers.io())
+            .observeOn(AndroidSchedulers.mainThread())
+            .doFinally {
+                endOfDayProgressDialog.dismiss()
+            }
+            .subscribe { t1, t2 ->
+                t1?.let {
+                    when (it) {
+                        is GetEndOfDayModelFromNewServer -> {
+                            showEndOfDayBottomSheetDialog(it.data.rows.mapRowToTransactionResponse())
+                        }
+                        is GateWayTransactionResponse -> {
+                            showEndOfDayBottomSheetDialog(mapEntityToTransFromGateWay(it.result))
+                        }
+                        else -> {
+                            showEndOfDayBottomSheetDialog(listOf<TransactionResponse>())
+                        }
+                    }
+                }
+                t2?.let {
+                    Timber.d(it)
+                    Toast.makeText(
+                        requireContext(),
+                        "An error occurred while fetching end of day, try again",
+                        Toast.LENGTH_LONG
+                    ).show()
+                }
+            }.disposeWith(compositeDisposable)
+//        val livedata = AppDatabase.getDatabaseInstance(requireContext())
+//            .transactionResponseDao()
+//            .getEndOfDayTransaction(
+//                getBeginningOfDay(timestamp),
+//                getEndOfDayTimeStamp(timestamp),
+//                NetPosTerminalConfig.getTerminalId()
+//            )
+//        livedata.observe(viewLifecycleOwner) {
+//            showEndOfDayBottomSheetDialog(it)
+//            livedata.removeObservers(viewLifecycleOwner)
+//        }
     }
 }

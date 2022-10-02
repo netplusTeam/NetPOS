@@ -1,6 +1,7 @@
 package com.woleapp.netpos.util
 
 import com.woleapp.netpos.BuildConfig
+import com.woleapp.netpos.model.GetZenithPayByTransferUserTransactionsModel
 
 const val STATE_PAYMENT_STAND_BY = 0
 const val STATE_PAYMENT_STARTED = 1
@@ -53,3 +54,76 @@ val GATEWAY_MAP = HashMap<String, String>().apply {
     put("X-CLIENT-ID", X_CLIENT_ID)
     put("X-ACCESSCODE", X_ACCESS_CODE)
 }
+
+const val TAG_NOTIFICATION_RECEIVED = "TAG_NOTIFICATION_RECEIVED"
+const val TAG_NOTIFICATION_RECEIVED_2 = "TAG_NOTIFICATION_RECEIVED_2"
+const val STRING_FIREBASE_INTENT_ACTION = "com.woleapp.netpos.FIREBASE_ACTION"
+const val TAG_NOTIFICATION_RECEIVED_FROM_BACKEND = "TAG_NOTIFICATION_RECEIVED_2"
+const val TAG_NEW_TOKEN_RECEIVED = "TAG_NEW_TOKEN_RECEIVED"
+const val WORKER_INPUT_PBT_TRANSACTION_TAG = "WORKER_INPUT_PBT_TRANSACTION_TAG"
+const val TAG_PROGRESS_LOADER = "TAG_PROGRESS_LOADER"
+
+const val INT_FIREBASE_PENDING_INTENT_REQUEST_CODE = 772
+
+val testPbtTransactions = arrayListOf(
+    GetZenithPayByTransferUserTransactionsModel(
+        amount = 50,
+        recipient_account_number = "1198153105",
+        transaction_reference = "000013220519124631000219551844",
+        paid_at = "2022-05-19T11:46:43.000Z",
+        channel = "NIP Inward (Credit) - Mobile Phones",
+        type = "C",
+        payer_account_name = "AJALA DOYINSOLA OLUWATOSIN",
+        payer_account_number = "0122565011",
+        payer_bank_code = "000013",
+        merchantId = "nfuuh347rfhier4hf3hie48r39f84erf3i4r7fj3847rfhie",
+        partnerId = "1234567890",
+        details = "NIP/GTB/AJALA DOYINSOLA OLUWATOSIN/REF421459419000000050002205191246",
+        terminalId = "0987654321"
+    ),
+    GetZenithPayByTransferUserTransactionsModel(
+        amount = 50000,
+        recipient_account_number = "1198153105",
+        transaction_reference = "000013220519124631000219551845",
+        paid_at = "2022-05-20T11:46:43.000Z",
+        channel = "NIP Inward (Credit) - Mobile Phones",
+        type = "C",
+        payer_account_name = "AJALA DOYINSOLA OLUWATOSIN",
+        payer_account_number = "0122565011",
+        payer_bank_code = "000013",
+        merchantId = "nfuuh347rfhier4hf3hie48r39f84erf3i4r7fj3847rfhie",
+        partnerId = "1234567890",
+        details = "NIP/GTB/AJALA DOYINSOLA OLUWATOSIN/REF421459419000000050002205191246",
+        terminalId = "0987654321"
+    ),
+    GetZenithPayByTransferUserTransactionsModel(
+        amount = 75000,
+        recipient_account_number = "1198153105",
+        transaction_reference = "000013220519124631000219551848",
+        paid_at = "2022-05-19T11:55:43.000Z",
+        channel = "NIP Inward (Credit) - Mobile Phones",
+        type = "C",
+        payer_account_name = "AJALA DOYINSOLA OLUWATOSIN",
+        payer_account_number = "0122565011",
+        payer_bank_code = "000013",
+        merchantId = "nfuuh347rfhier4hf3hie48r39f84erf3i4r7fj3847rfhie",
+        partnerId = "1234567890",
+        details = "NIP/GTB/AJALA DOYINSOLA OLUWATOSIN/REF421459419000000050002205191246",
+        terminalId = "0987654321"
+    ),
+    GetZenithPayByTransferUserTransactionsModel(
+        amount = 200000,
+        recipient_account_number = "1198153105",
+        transaction_reference = "000013220519124631000219551847",
+        paid_at = "2022-05-20T12:55:43.000Z",
+        channel = "NIP Inward (Credit) - Mobile Phones",
+        type = "C",
+        payer_account_name = "AJALA DOYINSOLA OLUWATOSIN",
+        payer_account_number = "0122565011",
+        payer_bank_code = "000013",
+        merchantId = "nfuuh347rfhier4hf3hie48r39f84erf3i4r7fj3847rfhie",
+        partnerId = "1234567890",
+        details = "NIP/GTB/AJALA DOYINSOLA OLUWATOSIN/REF421459419000000050002205191246",
+        terminalId = "0987654321"
+    )
+)

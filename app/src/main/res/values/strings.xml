@@ -140,4 +140,12 @@
     <string name="zenith_bank">Zenith Bank</string>
     <string name="unavailable_try_again">Error fetching account details please try again later...</string>
     <string name="pay_by_transfer">Pay By Transfer</string>
+    <string name="transacion_received">NetPos Transaction Notification!</string>
+    <string name="pbt_transactions">(PBT) Transactions History</string>
+    <string name="transaction_details">TRANSACTION DETAILS</string>
+
+    <string-array name="viewPagerDestinationsTabLayoutTexts">
+        <item>Last Transaction</item>
+        <item>All Transactions</item>
+    </string-array>
 </resources>

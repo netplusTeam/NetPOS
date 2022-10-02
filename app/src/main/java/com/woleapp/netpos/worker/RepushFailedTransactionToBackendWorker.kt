@@ -8,7 +8,6 @@ import com.woleapp.netpos.model.DataToLogAfterConnectingToNibss
 import com.woleapp.netpos.model.TransactionResponseXForTracking
 import com.woleapp.netpos.network.StormApiClient
 import io.reactivex.android.schedulers.AndroidSchedulers
-import io.reactivex.disposables.CompositeDisposable
 import io.reactivex.schedulers.Schedulers
 import timber.log.Timber
 
@@ -17,7 +16,6 @@ class RepushFailedTransactionToBackendWorker(
     workParams: WorkerParameters
 ) : Worker(context, workParams) {
     private val stormApiService = StormApiClient.getStormApiLoginInstance()
-    private val compositeDisposable = CompositeDisposable()
     private val transactionTrackingTableDao =
         AppDatabase.getDatabaseInstance(context).transactionTrackingTableDao()
 
@@ -38,11 +36,6 @@ class RepushFailedTransactionToBackendWorker(
         } else Result.retry()
     }
 
-    override fun onStopped() {
-        super.onStopped()
-        compositeDisposable.clear()
-    }
-
     private fun repushTransactionTransaction(
         transactionToRepush: TransactionResponseXForTracking,
         decrementCounter: () -> Unit
@@ -59,7 +52,9 @@ class RepushFailedTransactionToBackendWorker(
             .observeOn(AndroidSchedulers.mainThread())
             .subscribe { t1, t2 ->
                 t1?.let {
-                    if (it.code() in 200..299 || it.code() == 409 || it.message().contains("There is an error") || it.code() == 404 || it.code() == 500) {
+                    if (it.code() in 200..299 || it.code() == 409 || it.message()
+                        .contains("There is an error") || it.code() == 404 || it.code() == 500
+                    ) {
                         transactionTrackingTableDao.deleteTransactionAfterSuccessfulUpdateAtBackend(
                             transactionToRepush
                         )
