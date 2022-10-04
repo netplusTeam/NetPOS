@@ -3,10 +3,10 @@ package com.woleapp.netpos.model
 data class Row(
     var accountType: String?,
     var acquiringInstCode: String?,
-    var additionalAmount: Any,
+    var additionalAmount: Any?,
     var agentName: String?,
     var aid: String?,
-    var amount: Any,
+    var amount: Any?,
     var appCryptogram: String?,
     var authCode: String?,
     var cardExpiry: String?,
@@ -17,12 +17,12 @@ data class Row(
     var localTime_: String?,
     var maskedPan: String?,
     var merchantId: String?,
-    var merchantName: Any,
+    var merchantName: Any?,
     var operatorId: String?,
     var originalForwardingInstCode: String?,
-    var otherAmount: Int,
+    var otherAmount: Int?,
     var otherId: String?,
-    var partnerId: Any,
+    var partnerId: Any?,
     var provider: String?,
     var remark: String?,
     var responseCode: String?,
@@ -38,5 +38,5 @@ data class Row(
     var transmissionDateTime: String?,
     var tsi: String?,
     var tvr: String?,
-    var webHookResponseMessage: Any
+    var webHookResponseMessage: Any?
 )

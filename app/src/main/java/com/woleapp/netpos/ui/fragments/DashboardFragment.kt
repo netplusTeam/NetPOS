@@ -2,9 +2,6 @@
 
 package com.woleapp.netpos.ui.fragments
 
-// ktlint-disable no-wildcard-imports
-// ktlint-disable no-wildcard-imports
-// ktlint-disable no-wildcard-imports
 import android.app.AlertDialog
 import android.app.DatePickerDialog
 import android.app.ProgressDialog
@@ -436,7 +433,7 @@ class DashboardFragment : BaseFragment() {
         }
     }
 
-    private fun getEndOfDayTransactionsSecondImplementaion(timestamp: Long? = null) {
+    private fun getEndOfDayTransactionsSecondImplementation(timestamp: Long? = null) {
         endOfDayProgressDialog.show()
         val be: Long = getBeginningOfDay(timestamp)
         val be1: Long = Timestamp.from(Instant.ofEpochMilli(be).plusSeconds(86400)).time
@@ -630,24 +627,55 @@ class DashboardFragment : BaseFragment() {
         getEndOfDayLocal(
             getDateInMilliSecsForLocal(df.format(be)),
             getDateInMilliSecsForLocalForEndOfDay(df.format(be))
-        ).flatMap {
-            if (it.result.isEmpty()) {
+        ).flatMap { gateWayResp ->
+            if (gateWayResp.result.isEmpty()) {
                 return@flatMap stormApiService.getTransactionsFromNewService(
                     parameters.terminalId,
                     parameters.from,
                     parameters.to,
                     parameters.page,
                     parameters.pageSize
-                )
+                ).map {
+                    val dataWithModifiedAmount = it.data.rows.map { it1 ->
+                        it1.copy(amount = (it1.amount as Int * 100))
+                    }
+                    val modifiedData = it.data.copy(
+                        rows = dataWithModifiedAmount
+                    )
+                    val newResult = it.copy(data = modifiedData)
+                    println()
+                    println()
+                    newResult.data.rows.forEach { forEachIt ->
+                        println(forEachIt.amount)
+                    }
+                    Single.just(it.copy(data = modifiedData))
+                }
             } else {
-                Single.just(it)
+                Single.just(gateWayResp)
             }
         }.retry(2)
             .onErrorResumeNext {
-                getEndOfDayLocal(
-                    getDateInMilliSecsForLocal(df.format(be)),
-                    getDateInMilliSecsForLocalForEndOfDay(df.format(be))
-                )
+                stormApiService.getTransactionsFromNewService(
+                    parameters.terminalId,
+                    parameters.from,
+                    parameters.to,
+                    parameters.page,
+                    parameters.pageSize
+                ).map {
+                    val dataWithModifiedAmount = it.data.rows.map { it1 ->
+                        it1.copy(amount = (it1.amount as Double * 100))
+                    }
+                    val modifiedData = it.data.copy(
+                        rows = dataWithModifiedAmount
+                    )
+                    val newResult = it.copy(data = modifiedData)
+                    println()
+                    println()
+                    newResult.data.rows.forEach { forEachIt ->
+                        println(forEachIt.amount)
+                    }
+                    Single.just(it.copy(data = modifiedData))
+                }
             }
             .subscribeOn(Schedulers.io())
             .observeOn(AndroidSchedulers.mainThread())
@@ -656,15 +684,33 @@ class DashboardFragment : BaseFragment() {
             }
             .subscribe { t1, t2 ->
                 t1?.let {
-                    when (it) {
-                        is GetEndOfDayModelFromNewServer -> {
-                            showEndOfDayBottomSheetDialog(it.data.rows.mapRowToTransactionResponse())
-                        }
-                        is GateWayTransactionResponse -> {
-                            showEndOfDayBottomSheetDialog(mapEntityToTransFromGateWay(it.result))
-                        }
-                        else -> {
-                            showEndOfDayBottomSheetDialog(listOf<TransactionResponse>())
+                    val str = gson.toJson(it)
+                    val res: Any = gson.fromJson(str, NewEodModel::class.java)
+                    try {
+                        Timber.d("DATA_DATA_NEW_FROM_SERVER_11====>%s", res)
+                        Timber.d("DATA_DATA_NEW_FROM_SERVER_111====>%s", (res as NewEodModel).value.data.rows.size)
+                        Timber.d("DATA_DATA_NEW_FROM_SERVER_113====>%s", res.value.data.rows)
+                        val transactions = (res as NewEodModel).value.data.rows.mapRowToTransactionResponse()
+                        Timber.d("DATA_DATA_NEW_FROM_SERVER_112====>%s", transactions)
+                        showEndOfDayBottomSheetDialog(transactions)
+                    } catch (e: Exception) {
+                        when (res) {
+                            is GetEndOfDayModelFromNewServer -> {
+                                Timber.d("IT IS OF TYPE GetEndOfDayModelFromNewServer")
+                                showEndOfDayBottomSheetDialog(res.data.rows.mapRowToTransactionResponse())
+                            }
+                            is GateWayTransactionResponse -> {
+                                Timber.d("IT IS OF TYPE GateWayTransactionResponse")
+                                showEndOfDayBottomSheetDialog(mapEntityToTransFromGateWay(res.result))
+                            }
+                            is NewEodModel -> {
+                                Timber.d("IT IS OF TYPE NewEodModel")
+                                showEndOfDayBottomSheetDialog(res.value.data.rows.mapRowToTransactionResponse())
+                            }
+                            else -> {
+                                Timber.d("IT IS AN EMPTY LIST")
+                                showEndOfDayBottomSheetDialog(emptyList())
+                            }
                         }
                     }
                 }

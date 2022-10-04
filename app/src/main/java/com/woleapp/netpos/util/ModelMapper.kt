@@ -1,7 +1,7 @@
 package com.woleapp.netpos.util
 
 import android.util.Log
-import com.danbamitale.epmslib.entities.*
+import com.danbamitale.epmslib.entities.* // ktlint-disable no-wildcard-imports
 import com.danbamitale.epmslib.utils.IsoAccountType
 import com.woleapp.netpos.model.Row
 import com.woleapp.netpos.model.TransactionResponseModelFromGateWay
@@ -39,15 +39,12 @@ object ModelMapper {
 
     fun mapEntityToTransFromGateWay(trans: List<TransactionResponseModelFromGateWay>) =
         trans.map {
-            Log.d("TRANS_MILLIS", it.transactionTime)
-            Log.d("TRANS_MILLISD", it.transactionTime)
-            println("TRANS_MILLIS" + it.transactionTime)
             TransactionResponse().apply {
                 RRN = it.RRN
                 accountType = IsoAccountType.parseStringAccountType(it.accountType)
                 acquiringInstCode = it.acquiringInstCode
                 additionalAmount_54 =
-                    if (it.additionalAmount != null) it.additionalAmount.toString() else ""
+                    it.additionalAmount.toString()
                 amount = it.amount.toLong()
                 authCode = it.authCode
                 cardExpiry = it.cardExpiry
