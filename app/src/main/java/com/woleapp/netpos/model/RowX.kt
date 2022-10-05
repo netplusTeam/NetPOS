@@ -1,0 +1,31 @@
+package com.woleapp.netpos.model
+
+data class RowX(
+    val accountType: String?,
+    val acquiringInstCode: String?,
+    val amount: Double?,
+    val appCryptogram: String?,
+    val authCode: String?,
+    val cardExpiry: String?,
+    val cardHolder: String?,
+    val cardLabel: String?,
+    val dateCreated: String?,
+    val maskedPan: String?,
+    val merchantId: String?,
+    val originalForwardingInstCode: String?,
+    val otherAmount: Int?,
+    val otherId: String?,
+    val partnerId: String?,
+    val provider: String?,
+    val remark: String?,
+    val responseCode: String?,
+    val responseDE55: String?,
+    val responseMessage: String?,
+    val rrn: String?,
+    val source: String?,
+    val terminalId: String?,
+    val transactionTime: String?,
+    val transactionTimeInMillis: String?,
+    val transactionType: String?,
+    val transmissionDateTime: String?
+)

@@ -101,8 +101,11 @@ class ZenithPayByTransferFragment : BaseFragment() {
                     Toast.LENGTH_LONG
                 ).show()
             } else {
-                showCalendarDialog()
+                addFragmentWithoutRemove(ZenithPayByTransferTransactionPage())
             }
+//            {
+//                showCalendarDialog()
+//            }
         }
 
         val listOfService = ArrayList<Service>()

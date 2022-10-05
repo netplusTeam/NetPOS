@@ -32,7 +32,7 @@ fun newEndOfDayPrintImplementation(
     index: Int,
     it: TransactionResponse,
     printerManager: POIPrinterManage,
-    textPrintLine: TextPrintLine,
+    textPrintLine: TextPrintLine
 ) {
     val status = if (it.responseCode == "00") "A" else "D"
     val formattedAmount = it.amount.div(100).formatCurrencyAmountUsingCurrentModule()
@@ -96,10 +96,12 @@ fun previousEndOfDayPrintImplementation(
 }
 
 fun List<TransactionResponse>.printEndOfDay(
-    context: Context,
+    context: Context
 ): Single<PrinterResponse> {
-    if (Build.MODEL.equals("mini", true) || Build.MODEL.equals("p5", true))
+    Timber.d("DATA_TRANSACTION_TIME=======>%s", this.first().transactionTimeInMillis)
+    if (Build.MODEL.equals("mini", true) || Build.MODEL.equals("p5", true)) {
         return Single.error(Throwable("Device cannot print"))
+    }
 
     val printerManager = NetPosSdk.getPrinterManager(context).apply {
         if (DeviceConfig.Device == DeviceConfig.DEVICE_PRO) {
@@ -235,15 +237,17 @@ fun List<TransactionResponse>.printEndOfDay(
     val printerListener = object : POIPrinterManage.IPrinterListener {
         override fun onError(p0: Int, p1: String?) {
             emitter?.let {
-                if (it.isDisposed.not())
+                if (it.isDisposed.not()) {
                     it.onError(Throwable("message: $p1 - code: $p0"))
+                }
             }
         }
 
         override fun onFinish() {
             emitter?.let {
-                if (it.isDisposed.not())
+                if (it.isDisposed.not()) {
                     it.onSuccess(PrinterResponse())
+                }
             }
         }
 
@@ -270,15 +274,17 @@ fun List<TransactionResponse>.printAll(
     val printerListener = object : POIPrinterManage.IPrinterListener {
         override fun onError(p0: Int, p1: String?) {
             emitter?.let {
-                if (it.isDisposed.not())
+                if (it.isDisposed.not()) {
                     it.onError(Throwable("message: $p1 - code: $p0"))
+                }
             }
         }
 
         override fun onFinish() {
             emitter?.let {
-                if (it.isDisposed.not())
+                if (it.isDisposed.not()) {
                     it.onNext(PrinterResponse())
+                }
             }
         }
 
@@ -289,8 +295,9 @@ fun List<TransactionResponse>.printAll(
     return Observable.create {
         emitter = it
         forEach { transactionResponse ->
-            if (it.isDisposed.not())
+            if (it.isDisposed.not()) {
                 transactionResponse.print(printerListener, context, isMerchantCopy)
+            }
         }
         it.onComplete()
     }
@@ -412,9 +419,9 @@ fun TransactionResponse.buildReceipt(
             }"
         )
         builder.isReprint = isReprint
-        if (isMerchantCopy)
+        if (isMerchantCopy) {
             builder.isMerchantCopy
-        else builder.isCustomerCopy
+        } else builder.isCustomerCopy
     }
 
 fun NipNotification.print(context: Context, printerListener: POIPrinterManage.IPrinterListener) {
@@ -449,15 +456,17 @@ fun List<NipNotification>.printAllNotifications(context: Context): Observable<Pr
     val printerListener = object : POIPrinterManage.IPrinterListener {
         override fun onError(p0: Int, p1: String?) {
             emitter?.let {
-                if (it.isDisposed.not())
+                if (it.isDisposed.not()) {
                     it.onError(Throwable("message:$p1 - code:$p0"))
+                }
             }
         }
 
         override fun onFinish() {
             emitter?.let {
-                if (it.isDisposed.not())
+                if (it.isDisposed.not()) {
                     it.onNext(PrinterResponse())
+                }
             }
         }
 
@@ -468,8 +477,9 @@ fun List<NipNotification>.printAllNotifications(context: Context): Observable<Pr
     return Observable.create {
         emitter = it
         forEach { nipNotification ->
-            if (it.isDisposed.not())
+            if (it.isDisposed.not()) {
                 nipNotification.print(context, printerListener)
+            }
         }
         it.onComplete()
     }

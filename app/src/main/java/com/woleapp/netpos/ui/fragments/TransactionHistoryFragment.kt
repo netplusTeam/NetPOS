@@ -98,20 +98,11 @@ class TransactionHistoryFragment : BaseFragment() {
             )
         )
 
-        if (action != HISTORY_ACTION_EOD)
+        if (action != HISTORY_ACTION_EOD) {
             viewModel.pagedTransaction.observe(viewLifecycleOwner) {
-                println(it.size)
-                it.forEach { trs ->
-                    println("PGD_LIST " + trs.amount)
-                    println("PGD_LIST " + trs.localTime_12)
-                    println("PGD_LIST " + trs.localDate_13)
-                    println("PGD_LIST " + trs.transmissionDateTime)
-                    println("PGD_LIST " + trs.transactionTimeInMillis)
-                    println("====================================\n")
-                }
                 (adapter as PagedListAdapter<TransactionResponse, *>).submitList(it)
             }
-        else {
+        } else {
             val eodList = viewModel.getEodList()
             (adapter as ListAdapter<TransactionResponse, TransactionsViewHolder>).submitList(eodList)
         }

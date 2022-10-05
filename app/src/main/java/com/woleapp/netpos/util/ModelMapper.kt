@@ -1,18 +1,16 @@
 package com.woleapp.netpos.util
 
-import android.util.Log
-import com.danbamitale.epmslib.entities.TransactionResponse
-import com.danbamitale.epmslib.entities.TransactionType
-import com.danbamitale.epmslib.entities.responseMessage
+import com.danbamitale.epmslib.entities.*
 import com.danbamitale.epmslib.utils.IsoAccountType
 import com.woleapp.netpos.model.Row
 import com.woleapp.netpos.model.TransactionResponseModelFromGateWay
+import com.woleapp.netpos.util.RandomNumUtil.formattedTime
 import com.woleapp.netpos.util.RandomNumUtil.getDateInMillis
+import com.woleapp.netpos.util.RandomNumUtil.getDateInMillis2
 
 object ModelMapper {
     fun mapTransFromGateWayToEntity(trans: List<TransactionResponse>) =
         trans.map {
-
             TransactionResponseModelFromGateWay(
                 RRN = it.RRN,
                 accountType = it.accountType.name,
@@ -41,15 +39,12 @@ object ModelMapper {
 
     fun mapEntityToTransFromGateWay(trans: List<TransactionResponseModelFromGateWay>) =
         trans.map {
-            Log.d("TRANS_MILLIS", it.transactionTime)
-            Log.d("TRANS_MILLISD", it.transactionTime)
-            println("TRANS_MILLIS" + it.transactionTime)
             TransactionResponse().apply {
                 RRN = it.RRN
                 accountType = IsoAccountType.parseStringAccountType(it.accountType)
                 acquiringInstCode = it.acquiringInstCode
                 additionalAmount_54 =
-                    if (it.additionalAmount != null) it.additionalAmount.toString() else ""
+                    it.additionalAmount.toString()
                 amount = it.amount.toLong()
                 authCode = it.authCode
                 cardExpiry = it.cardExpiry
@@ -61,7 +56,7 @@ object ModelMapper {
                 responseCode = it.responseCode
                 terminalId = it.terminalId
                 transactionTimeInMillis =
-                    if (it.transactionTime.contains("-")) getDateInMillis(it.transactionTime) else it.transactionTime.toLong()
+                    if (it.transactionTime.contains("-")) getDateInMillis2(it.transactionTime) else it.transactionTime.toLong()
                 transactionType = TransactionType.valueOf(it.transactionType)
                 transmissionDateTime = it.transactionTime
             }
@@ -95,5 +90,42 @@ object ModelMapper {
                     ?: TransactionType.PURCHASE
                 transmissionDateTime = it.transactionTime ?: ""
             }
+        }
+
+    fun TransactionRequestData.mapRequestDataToTransactionResponse(
+        cardData: CardData,
+        cardHolderName: String,
+        cardScheme: String,
+        errorMessage: String,
+        transTimeInMillis: Long,
+        responseCode: String?
+    ): TransactionResponse =
+        TransactionResponse().apply {
+            this.RRN = this@mapRequestDataToTransactionResponse.RRN ?: ""
+            accountType =
+                this@mapRequestDataToTransactionResponse.accountType
+            acquiringInstCode =
+                this@mapRequestDataToTransactionResponse.originalDataElements?.originalAcquiringInstCode
+                    ?: ""
+            additionalAmount_54 = ""
+            amount = this@mapRequestDataToTransactionResponse.amount
+            authCode =
+                this@mapRequestDataToTransactionResponse.originalDataElements?.originalAuthorizationCode
+                    ?: ""
+            cardExpiry = cardData.expiryDate
+            cardHolder = cardHolderName
+            cardLabel = cardScheme
+            this.errorMessage = errorMessage
+            this.maskedPan = cardData.pan
+            originalForwardingInstCode =
+                this@mapRequestDataToTransactionResponse.originalDataElements?.originalForwardingInstCode
+                    ?: ""
+            this.responseCode = responseCode
+                ?: this@mapRequestDataToTransactionResponse.originalDataElements?.reversalReasonCode?.code
+                ?: ""
+            terminalId = Singletons.getCurrentlyLoggedInUser()?.terminal_id ?: ""
+            transactionTimeInMillis = transTimeInMillis
+            transactionType = this@mapRequestDataToTransactionResponse.transactionType
+            transmissionDateTime = formattedTime
         }
 }

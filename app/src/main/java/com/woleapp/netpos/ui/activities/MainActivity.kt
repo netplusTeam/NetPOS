@@ -12,28 +12,38 @@ import android.location.Location
 import android.location.LocationListener
 import android.location.LocationManager
 import android.os.Bundle
+import android.util.Log
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.databinding.DataBindingUtil
 import androidx.fragment.app.Fragment
+import com.google.android.gms.tasks.OnCompleteListener
+import com.google.firebase.messaging.FirebaseMessaging
 import com.pixplicity.easyprefs.library.Prefs
 import com.woleapp.netpos.R
 import com.woleapp.netpos.databinding.ActivityMainBinding
+import com.woleapp.netpos.model.AppConstants.FIREBASE_TOPIC_UPDATE
 import com.woleapp.netpos.model.User
 import com.woleapp.netpos.mqtt.MqttHelper
 import com.woleapp.netpos.nibss.CONFIGURATION_STATUS
 import com.woleapp.netpos.nibss.NetPosTerminalConfig
 import com.woleapp.netpos.receivers.BatteryReceiver
 import com.woleapp.netpos.ui.fragments.DashboardFragment
-import com.woleapp.netpos.util.* // ktlint-disable no-wildcard-imports
+import com.woleapp.netpos.util.*
 import com.woleapp.netpos.util.Singletons.gson
 import dagger.hilt.android.AndroidEntryPoint
 import io.reactivex.disposables.CompositeDisposable
 import pub.devrel.easypermissions.EasyPermissions
 import timber.log.Timber
 
+const val TAG = "FIRE_BASE_TOKEN"
+const val TAG1 = "FIRE_BASE_TOKEN_1"
+const val TAG2 = "FIRE_BASE_TOKEN_2"
+
 @AndroidEntryPoint
 class MainActivity : AppCompatActivity(), EasyPermissions.PermissionCallbacks {
+
+    private lateinit var firebaseInstance: FirebaseMessaging
 
     private var progressDialog: ProgressDialog? = null
     private lateinit var alertDialog: AlertDialog
@@ -81,6 +91,7 @@ class MainActivity : AppCompatActivity(), EasyPermissions.PermissionCallbacks {
 
     override fun onStart() {
         super.onStart()
+
         registerReceiver(batteryReceiver, iFilter)
         // LocalBroadcastManager.getInstance(this).registerReceiver(receiver, IntentFilter(CONFIGURATION_ACTION))
         when ( // NetPosTerminalConfig.isConfigurationInProcess -> showProgressDialog()
@@ -133,6 +144,14 @@ class MainActivity : AppCompatActivity(), EasyPermissions.PermissionCallbacks {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        firebaseInstance = FirebaseMessaging.getInstance()
+
+        subscribeToFireBaseMessagingTopic(firebaseInstance, FIREBASE_TOPIC_UPDATE)
+
+        getFireBaseToken(firebaseInstance) {
+            sendTokenToBackend(it)
+        }
+
         binding = DataBindingUtil.setContentView(this, R.layout.activity_main)
         // loadCerts()
         if (!EasyPermissions.hasPermissions(
@@ -245,5 +264,34 @@ class MainActivity : AppCompatActivity(), EasyPermissions.PermissionCallbacks {
     override fun onDestroy() {
         super.onDestroy()
         compositeDisposable.dispose()
+    }
+
+    private fun sendTokenToBackend(token: String) {
+        Timber.d("FIRE_BASE_TOKEN_1==>%s", token)
+    }
+
+    private fun getFireBaseToken(
+        firebaseMessagingInstance: FirebaseMessaging,
+        actionToPerformWithTheReceivedToken: (received: String) -> Unit
+    ) {
+        firebaseMessagingInstance.token.addOnCompleteListener(
+            OnCompleteListener { task ->
+                if (!task.isSuccessful) {
+                    Log.w(TAG1, "Fetching FCM registration token failed", task.exception)
+                    return@OnCompleteListener
+                }
+
+                // Get new FCM registration token
+                val token = task.result
+                actionToPerformWithTheReceivedToken(token)
+            }
+        )
+    }
+
+    private fun subscribeToFireBaseMessagingTopic(
+        firebaseMessagingInstance: FirebaseMessaging,
+        fireBaseTopic: String
+    ) {
+        firebaseMessagingInstance.subscribeToTopic(fireBaseTopic)
     }
 }

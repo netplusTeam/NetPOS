@@ -5,6 +5,7 @@ import com.google.gson.Gson
 import com.pixplicity.easyprefs.library.Prefs
 import com.woleapp.netpos.BuildConfig
 import com.woleapp.netpos.database.AppDatabase
+import com.woleapp.netpos.database.dao.ZenithPayByTransferUserTransactionsDao
 import com.woleapp.netpos.network.StormApiService
 import com.woleapp.netpos.network.ZenithPayByTransferService
 import com.woleapp.netpos.util.PREF_USER_TOKEN
@@ -13,7 +14,6 @@ import dagger.Provides
 import dagger.hilt.InstallIn
 import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
-import okhttp3.Cache
 import okhttp3.Interceptor
 import okhttp3.OkHttpClient
 import okhttp3.logging.HttpLoggingInterceptor
@@ -161,6 +161,13 @@ object Module {
         appDatabase: AppDatabase
     ) =
         appDatabase.transactionResponseDao()
+
+    @Singleton
+    @Provides
+    fun providesZenithPayByTransferLocalDao(
+        appDatabase: AppDatabase
+    ): ZenithPayByTransferUserTransactionsDao =
+        appDatabase.getZenithPayByTransferDao()
 
     @Singleton
     @Provides
