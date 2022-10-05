@@ -56,7 +56,10 @@ object ModelMapper {
                 responseCode = it.responseCode
                 terminalId = it.terminalId
                 transactionTimeInMillis =
-                    if (it.transactionTime.contains("-")) getDateInMillis2(it.transactionTime) else it.transactionTime.toLong()
+                    if (it.transactionTime.contains("T")) getDateInMillis(it.transactionTime) else if (!it.transactionTime.contains(
+                            "T"
+                        ) && it.transactionTime.contains("-")
+                    ) getDateInMillis2(it.transactionTime) else it.transactionTime.toLong()
                 transactionType = TransactionType.valueOf(it.transactionType)
                 transmissionDateTime = it.transactionTime
             }

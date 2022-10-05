@@ -677,20 +677,26 @@ class DashboardFragment : BaseFragment() {
             .subscribe { t1, t2 ->
                 t1?.let {
                     try {
+                        Timber.d("ERROR_CHECKER_1======>%s", "$it")
                         val response = gson.fromJson(gson.toJson(it), NewEodModel::class.java)
                         showEndOfDayBottomSheetDialog(response.value.data.rows.mapRowToTransactionResponse())
                     } catch (e: Exception) {
+                        Timber.d("ERROR_CHECKER_2======>%s", "$it")
                         when (it) {
                             is GetEndOfDayModelFromNewServer -> {
+                                Timber.d("ERROR_CHECKER_3======>%s", "$it")
                                 showEndOfDayBottomSheetDialog(it.data.rows.mapRowToTransactionResponse())
                             }
                             is GateWayTransactionResponse -> {
+                                Timber.d("ERROR_CHECKER_4======>%s", "$it")
                                 showEndOfDayBottomSheetDialog(mapEntityToTransFromGateWay(it.result))
                             }
                             is NewEodModel -> {
+                                Timber.d("ERROR_CHECKER_5======>%s", "$it")
                                 showEndOfDayBottomSheetDialog(it.value.data.rows.mapRowToTransactionResponse())
                             }
                             else -> {
+                                Timber.d("ERROR_CHECKER_6======>%s", "$it")
                                 showEndOfDayBottomSheetDialog(listOf())
                             }
                         }
