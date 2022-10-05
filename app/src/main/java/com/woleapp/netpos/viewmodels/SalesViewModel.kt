@@ -30,11 +30,11 @@ import com.woleapp.netpos.network.* // ktlint-disable no-wildcard-imports
 import com.woleapp.netpos.nibss.NetPosTerminalConfig
 import com.woleapp.netpos.util.* // ktlint-disable no-wildcard-imports
 import com.woleapp.netpos.util.ModelMapper.mapRequestDataToTransactionResponse
+import com.woleapp.netpos.util.RandomNumUtil.dateStr2Long
 import com.woleapp.netpos.util.RandomNumUtil.formattedTime
 import com.woleapp.netpos.util.RandomNumUtil.generateRandomRrn
 import com.woleapp.netpos.util.RandomNumUtil.getCurrentDateTime
 import com.woleapp.netpos.util.RandomNumUtil.getDate
-import com.woleapp.netpos.util.RandomNumUtil.getDateInMillis2
 import com.woleapp.netpos.util.RandomNumUtil.getTransactionResponseToLog
 import com.woleapp.netpos.util.RandomNumUtil.mapDanbamitaleResponseToResponseX
 import com.woleapp.netpos.util.Singletons.getKeyHolder
@@ -279,7 +279,7 @@ class SalesViewModel(
                             responseCode = "99",
                             responseDE55 = "",
                             terminalId = user!!.terminal_id!!,
-                            transactionTimeInMillis = getDateInMillis2(transDateTime).toInt(),
+                            transactionTimeInMillis = dateStr2Long(transDateTime),
                             transactionType = requestData.transactionType.name,
                             transmissionDateTime = transDateTime
                         )
@@ -346,7 +346,7 @@ class SalesViewModel(
                 processor.rollback(context, MessageReasonCode.Timeout)
             }
             .flatMap {
-                transResp = it
+                transResp = it.copy(transmissionDateTime = getDate(it.transactionTimeInMillis))
                 if (it.responseCode == "A3") {
                     Prefs.remove(PREF_CONFIG_DATA)
                     Prefs.remove(PREF_KEYHOLDER)
@@ -355,6 +355,8 @@ class SalesViewModel(
                 it.cardHolder = customerName.value!!
                 it.cardLabel = cardScheme!!
                 it.amount = requestData.amount
+                it.transmissionDateTime = getDate(it.transactionTimeInMillis)
+                Timber.d("DATA_TR_DATA======>%s", "$it")
                 lastTransactionResponse.postValue(it)
                 temporalRrnForLastTransaction.postValue(customRrn)
                 _message.postValue(Event(if (it.responseCode == "00") "Transaction Approved" else "Transaction Not approved"))
@@ -412,6 +414,7 @@ class SalesViewModel(
                 lastTransactionResponse.postValue(it)
                 temporalRrnForLastTransaction.postValue(customRrn)
                 _message.postValue(Event(if (it.responseCode == "00") "Transaction Approved" else "Transaction Not approved"))
+                Timber.d("DATA_TO_SAVE=====>%s", it)
                 transactionResponseDao
                     .insertNewTransaction(it)
             }.flatMap {

@@ -1,12 +1,12 @@
 package com.woleapp.netpos.util
 
-import android.util.Log
-import com.danbamitale.epmslib.entities.* // ktlint-disable no-wildcard-imports
+import com.danbamitale.epmslib.entities.*
 import com.danbamitale.epmslib.utils.IsoAccountType
 import com.woleapp.netpos.model.Row
 import com.woleapp.netpos.model.TransactionResponseModelFromGateWay
 import com.woleapp.netpos.util.RandomNumUtil.formattedTime
 import com.woleapp.netpos.util.RandomNumUtil.getDateInMillis
+import com.woleapp.netpos.util.RandomNumUtil.getDateInMillis2
 
 object ModelMapper {
     fun mapTransFromGateWayToEntity(trans: List<TransactionResponse>) =
@@ -56,7 +56,7 @@ object ModelMapper {
                 responseCode = it.responseCode
                 terminalId = it.terminalId
                 transactionTimeInMillis =
-                    if (it.transactionTime.contains("-")) getDateInMillis(it.transactionTime) else it.transactionTime.toLong()
+                    if (it.transactionTime.contains("-")) getDateInMillis2(it.transactionTime) else it.transactionTime.toLong()
                 transactionType = TransactionType.valueOf(it.transactionType)
                 transmissionDateTime = it.transactionTime
             }

@@ -527,6 +527,9 @@ class DashboardFragment : BaseFragment() {
         AppDatabase.getDatabaseInstance(requireContext())
             .transactionResponseDao()
             .getEndOfDayTransactionSingle(be, be1, NetPosTerminalConfig.getTerminalId())
+            .doOnError {
+                Timber.d("ERROR_HAPPENING=========>%s", it.localizedMessage)
+            }
             .flatMap { transactionList ->
                 Single.just(
                     GateWayTransactionResponse(
@@ -627,33 +630,28 @@ class DashboardFragment : BaseFragment() {
         getEndOfDayLocal(
             getDateInMilliSecsForLocal(df.format(be)),
             getDateInMilliSecsForLocalForEndOfDay(df.format(be))
-        ).flatMap { gateWayResp ->
-            if (gateWayResp.result.isEmpty()) {
-                return@flatMap stormApiService.getTransactionsFromNewService(
-                    parameters.terminalId,
-                    parameters.from,
-                    parameters.to,
-                    parameters.page,
-                    parameters.pageSize
-                ).map {
-                    val dataWithModifiedAmount = it.data.rows.map { it1 ->
-                        it1.copy(amount = (it1.amount as Int * 100))
+        )
+            .flatMap { gateWayResp ->
+                if (gateWayResp.result.isEmpty()) {
+                    return@flatMap stormApiService.getTransactionsFromNewService(
+                        parameters.terminalId,
+                        parameters.from,
+                        parameters.to,
+                        parameters.page,
+                        parameters.pageSize
+                    ).map {
+                        val dataWithModifiedAmount = it.data.rows.map { it1 ->
+                            it1.copy(amount = (it1.amount as Int * 100))
+                        }
+                        val modifiedData = it.data.copy(
+                            rows = dataWithModifiedAmount
+                        )
+                        Single.just(it.copy(data = modifiedData))
                     }
-                    val modifiedData = it.data.copy(
-                        rows = dataWithModifiedAmount
-                    )
-                    val newResult = it.copy(data = modifiedData)
-                    println()
-                    println()
-                    newResult.data.rows.forEach { forEachIt ->
-                        println(forEachIt.amount)
-                    }
-                    Single.just(it.copy(data = modifiedData))
+                } else {
+                    Single.just(gateWayResp)
                 }
-            } else {
-                Single.just(gateWayResp)
-            }
-        }.retry(2)
+            }.retry(2)
             .onErrorResumeNext {
                 stormApiService.getTransactionsFromNewService(
                     parameters.terminalId,
@@ -668,12 +666,6 @@ class DashboardFragment : BaseFragment() {
                     val modifiedData = it.data.copy(
                         rows = dataWithModifiedAmount
                     )
-                    val newResult = it.copy(data = modifiedData)
-                    println()
-                    println()
-                    newResult.data.rows.forEach { forEachIt ->
-                        println(forEachIt.amount)
-                    }
                     Single.just(it.copy(data = modifiedData))
                 }
             }
@@ -684,32 +676,22 @@ class DashboardFragment : BaseFragment() {
             }
             .subscribe { t1, t2 ->
                 t1?.let {
-                    val str = gson.toJson(it)
-                    val res: Any = gson.fromJson(str, NewEodModel::class.java)
                     try {
-                        Timber.d("DATA_DATA_NEW_FROM_SERVER_11====>%s", res)
-                        Timber.d("DATA_DATA_NEW_FROM_SERVER_111====>%s", (res as NewEodModel).value.data.rows.size)
-                        Timber.d("DATA_DATA_NEW_FROM_SERVER_113====>%s", res.value.data.rows)
-                        val transactions = (res as NewEodModel).value.data.rows.mapRowToTransactionResponse()
-                        Timber.d("DATA_DATA_NEW_FROM_SERVER_112====>%s", transactions)
-                        showEndOfDayBottomSheetDialog(transactions)
+                        val response = gson.fromJson(gson.toJson(it), NewEodModel::class.java)
+                        showEndOfDayBottomSheetDialog(response.value.data.rows.mapRowToTransactionResponse())
                     } catch (e: Exception) {
-                        when (res) {
+                        when (it) {
                             is GetEndOfDayModelFromNewServer -> {
-                                Timber.d("IT IS OF TYPE GetEndOfDayModelFromNewServer")
-                                showEndOfDayBottomSheetDialog(res.data.rows.mapRowToTransactionResponse())
+                                showEndOfDayBottomSheetDialog(it.data.rows.mapRowToTransactionResponse())
                             }
                             is GateWayTransactionResponse -> {
-                                Timber.d("IT IS OF TYPE GateWayTransactionResponse")
-                                showEndOfDayBottomSheetDialog(mapEntityToTransFromGateWay(res.result))
+                                showEndOfDayBottomSheetDialog(mapEntityToTransFromGateWay(it.result))
                             }
                             is NewEodModel -> {
-                                Timber.d("IT IS OF TYPE NewEodModel")
-                                showEndOfDayBottomSheetDialog(res.value.data.rows.mapRowToTransactionResponse())
+                                showEndOfDayBottomSheetDialog(it.value.data.rows.mapRowToTransactionResponse())
                             }
                             else -> {
-                                Timber.d("IT IS AN EMPTY LIST")
-                                showEndOfDayBottomSheetDialog(emptyList())
+                                showEndOfDayBottomSheetDialog(listOf())
                             }
                         }
                     }

@@ -48,7 +48,7 @@ data class TransactionResponseX(
     val responseCode: String,
     val responseDE55: String,
     val terminalId: String,
-    val transactionTimeInMillis: Int,
+    val transactionTimeInMillis: Long,
     val transactionType: String,
     val transmissionDateTime: String
 )

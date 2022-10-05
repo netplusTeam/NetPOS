@@ -13,7 +13,11 @@ import com.woleapp.netpos.model.TransactionToLogBeforeConnectingToNibbs
 import timber.log.Timber
 import java.text.DateFormat
 import java.text.DecimalFormat
+import java.text.ParseException
 import java.text.SimpleDateFormat
+import java.time.LocalDateTime
+import java.time.ZoneOffset
+import java.time.format.DateTimeFormatter
 import java.util.*
 
 object RandomNumUtil {
@@ -51,12 +55,31 @@ object RandomNumUtil {
         val formatter = SimpleDateFormat("yyyy-MM-dd")
         return formatter.format(initDate) + " 23:59:59"
     }
+    @SuppressLint("SimpleDateFormat")
+    fun getDateInMillis3(dateTime: String): Long {
+        val format = SimpleDateFormat("yyyy-MM-dd HH:mm:ss")
+        val date = format.parse(dateTime)
+        return date!!.time + 3600000
+    }
 
     @SuppressLint("SimpleDateFormat")
     fun getDateInMillis2(dateTime: String): Long {
-        val format = SimpleDateFormat("dd-MM-yyyy hh:mm:ss")
-        val date = format.parse(dateTime)
-        return date!!.time + 3600000
+        val formatter: DateTimeFormatter =
+            DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss", Locale.ENGLISH)
+        val localDate: LocalDateTime = LocalDateTime.parse(dateTime, formatter)
+        return localDate.atOffset(ZoneOffset.UTC).toInstant().toEpochMilli() + 3600000
+    }
+
+    fun dateStr2Long(dateStr: String): Long {
+        return try {
+            val c = Calendar.getInstance()
+            c.time = SimpleDateFormat("yyyy-MM-dd hh:mm")
+                .parse(dateStr)!!
+            c.timeInMillis
+        } catch (e: ParseException) {
+            e.printStackTrace()
+            0
+        }
     }
 
     @SuppressLint("SimpleDateFormat")
@@ -189,7 +212,7 @@ object RandomNumUtil {
                 responseCode = responseCode,
                 responseDE55 = responseDE55 ?: "",
                 terminalId = terminalId,
-                transactionTimeInMillis = transactionTimeInMillis.toInt(),
+                transactionTimeInMillis = transactionTimeInMillis,
                 transactionType = transactionType.name,
                 transmissionDateTime = getCurrentDateTime()
             )
