@@ -60,8 +60,9 @@ class TransactionBoundaryCallBack(
     private fun getTransaction(
         params: GetEodFromNewServiceModel
     ) {
-        if (dataLoadedFinished || isLoadInProgress)
+        if (dataLoadedFinished || isLoadInProgress) {
             return
+        }
         isLoadInProgress = true
         Timber.d("WEIRD_TERMINAL ==> ${params.terminalId}")
         Timber.d("WEIRD_FROM ==> ${params.from}")
@@ -76,8 +77,9 @@ class TransactionBoundaryCallBack(
         )
             .retry(3)
             .flatMap {
-                if (it.data.rows.isEmpty())
+                if (it.data.rows.isEmpty()) {
                     dataLoadedFinished = true
+                }
                 it.data.rows = it.data.rows.map { transaction ->
                     transaction.amount =
                         if (transaction.amount is Int) (transaction.amount as Int).times(100) else (transaction.amount as Double)
@@ -109,8 +111,9 @@ class TransactionBoundaryCallBack(
     private fun getTransactionByTerminalId(
         params: GetEodFromNewServiceModel
     ) {
-        if (dataLoadedFinished || isLoadInProgress)
+        if (dataLoadedFinished || isLoadInProgress) {
             return
+        }
         isLoadInProgress = true
         stormApiService.getTransactionsFromNewServiceByTerminalId(
             params.terminalId,
@@ -119,8 +122,9 @@ class TransactionBoundaryCallBack(
         )
             .retry(3)
             .flatMap {
-                if (it.data.rows.isEmpty())
+                if (it.data.rows.isEmpty()) {
                     dataLoadedFinished = true
+                }
                 it.data.rows = it.data.rows.map { transaction ->
                     transaction.amount =
                         if (transaction.amount is Int) (transaction.amount as Int).times(100) else (transaction.amount as Double)
