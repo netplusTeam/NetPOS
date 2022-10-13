@@ -1,6 +1,6 @@
 package com.woleapp.netpos.util
 
-import com.danbamitale.epmslib.entities.*
+import com.danbamitale.epmslib.entities.* // ktlint-disable no-wildcard-imports
 import com.danbamitale.epmslib.utils.IsoAccountType
 import com.woleapp.netpos.model.Row
 import com.woleapp.netpos.model.TransactionResponseModelFromGateWay

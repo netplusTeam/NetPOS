@@ -35,8 +35,8 @@ android {
         applicationId "com.woleapp.netpos"
         minSdkVersion 21
         targetSdkVersion 30
-        versionCode 131
-        versionName "1.1.131"
+        versionCode 132
+        versionName "1.1.132"
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         def environmentPath
         if (appModeProd == "true")
@@ -120,6 +120,10 @@ android {
             dimension "whiteLabels"
             applicationIdSuffix ".aellacredit"
         }
+        tingopay{
+            dimension "whiteLabels"
+            applicationIdSuffix ".tingopay"
+        }
     }
 
     sourceSets {
@@ -142,6 +146,9 @@ android {
             java.srcDirs('src/defaults/java')
         }
         aellacredit {
+            java.srcDirs('src/defaults/java')
+        }
+        tingopay {
             java.srcDirs('src/defaults/java')
         }
     }

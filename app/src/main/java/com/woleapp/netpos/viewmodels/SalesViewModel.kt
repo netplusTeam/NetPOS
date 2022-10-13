@@ -235,7 +235,6 @@ class SalesViewModel(
         val customRrn = generateRandomRrn(12)
         val transTime = formattedTime.replace(":", "")
         val transDateTime = getCurrentDateTime()
-        println("=========TTT+Time $transDateTime")
 
         // IsoAccountType.
         this.amountLong = amountDbl.toLong()
@@ -356,10 +355,9 @@ class SalesViewModel(
                 it.cardLabel = cardScheme!!
                 it.amount = requestData.amount
                 it.transmissionDateTime = getDate(it.transactionTimeInMillis)
-                Timber.d("DATA_TR_DATA======>%s", "$it")
                 lastTransactionResponse.postValue(it)
                 temporalRrnForLastTransaction.postValue(customRrn)
-                _message.postValue(Event(if (it.responseCode == "00") "Transaction Approved" else "Transaction Not approved"))
+                _message.postValue(Event(if (it.responseCode == "00" || it.responseCode == "16") "Transaction Approved" else "Transaction Not approved"))
                 transactionResponseDao
                     .insertNewTransaction(it)
             }.flatMap {
@@ -388,7 +386,7 @@ class SalesViewModel(
                     // _finish.value = Event(true)
                 }
                 throwable?.let {
-                    _message.value = Event("Error: ${it.localizedMessage}")
+//                    _message.value = Event("Error: ${it.localizedMessage}")
                     Timber.e(it)
                 }
             }.disposeWith(compositeDisposable)

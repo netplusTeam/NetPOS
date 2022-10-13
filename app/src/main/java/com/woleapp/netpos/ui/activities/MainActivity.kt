@@ -29,7 +29,10 @@ import com.woleapp.netpos.nibss.CONFIGURATION_STATUS
 import com.woleapp.netpos.nibss.NetPosTerminalConfig
 import com.woleapp.netpos.receivers.BatteryReceiver
 import com.woleapp.netpos.ui.fragments.DashboardFragment
-import com.woleapp.netpos.util.*
+import com.woleapp.netpos.util.JWTHelper
+import com.woleapp.netpos.util.PREF_LAST_LOCATION
+import com.woleapp.netpos.util.PREF_USER
+import com.woleapp.netpos.util.PREF_USER_TOKEN
 import com.woleapp.netpos.util.Singletons.gson
 import dagger.hilt.android.AndroidEntryPoint
 import io.reactivex.disposables.CompositeDisposable

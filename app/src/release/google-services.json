@@ -7,6 +7,43 @@
   "client": [
     {
       "client_info": {
+        "mobilesdk_app_id": "1:407232811618:android:72371ee21fcb5ebcf5b73b",
+        "android_client_info": {
+          "package_name": "com.bsystems"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "407232811618-0vb3c3kuvkdd3gu4mqou3a15gtp80od0.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.bsystems",
+            "certificate_hash": "d63b0a7a6a6a542ab3bf2133c65462e24660398d"
+          }
+        },
+        {
+          "client_id": "407232811618-ccp697t0tsad9c53o3k50s46l8s0ugcd.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBXBvZYFLfY7XIkSAypMcxVT0ArfG_2HmI"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "407232811618-ccp697t0tsad9c53o3k50s46l8s0ugcd.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    },
+    {
+      "client_info": {
         "mobilesdk_app_id": "1:407232811618:android:2f60f863a0de30daf5b73b",
         "android_client_info": {
           "package_name": "com.woleapp.agency"
@@ -340,6 +377,80 @@
     },
     {
       "client_info": {
+        "mobilesdk_app_id": "1:407232811618:android:453ce588bbd3a830f5b73b",
+        "android_client_info": {
+          "package_name": "com.woleapp.netpos.contactless"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "407232811618-peupl2ot7npo81emff7tesgual8e5e90.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.woleapp.netpos.contactless",
+            "certificate_hash": "d63b0a7a6a6a542ab3bf2133c65462e24660398d"
+          }
+        },
+        {
+          "client_id": "407232811618-ccp697t0tsad9c53o3k50s46l8s0ugcd.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBXBvZYFLfY7XIkSAypMcxVT0ArfG_2HmI"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "407232811618-ccp697t0tsad9c53o3k50s46l8s0ugcd.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:407232811618:android:9cab31258f302458f5b73b",
+        "android_client_info": {
+          "package_name": "com.woleapp.netpos.contactless.debug"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "407232811618-ffveu4mgonkont0guc81b3of355mnl7b.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.woleapp.netpos.contactless.debug",
+            "certificate_hash": "d63b0a7a6a6a542ab3bf2133c65462e24660398d"
+          }
+        },
+        {
+          "client_id": "407232811618-ccp697t0tsad9c53o3k50s46l8s0ugcd.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBXBvZYFLfY7XIkSAypMcxVT0ArfG_2HmI"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "407232811618-ccp697t0tsad9c53o3k50s46l8s0ugcd.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    },
+    {
+      "client_info": {
         "mobilesdk_app_id": "1:407232811618:android:c1b302f9939dcc08f5b73b",
         "android_client_info": {
           "package_name": "com.woleapp.netpos.debug"
@@ -573,6 +684,80 @@
           "client_type": 1,
           "android_info": {
             "package_name": "com.woleapp.netpos.providus.debug",
+            "certificate_hash": "d63b0a7a6a6a542ab3bf2133c65462e24660398d"
+          }
+        },
+        {
+          "client_id": "407232811618-ccp697t0tsad9c53o3k50s46l8s0ugcd.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBXBvZYFLfY7XIkSAypMcxVT0ArfG_2HmI"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "407232811618-ccp697t0tsad9c53o3k50s46l8s0ugcd.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:407232811618:android:254f5fe539c59b1cf5b73b",
+        "android_client_info": {
+          "package_name": "com.woleapp.netpos.tingopay"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "407232811618-rilj0c292fkp2mgebtj5i6nfij3nchoq.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.woleapp.netpos.tingopay",
+            "certificate_hash": "d63b0a7a6a6a542ab3bf2133c65462e24660398d"
+          }
+        },
+        {
+          "client_id": "407232811618-ccp697t0tsad9c53o3k50s46l8s0ugcd.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBXBvZYFLfY7XIkSAypMcxVT0ArfG_2HmI"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "407232811618-ccp697t0tsad9c53o3k50s46l8s0ugcd.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:407232811618:android:97d31a588cf0f210f5b73b",
+        "android_client_info": {
+          "package_name": "com.woleapp.netpos.tingopay.debug"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "407232811618-fenlt97e6s12ha80i5ig87ih98qf9ld3.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.woleapp.netpos.tingopay.debug",
             "certificate_hash": "d63b0a7a6a6a542ab3bf2133c65462e24660398d"
           }
         },
