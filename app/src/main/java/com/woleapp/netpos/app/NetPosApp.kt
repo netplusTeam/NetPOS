@@ -52,9 +52,6 @@ class NetPosApp : Application() {
                 TerminalParameters()
                     .apply {
                         // online E068C8
-                        Timber.d("MERCHANT_CODE_IS_HERE==>" + merchantCode)
-                        Timber.d("MERCHANT_NAME_IS_HERE==>" + merchantName)
-                        Timber.d("MERCHANT_ID_IS_HERE==>" + merchantId)
                         terminalCapability = "E0F8C8"
                     }
             )
@@ -78,12 +75,14 @@ class NetPosApp : Application() {
                     // Toast.makeText(baseContext, msg, Toast.LENGTH_SHORT).show()
                 }
         }
-        if (checkBillsPaymentToken().not())
+        if (checkBillsPaymentToken().not()) {
             getBillsToken(StormApiClient.getBillsInstance())
-        if (checkAppToken().not())
+        }
+        if (checkAppToken().not()) {
             getAppToken(StormApiClient.getBillsInstance()).subscribeOn(Schedulers.io())
                 .retry(2)
                 .observeOn(AndroidSchedulers.mainThread()).subscribe { _, _ ->
                 }.disposeWith(CompositeDisposable())
+        }
     }
 }

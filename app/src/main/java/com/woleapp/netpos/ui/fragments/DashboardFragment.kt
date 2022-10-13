@@ -93,8 +93,8 @@ class DashboardFragment : BaseFragment() {
         progressDialog = ProgressDialog(requireContext())
         endOfDayProgressDialog = ProgressDialog(requireContext()).apply {
             this.setCancelable(false)
-            this.setMessage("Please wait...")
-            this.setButton(DialogInterface.BUTTON_POSITIVE, "Cancel") { dialog, _ ->
+            this.setMessage(getString(R.string.please_wait))
+            this.setButton(DialogInterface.BUTTON_POSITIVE, getString(R.string.cancel)) { dialog, _ ->
                 compositeDisposable.clear()
                 dialog.cancel()
             }
@@ -133,11 +133,11 @@ class DashboardFragment : BaseFragment() {
             // addFragmentWithoutRemove(nextFrag)
         }
         val listOfServices = arrayListOf<Service>(
-            Service(0, "Transaction", R.drawable.ic_trans),
-            Service(1, "Balance Inquiry", R.drawable.ic_write),
-            Service(2, "Bank Transfer", R.drawable.ic_lending),
+            Service(0, getString(R.string.transactions), R.drawable.ic_trans),
+            Service(1, getString(R.string.balance_enquiry), R.drawable.ic_write),
+            Service(2, getString(R.string.bank_transfer), R.drawable.ic_lending),
             // add(Service(3, "Pay Bills", R.drawable.ic_bill))
-            Service(4, "View End Of Day Transactions", R.drawable.ic_print)
+            Service(4, getString(R.string.veiw_eod), R.drawable.ic_print)
         )
         adapter.submitList(listOfServices)
     }
@@ -170,20 +170,20 @@ class DashboardFragment : BaseFragment() {
         }
         val listOfServices = ArrayList<Service>()
             .apply {
-                add(Service(0, "Purchase", R.drawable.ic_trans))
+                add(Service(0, getString(R.string.purchase), R.drawable.ic_trans))
 //                add(Service(1, "Balance Inquiry", R.drawable.ic_write))
                 if (BuildConfig.FLAVOR.equals("wemacashout", true).not()) {
                     add(
                         Service(
                             2,
-                            if (BuildConfig.FLAVOR == "zenith") "Pay With Transfer" else "Bank Transfer",
+                            if (BuildConfig.FLAVOR == "zenith") getString(R.string.pay_by_transfer) else getString(R.string.bank_transfer),
                             R.drawable.ic_lending
                         )
                     )
                 }
 //                add(Service(3, "Pay Bills", R.drawable.ic_bill))
-                add(Service(4, "View End Of Day Transactions", R.drawable.ic_print))
-                add(Service(5, "Settings", R.drawable.ic_baseline_settings))
+                add(Service(4, getString(R.string.veiw_eod), R.drawable.ic_print))
+                add(Service(5, getString(R.string.settings), R.drawable.ic_baseline_settings))
             }
         adapter.submitList(listOfServices)
     }
@@ -246,20 +246,22 @@ class DashboardFragment : BaseFragment() {
         }
         val listOfServices = ArrayList<Service>()
             .apply {
-                add(Service(0, "Transaction", R.drawable.ic_trans))
-                add(Service(1, "Balance Inquiry", R.drawable.ic_write))
+                add(Service(0, getString(R.string.transactions), R.drawable.ic_trans))
+                add(Service(1, getString(R.string.balance_enquiry), R.drawable.ic_write))
                 if (BuildConfig.FLAVOR.equals("wemacashout", true).not()) {
                     add(
                         Service(
                             2,
-                            if (BuildConfig.FLAVOR == "zenith") "Pay With Transfer" else "Bank Transfer",
+                            if (BuildConfig.FLAVOR == "zenith") getString(R.string.pay_by_transfer) else getString(
+                                R.string.bank_transfer
+                            ),
                             R.drawable.ic_lending
                         )
                     )
                 }
-                add(Service(3, "Pay Bills", R.drawable.ic_bill))
-                add(Service(4, "View End Of Day Transactions", R.drawable.ic_print))
-                add(Service(5, "Settings", R.drawable.ic_baseline_settings))
+                add(Service(3, getString(R.string.pay_bills), R.drawable.ic_bill))
+                add(Service(4, getString(R.string.veiw_eod), R.drawable.ic_print))
+                add(Service(5, getString(R.string.settings), R.drawable.ic_baseline_settings))
             }
         adapter.submitList(listOfServices)
     }
@@ -289,7 +291,7 @@ class DashboardFragment : BaseFragment() {
         accountType: IsoAccountType = IsoAccountType.DEFAULT_UNSPECIFIED
     ) {
         if (NetPosTerminalConfig.getKeyHolder() == null) {
-            Toast.makeText(requireContext(), "Terminal not configured", Toast.LENGTH_LONG).show()
+            Toast.makeText(requireContext(), getString(R.string.terminal_not_configured), Toast.LENGTH_LONG).show()
             return
         }
 
@@ -301,7 +303,7 @@ class DashboardFragment : BaseFragment() {
         )
         val requestData =
             TransactionRequestData(TransactionType.BALANCE, 0L, accountType = accountType)
-        progressDialog.setMessage("Checking Balance...")
+        progressDialog.setMessage(getString(R.string.checking_bal))
         progressDialog.show()
         val processor = TransactionProcessor(hostConfig)
         // processor.
@@ -332,7 +334,7 @@ class DashboardFragment : BaseFragment() {
                     }
 
                     val messageString = if (it.isApproved) {
-                        "Account Balance:\n " + it.accountBalances.joinToString("\n") { accountBalance ->
+                        "${getString(R.string.acc_bal)}\n " + it.accountBalances.joinToString("\n") { accountBalance ->
                             "${accountBalance.accountType}, ${
                             accountBalance.amount.div(100).formatCurrencyAmount()
                             }"
@@ -341,7 +343,7 @@ class DashboardFragment : BaseFragment() {
                         "${it.responseMessage}(${it.responseCode})"
                     }
 
-                    showMessage(if (it.isApproved) "Approved" else "Declined", messageString)
+                    showMessage(if (it.isApproved) getString(R.string.approved) else getString(R.string.declined), messageString)
                 }
             }.disposeWith(compositeDisposable)
     }
@@ -389,7 +391,7 @@ class DashboardFragment : BaseFragment() {
                         if (isEmpty()) {
                             Toast.makeText(
                                 requireContext(),
-                                "No transactions to print",
+                                getString(R.string.noTransactionsToPrint),
                                 Toast.LENGTH_SHORT
                             ).show()
                             return@setOnClickListener
@@ -677,26 +679,20 @@ class DashboardFragment : BaseFragment() {
             .subscribe { t1, t2 ->
                 t1?.let {
                     try {
-                        Timber.d("ERROR_CHECKER_1======>%s", "$it")
                         val response = gson.fromJson(gson.toJson(it), NewEodModel::class.java)
                         showEndOfDayBottomSheetDialog(response.value.data.rows.mapRowToTransactionResponse())
                     } catch (e: Exception) {
-                        Timber.d("ERROR_CHECKER_2======>%s", "$it")
                         when (it) {
                             is GetEndOfDayModelFromNewServer -> {
-                                Timber.d("ERROR_CHECKER_3======>%s", "$it")
                                 showEndOfDayBottomSheetDialog(it.data.rows.mapRowToTransactionResponse())
                             }
                             is GateWayTransactionResponse -> {
-                                Timber.d("ERROR_CHECKER_4======>%s", "$it")
                                 showEndOfDayBottomSheetDialog(mapEntityToTransFromGateWay(it.result))
                             }
                             is NewEodModel -> {
-                                Timber.d("ERROR_CHECKER_5======>%s", "$it")
                                 showEndOfDayBottomSheetDialog(it.value.data.rows.mapRowToTransactionResponse())
                             }
                             else -> {
-                                Timber.d("ERROR_CHECKER_6======>%s", "$it")
                                 showEndOfDayBottomSheetDialog(listOf())
                             }
                         }
@@ -706,7 +702,7 @@ class DashboardFragment : BaseFragment() {
                     Timber.d(it)
                     Toast.makeText(
                         requireContext(),
-                        "An error occurred while fetching end of day, try again",
+                        getString(R.string.error_occured),
                         Toast.LENGTH_LONG
                     ).show()
                 }

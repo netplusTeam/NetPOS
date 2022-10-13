@@ -42,7 +42,7 @@ class SaveTransactionFromFirebaseMessagingServiceToDbWorker(
                 }.disposeWith(compositeDisposable)
             numberOfAffectedRows
         } ?: 0
-        return if (affectedRows > 0) Result.success() else Result.retry()
+        return if (affectedRows > 0 || affectedRows < 0) Result.success() else Result.retry()
     }
 
     override fun onStopped() {

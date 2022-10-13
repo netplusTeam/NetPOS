@@ -55,23 +55,19 @@ class ZenithPbtTransactionDetailsFragment : Fragment() {
             showTransactionTextView.text = RandomNumUtil.formatHtml(transaction.toString())
             printBtn.setOnClickListener {
                 Timber.d("PRINT_BUTTON_CLICKED==>%s", "$transaction")
-                if (transaction != null) {
-                    transaction.mapZenithPayByTransferToNormalTransaction()
-                        .copy(amount = transaction.amount * 100L)
-                        .print(requireContext()).subscribeOn(Schedulers.io())
-                        .observeOn(AndroidSchedulers.mainThread())
-                        .subscribe({ printResp ->
-                            Timber.e(printResp.toString())
-                        }, { err ->
-                            Toast.makeText(
-                                requireContext(),
-                                err.localizedMessage,
-                                Toast.LENGTH_LONG
-                            )
-                                .show()
-                            // Timber.e(err.localizedMessage)
-                        }).disposeWith(compositeDisposable)
-                }
+                transaction?.mapZenithPayByTransferToNormalTransaction()?.copy(amount = transaction.amount * 100L)
+                    ?.print(requireContext())?.subscribeOn(Schedulers.io())?.observeOn(AndroidSchedulers.mainThread())
+                    ?.subscribe({ printResp ->
+                        Timber.e(printResp.toString())
+                    }, { err ->
+                        Toast.makeText(
+                            requireContext(),
+                            err.localizedMessage,
+                            Toast.LENGTH_LONG
+                        )
+                            .show()
+                        // Timber.e(err.localizedMessage)
+                    })?.disposeWith(compositeDisposable)
             }
         }
     }

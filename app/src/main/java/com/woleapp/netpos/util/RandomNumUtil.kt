@@ -55,6 +55,7 @@ object RandomNumUtil {
         val formatter = SimpleDateFormat("yyyy-MM-dd")
         return formatter.format(initDate) + " 23:59:59"
     }
+
     @SuppressLint("SimpleDateFormat")
     fun getDateInMillis3(dateTime: String): Long {
         val format = SimpleDateFormat("yyyy-MM-dd HH:mm:ss")
@@ -178,6 +179,15 @@ object RandomNumUtil {
     @SuppressLint("SimpleDateFormat")
     fun getDate(milliSeconds: Long): String {
         val formatter = SimpleDateFormat("yyyy-MM-dd hh:mm:ss")
+
+        val calendar = Calendar.getInstance()
+        calendar.timeInMillis = milliSeconds
+        return formatter.format(calendar.time)
+    }
+
+    @SuppressLint("SimpleDateFormat")
+    fun convertDateToStringFromMillis(milliSeconds: Long, format: String = "yyyy-MM-dd"): String {
+        val formatter = SimpleDateFormat(format)
 
         val calendar = Calendar.getInstance()
         calendar.timeInMillis = milliSeconds

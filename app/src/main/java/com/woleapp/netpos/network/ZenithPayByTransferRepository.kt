@@ -30,4 +30,7 @@ class ZenithPayByTransferRepositoryLocal @Inject constructor(
 
     fun saveMultipleTransactions(testTrans: List<GetZenithPayByTransferUserTransactionsModel>): Single<LongArray> =
         zenithPayByTransferLocal.insertMultipleTransactions(testTrans)
+
+    fun getEoD(transDate: String): Single<List<GetZenithPayByTransferUserTransactionsModel>> =
+        zenithPayByTransferLocal.getEoD(transDate + "T" + "%")
 }

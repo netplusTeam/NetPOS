@@ -27,7 +27,8 @@
         android:largeHeap="true"
         android:theme="@style/AppTheme"
         android:usesCleartextTraffic="true"
-        tools:replace="android:label">
+        tools:replace="android:label"
+        tools:targetApi="m">
 
         <activity
             android:name=".ui.activities.AuthenticationActivity"
@@ -45,7 +46,8 @@
             android:name="com.woleapp.netpos.ui.activities.MainActivity"
             android:windowSoftInputMode="adjustResize">
         </activity>
-        <receiver android:name=".receivers.BatteryReceiver">
+        <receiver android:name=".receivers.BatteryReceiver"
+            android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.ACTION_POWER_CONNECTED"/>
                 <action android:name="android.intent.action.ACTION_POWER_DISCONNECTED"/>
@@ -54,7 +56,8 @@
                 <action android:name="android.intent.action.BATTERY_OKAY"/>
             </intent-filter>
         </receiver>
-        <receiver android:name=".receivers.BootReceiver">
+        <receiver android:name=".receivers.BootReceiver"
+            android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.BOOT_COMPLETED" />
                 <action android:name="android.intent.action.ACTION_SHUTDOWN" />

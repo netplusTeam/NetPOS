@@ -10,6 +10,8 @@ import com.woleapp.netpos.network.ZenithPayByTransferRepository
 import com.woleapp.netpos.network.ZenithPayByTransferRepositoryLocal
 import com.woleapp.netpos.util.PREF_ZENITH_PBT_USER_ACCOUNT
 import com.woleapp.netpos.util.Singletons
+import com.woleapp.netpos.util.disposeWith
+import com.woleapp.netpos.util.resourceWrapper.Resource
 import dagger.hilt.android.lifecycle.HiltViewModel
 import io.reactivex.android.schedulers.AndroidSchedulers
 import io.reactivex.disposables.CompositeDisposable
@@ -34,6 +36,10 @@ class PayByZenithViewModel @Inject constructor(
     private val _allTransactions: MutableLiveData<List<GetZenithPayByTransferUserTransactionsModel>> =
         MutableLiveData()
     val allTransactions: LiveData<List<GetZenithPayByTransferUserTransactionsModel>> get() = _allTransactions
+
+    private val _eodTransactions: MutableLiveData<Resource<List<GetZenithPayByTransferUserTransactionsModel>>> =
+        MutableLiveData()
+    val eodTransactions: LiveData<Resource<List<GetZenithPayByTransferUserTransactionsModel>>> get() = _eodTransactions
 
     @Inject
     lateinit var gson: Gson
@@ -77,41 +83,62 @@ class PayByZenithViewModel @Inject constructor(
     }
 
     fun getLastTransaction() {
-        zenithPbtRepositoryLocal.getLastTransaction()
-            .subscribeOn(Schedulers.io())
-            .observeOn(AndroidSchedulers.mainThread())
-            .subscribe { data, error ->
-                data?.let {
-                    _lastTransaction.postValue(it)
+        compositeDisposable.add(
+            zenithPbtRepositoryLocal.getLastTransaction()
+                .subscribeOn(Schedulers.io())
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribe { data, error ->
+                    data?.let {
+                        _lastTransaction.postValue(it)
+                    }
+                    error?.let {
+                        Timber.d(it)
+                    }
                 }
-                error?.let {
-                    Timber.d(it)
-                }
-            }
+        )
     }
 
     fun saveTestTransactions(testTransactions: List<GetZenithPayByTransferUserTransactionsModel>) {
-        zenithPbtRepositoryLocal.saveMultipleTransactions(testTransactions)
-            .subscribeOn(Schedulers.io())
-            .observeOn(AndroidSchedulers.mainThread())
-            .subscribe { t1, t2 ->
-                t1?.let { Timber.d(it.toString()) }
-                t2?.let { Timber.d(it.localizedMessage) }
-            }
+        compositeDisposable.add(
+            zenithPbtRepositoryLocal.saveMultipleTransactions(testTransactions)
+                .subscribeOn(Schedulers.io())
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribe { t1, t2 ->
+                    t1?.let { Timber.d(it.toString()) }
+                    t2?.let { Timber.d(it.localizedMessage) }
+                }
+        )
     }
 
     fun getAllTransaction() {
-        zenithPbtRepositoryLocal.getAllTransaction()
+        compositeDisposable.add(
+            zenithPbtRepositoryLocal.getAllTransaction()
+                .subscribeOn(Schedulers.io())
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribe { data, error ->
+                    data?.let {
+                        _allTransactions.postValue(it)
+                    }
+                    error?.let {
+                        Timber.d(it)
+                    }
+                }
+        )
+    }
+
+    fun getEoD(date: String) {
+        _eodTransactions.postValue(Resource.loading())
+        zenithPbtRepositoryLocal.getEoD(date)
             .subscribeOn(Schedulers.io())
             .observeOn(AndroidSchedulers.mainThread())
-            .subscribe { data, error ->
-                data?.let {
-                    _allTransactions.postValue(it)
+            .subscribe { t1, t2 ->
+                t1?.let {
+                    _eodTransactions.postValue(Resource.success(it))
                 }
-                error?.let {
-                    Timber.d(it)
+                t2?.let {
+                    _eodTransactions.postValue(Resource.error(null))
                 }
-            }
+            }.disposeWith(compositeDisposable)
     }
 
     fun setClickedTransaction(clickedTrans: GetZenithPayByTransferUserTransactionsModel) {

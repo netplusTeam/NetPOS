@@ -20,4 +20,7 @@ interface ZenithPayByTransferUserTransactionsDao {
 
     @Query("SELECT * FROM pbtTransaction")
     fun getAllTransactions(): Single<List<GetZenithPayByTransferUserTransactionsModel>>
+
+    @Query("SELECT * FROM pbtTransaction WHERE paid_at LIKE :eodDate")
+    fun getEoD(eodDate: String): Single<List<GetZenithPayByTransferUserTransactionsModel>>
 }

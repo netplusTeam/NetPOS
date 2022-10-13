@@ -122,6 +122,14 @@ android {
         }
     }
 
+    variantFilter { variant ->
+        def name_types = variant.flavors*.name
+        def name = name_types.join()
+        if (variant.buildType.name == "release" && name.contains("dev")) {
+            setIgnore(true)
+        }
+    }
+
     sourceSets {
         wema {
             java.srcDirs('src/defaults/java')

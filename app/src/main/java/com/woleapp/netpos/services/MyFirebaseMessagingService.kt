@@ -1,6 +1,5 @@
 package com.woleapp.netpos.services
 
-import android.app.Notification
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.app.PendingIntent
@@ -9,7 +8,8 @@ import android.content.Intent
 import android.media.RingtoneManager
 import android.os.Build
 import android.util.Log
-import androidx.work.* // ktlint-disable no-wildcard-imports
+import androidx.core.app.NotificationCompat
+import androidx.work.*
 import com.google.firebase.messaging.FirebaseMessagingService
 import com.google.firebase.messaging.RemoteMessage
 import com.google.gson.Gson
@@ -87,9 +87,9 @@ class MyFirebaseMessagingService : FirebaseMessagingService() {
 
         val channelId = "fcm_default_channel"
         val defaultSoundUri = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION)
-        val notificationBuilder = Notification.Builder(this, channelId)
+        val notificationBuilder = NotificationCompat.Builder(this, channelId)
             .setContentTitle(getString(R.string.transacion_received))
-            .setStyle(Notification.BigTextStyle().bigText(messageBody))
+            .setStyle(NotificationCompat.BigTextStyle().bigText(messageBody))
             .setSmallIcon(R.drawable.ic_netpos_logo)
             .setContentText(messageBody)
             .setAutoCancel(true)

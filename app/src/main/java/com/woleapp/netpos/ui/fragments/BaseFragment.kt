@@ -1,6 +1,9 @@
 package com.woleapp.netpos.ui.fragments
 
+import android.view.View
+import android.widget.Toast
 import androidx.fragment.app.Fragment
+import com.google.android.material.snackbar.Snackbar
 import com.woleapp.netpos.R
 
 open class BaseFragment : Fragment() {
@@ -26,5 +29,13 @@ open class BaseFragment : Fragment() {
         ft.setCustomAnimations(R.anim.right_to_left, R.anim.left_to_right)
         ft.replace(R.id.container_main, targetFragment!!, className)
         ft.commitAllowingStateLoss()
+    }
+
+    open fun showSnackBar(message: String, rootView: View) {
+        Snackbar.make(rootView, message, Snackbar.LENGTH_LONG).show()
+    }
+
+    open fun showToast(message: String) {
+        Toast.makeText(requireContext(), message, Toast.LENGTH_LONG).show()
     }
 }
