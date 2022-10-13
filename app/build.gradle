@@ -120,6 +120,10 @@ android {
             dimension "whiteLabels"
             applicationIdSuffix ".aellacredit"
         }
+        tingopay{
+            dimension "whiteLabels"
+            applicationIdSuffix ".tingopay"
+        }
     }
 
     variantFilter { variant ->
@@ -150,6 +154,9 @@ android {
             java.srcDirs('src/defaults/java')
         }
         aellacredit {
+            java.srcDirs('src/defaults/java')
+        }
+        tingopay {
             java.srcDirs('src/defaults/java')
         }
     }

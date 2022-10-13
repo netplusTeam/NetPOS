@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Tingo Pay</string>
+    <string name="enter_your_registered_e_mail_with_storm">Enter your registered email with Tingo Pay</string>
+</resources>
