@@ -4,5 +4,6 @@ enum class Status {
     ERROR,
     LOADING,
     SUCCESS,
-    TIMEOUT
+    TIMEOUT,
+    INITIAL_DEFAULT
 }

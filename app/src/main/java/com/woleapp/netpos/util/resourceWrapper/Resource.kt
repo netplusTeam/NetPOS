@@ -29,5 +29,11 @@ data class Resource<out T>(
             null,
             "Time out! Please try again later."
         )
+
+        fun<T> initialDefault(): Resource<T> = Resource(
+            Status.INITIAL_DEFAULT,
+            null,
+            "App just start up, no action required"
+        )
     }
 }

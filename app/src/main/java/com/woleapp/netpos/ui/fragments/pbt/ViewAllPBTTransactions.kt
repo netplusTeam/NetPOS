@@ -107,10 +107,34 @@ class ViewAllPBTTransactions @Inject constructor() : BaseFragment() {
             )
         )
         transactionsRV.adapter = rvAdapter
+
+        viewModel.eodTransactions.observe(viewLifecycleOwner) {
+            when (it.status) {
+                Status.SUCCESS -> {
+                    endOfDayProgressDialog.dismiss()
+                    showEndOfDayBottomSheetDialog(it.data!!.map { mapped -> mapped.copy(amount = mapped.amount * 100) })
+                }
+                Status.TIMEOUT -> {
+                    endOfDayProgressDialog.dismiss()
+                    showSnackBar(getString(R.string.time_out), binding.root)
+                }
+                Status.LOADING -> {
+                    endOfDayProgressDialog.show()
+                }
+                Status.ERROR -> {
+                    endOfDayProgressDialog.dismiss()
+                    showSnackBar(getString(R.string.failed), binding.root)
+                }
+                Status.INITIAL_DEFAULT -> {
+                    // Do nothing
+                }
+            }
+        }
     }
 
     override fun onResume() {
         super.onResume()
+
         searchTransactionSV.setOnQueryTextListener(object : SearchView.OnQueryTextListener {
             override fun onQueryTextSubmit(str: String?): Boolean {
                 str?.let {
@@ -245,24 +269,5 @@ class ViewAllPBTTransactions @Inject constructor() : BaseFragment() {
 
     private fun getEndOfDayTransactions(selectedDate: String) {
         viewModel.getEoD(selectedDate)
-        viewModel.eodTransactions.observe(viewLifecycleOwner) {
-            when (it.status) {
-                Status.SUCCESS -> {
-                    endOfDayProgressDialog.dismiss()
-                    showEndOfDayBottomSheetDialog(it.data!!)
-                }
-                Status.TIMEOUT -> {
-                    endOfDayProgressDialog.dismiss()
-                    showSnackBar(getString(R.string.time_out), binding.root)
-                }
-                Status.LOADING -> {
-                    endOfDayProgressDialog.show()
-                }
-                Status.ERROR -> {
-                    endOfDayProgressDialog.dismiss()
-                    showSnackBar(getString(R.string.failed), binding.root)
-                }
-            }
-        }
     }
 }

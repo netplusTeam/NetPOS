@@ -38,7 +38,7 @@ class PayByZenithViewModel @Inject constructor(
     val allTransactions: LiveData<List<GetZenithPayByTransferUserTransactionsModel>> get() = _allTransactions
 
     private val _eodTransactions: MutableLiveData<Resource<List<GetZenithPayByTransferUserTransactionsModel>>> =
-        MutableLiveData()
+        MutableLiveData(Resource.initialDefault())
     val eodTransactions: LiveData<Resource<List<GetZenithPayByTransferUserTransactionsModel>>> get() = _eodTransactions
 
     @Inject
