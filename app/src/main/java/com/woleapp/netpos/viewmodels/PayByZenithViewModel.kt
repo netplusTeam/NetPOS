@@ -141,6 +141,10 @@ class PayByZenithViewModel @Inject constructor(
             }.disposeWith(compositeDisposable)
     }
 
+    fun resetEodToDefault() {
+        _eodTransactions.postValue(Resource.initialDefault())
+    }
+
     fun setClickedTransaction(clickedTrans: GetZenithPayByTransferUserTransactionsModel) {
         _clickedTransaction.postValue(clickedTrans)
     }

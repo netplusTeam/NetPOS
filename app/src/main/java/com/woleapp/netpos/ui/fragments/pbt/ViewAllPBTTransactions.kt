@@ -108,6 +108,10 @@ class ViewAllPBTTransactions @Inject constructor() : BaseFragment() {
         )
         transactionsRV.adapter = rvAdapter
 
+        observePbtEodTransactions()
+    }
+
+    private fun observePbtEodTransactions() {
         viewModel.eodTransactions.observe(viewLifecycleOwner) {
             when (it.status) {
                 Status.SUCCESS -> {
@@ -265,6 +269,11 @@ class ViewAllPBTTransactions @Inject constructor() : BaseFragment() {
         endOfDay.closeButton.setOnClickListener {
             bottomSheet.dismiss()
         }
+    }
+
+    override fun onPause() {
+        super.onPause()
+        viewModel.resetEodToDefault()
     }
 
     private fun getEndOfDayTransactions(selectedDate: String) {
