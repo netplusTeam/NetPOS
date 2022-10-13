@@ -1,8 +1,6 @@
 package com.woleapp.netpos.ui.fragments.pbt
 
 import android.app.DatePickerDialog
-import android.app.ProgressDialog
-import android.content.DialogInterface
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
@@ -29,8 +27,10 @@ import com.woleapp.netpos.model.mapToZenithPbtTransactionModel
 import com.woleapp.netpos.model.mapZenithPayByTransferToNormalTransaction
 import com.woleapp.netpos.ui.fragments.BaseFragment
 import com.woleapp.netpos.ui.fragments.TransactionHistoryFragment
+import com.woleapp.netpos.ui.fragments.dialog.LoadingDialog
 import com.woleapp.netpos.util.HISTORY_ACTION_EOD
 import com.woleapp.netpos.util.RandomNumUtil.convertDateToStringFromMillis
+import com.woleapp.netpos.util.STRING_LOADING_DIALOG_TAG
 import com.woleapp.netpos.util.disposeWith
 import com.woleapp.netpos.util.printEndOfDay
 import com.woleapp.netpos.util.resourceWrapper.Status
@@ -50,7 +50,7 @@ class ViewAllPBTTransactions @Inject constructor() : BaseFragment() {
     private lateinit var binding: FragmentViewAllPBTTransactionsBinding
     private lateinit var searchTransactionSV: SearchView
     private lateinit var calendarBtn: ImageView
-    private lateinit var endOfDayProgressDialog: ProgressDialog
+    private var endOfDayProgressDialog = LoadingDialog()
     private lateinit var transactionsRV: RecyclerView
     private val viewModel by activityViewModels<PayByZenithViewModel>()
     private val transactionViewModel by activityViewModels<TransactionsViewModel> {
@@ -77,14 +77,6 @@ class ViewAllPBTTransactions @Inject constructor() : BaseFragment() {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-
-        endOfDayProgressDialog = ProgressDialog(requireContext()).apply {
-            this.setCancelable(false)
-            this.setMessage("Please wait...")
-            this.setButton(DialogInterface.BUTTON_POSITIVE, "Cancel") { dialog, _ ->
-                cancel()
-            }
-        }
 
         adapterListener = object : TransactionClickListener {
             override fun invoke(p1: TransactionResponse) {
@@ -123,7 +115,10 @@ class ViewAllPBTTransactions @Inject constructor() : BaseFragment() {
                     showSnackBar(getString(R.string.time_out), binding.root)
                 }
                 Status.LOADING -> {
-                    endOfDayProgressDialog.show()
+                    endOfDayProgressDialog.show(
+                        childFragmentManager,
+                        STRING_LOADING_DIALOG_TAG
+                    )
                 }
                 Status.ERROR -> {
                     endOfDayProgressDialog.dismiss()

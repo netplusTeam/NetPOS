@@ -12,4 +12,5 @@
     <dimen name="dimen_40dp">40dp</dimen>
     <dimen name="dimen_55dp">55dp</dimen>
     <dimen name="dimen_1dp">1dp</dimen>
+    <dimen name="dimen_70dp">70dp</dimen>
 </resources>

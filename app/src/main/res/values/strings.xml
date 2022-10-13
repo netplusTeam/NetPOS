@@ -155,6 +155,7 @@
     <string name="error_occured">An error occurred while fetching end of day, try again</string>
     <string name="please_wait">Please wait…</string>
     <string name="time_out">Timed out, please try again later!</string>
+    <string name="processing">Processing…</string>
     <string name="failed">Failed! Please try again later</string>
 
     <string-array name="viewPagerDestinationsTabLayoutTexts">
