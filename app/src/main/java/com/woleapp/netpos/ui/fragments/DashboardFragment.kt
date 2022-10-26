@@ -118,6 +118,30 @@ class DashboardFragment : BaseFragment() {
         }
     }
 
+    private fun setUpAdapterForTingoPay() {
+        adapter = ServiceAdapter {
+            when (it.id) {
+                0 -> addFragmentWithoutRemove(TransactionsFragment())
+                1 -> getBalance()
+                2 -> addFragmentWithoutRemove(NipNotificationFragment.newInstance())
+                3 -> addFragmentWithoutRemove(BillsFragment())
+                4 -> showCalendarDialog()
+                else -> {
+                    sendPayload()
+                }
+            }
+            // addFragmentWithoutRemove(nextFrag)
+        }
+        val listOfServices = arrayListOf<Service>(
+            Service(0, getString(R.string.transactions), R.drawable.ic_trans),
+            Service(1, getString(R.string.balance_enquiry), R.drawable.ic_write),
+            Service(2, getString(R.string.bank_transfer), R.drawable.ic_lending),
+            // add(Service(3, "Pay Bills", R.drawable.ic_bill))
+            Service(4, getString(R.string.veiw_eod), R.drawable.ic_print)
+        )
+        adapter.submitList(listOfServices)
+    }
+
     private fun setupKongaAdapter() {
         adapter = ServiceAdapter {
             when (it.id) {
@@ -226,11 +250,19 @@ class DashboardFragment : BaseFragment() {
                 2 -> {
                     if (BuildConfig.FLAVOR == "zenith") {
                         addFragmentWithoutRemove(ZenithPayByTransferFragment())
-                    } else {
+                    }else if (BuildConfig.FLAVOR == "tingopay") {
+                        showToast("Not yet available")
+                    } else{
                         addFragmentWithoutRemove(NipNotificationFragment.newInstance())
                     }
                 }
-                3 -> addFragmentWithoutRemove(BillsFragment())
+                3 -> {
+                    if (BuildConfig.FLAVOR == "tingopay") {
+                        showToast("Not yet available")
+                    } else {
+                        addFragmentWithoutRemove(BillsFragment())
+                    }
+                }
                 4 -> showCalendarDialog()
                 5 -> {
                     parentFragmentManager.beginTransaction()
@@ -578,6 +610,7 @@ class DashboardFragment : BaseFragment() {
         when (BuildConfig.FLAVOR) {
             "konga" -> setupKongaAdapter()
             "aellacredit" -> setUpAdapterForAellaCredit()
+//            "tingopay" -> setUpAdapterForTingoPay()
             else -> setUpDefaultAdapter()
         }
         binding.rvDashboard.layoutManager = GridLayoutManager(context, 2)
