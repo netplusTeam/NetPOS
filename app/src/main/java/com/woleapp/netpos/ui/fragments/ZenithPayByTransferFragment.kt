@@ -193,13 +193,16 @@ class ZenithPayByTransferFragment : BaseFragment() {
     }
 
     private fun getEndOfDayTransactions(timestamp: Long? = null) {
+        val terminalId = Singletons.getCurrentlyLoggedInUser()?.terminal_id
         endOfDayProgressDialog.show()
         val be: Long = getBeginningOfDay(timestamp)
         val be1: Long = Timestamp.from(Instant.ofEpochMilli(be).plusSeconds(86400)).time
         val df = SimpleDateFormat("dd:MM:yyyy hh:mm:ss", Locale.getDefault())
         val dateFormat = SimpleDateFormat("yyyy:MM:dd", Locale.getDefault())
 
-        zenithPbtViewModel.getZenithPbtTransactions(dateFormat.format(be).replace(":", "-"))
+        terminalId?.let {
+            zenithPbtViewModel.getZenithPbtTransactions(dateFormat.format(be).replace(":", "-"))
+        }
         zenithPbtViewModel.zenithPbtTransactions.observe(viewLifecycleOwner) {
             endOfDayProgressDialog.dismiss()
             showEndOfDayBottomSheetDialog(it)

@@ -88,7 +88,6 @@ class DashboardFragment : BaseFragment() {
         container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View {
-        zenithPbtViewModel.saveTestTransactions(testPbtTransactions)
         binding = FragmentDashboardBinding.inflate(inflater, container, false)
         progressDialog = ProgressDialog(requireContext())
         endOfDayProgressDialog = ProgressDialog(requireContext()).apply {

@@ -18,9 +18,9 @@ interface ZenithPayByTransferUserTransactionsDao {
     @Query("SELECT * FROM pbtTransaction ORDER BY paid_at DESC LIMIT 1")
     fun getTheLastTransaction(): Single<GetZenithPayByTransferUserTransactionsModel>
 
-    @Query("SELECT * FROM pbtTransaction")
+    @Query("SELECT * FROM pbtTransaction ORDER BY paid_at DESC")
     fun getAllTransactions(): Single<List<GetZenithPayByTransferUserTransactionsModel>>
 
-    @Query("SELECT * FROM pbtTransaction WHERE paid_at LIKE :eodDate")
+    @Query("SELECT * FROM pbtTransaction WHERE paid_at LIKE :eodDate ORDER BY paid_at DESC")
     fun getEoD(eodDate: String): Single<List<GetZenithPayByTransferUserTransactionsModel>>
 }

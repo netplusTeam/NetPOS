@@ -15,7 +15,7 @@ data class GetZenithPayByTransferUserTransactions(
 
 @Entity(tableName = "pbtTransaction")
 data class GetZenithPayByTransferUserTransactionsModel(
-    val amount: Int,
+    val amount: Double,
     val channel: String,
     val details: String,
     val merchantId: String,
@@ -75,7 +75,7 @@ fun GetZenithPayByTransferUserTransactionsModel.mapZenithPayByTransferToNormalTr
 
 fun TransactionResponse.mapToZenithPbtTransactionModel() =
     GetZenithPayByTransferUserTransactionsModel(
-        amount.toInt(),
+        amount.toDouble(),
         echoData ?: "",
         appCryptogram,
         merchantId,

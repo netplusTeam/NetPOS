@@ -61,6 +61,7 @@ const val STRING_FIREBASE_INTENT_ACTION = "com.woleapp.netpos.FIREBASE_ACTION"
 const val TAG_NOTIFICATION_RECEIVED_FROM_BACKEND = "TAG_NOTIFICATION_RECEIVED_2"
 const val TAG_NEW_TOKEN_RECEIVED = "TAG_NEW_TOKEN_RECEIVED"
 const val WORKER_INPUT_PBT_TRANSACTION_TAG = "WORKER_INPUT_PBT_TRANSACTION_TAG"
+const val WORKER_INPUT_FIREBASE_DEVICE_TOKEN_TAG = "WORKER_INPUT_FIREBASE_DEVICE_TOKEN_TAG"
 const val TAG_PROGRESS_LOADER = "TAG_PROGRESS_LOADER"
 const val STRING_LOADING_DIALOG_TAG = "STRING_LOADING_DIALOG_TAG"
 
@@ -68,7 +69,7 @@ const val INT_FIREBASE_PENDING_INTENT_REQUEST_CODE = 772
 
 val testPbtTransactions = arrayListOf(
     GetZenithPayByTransferUserTransactionsModel(
-        amount = 50,
+        amount = 50.00,
         recipient_account_number = "1198153105",
         transaction_reference = "000013220519124631000219551844",
         paid_at = "2022-05-19T11:46:43.000Z",
@@ -83,7 +84,7 @@ val testPbtTransactions = arrayListOf(
         terminalId = "0987654321"
     ),
     GetZenithPayByTransferUserTransactionsModel(
-        amount = 50000,
+        amount = 50000.00,
         recipient_account_number = "1198153105",
         transaction_reference = "000013220519124631000219551845",
         paid_at = "2022-05-20T11:46:43.000Z",
@@ -98,7 +99,7 @@ val testPbtTransactions = arrayListOf(
         terminalId = "0987654321"
     ),
     GetZenithPayByTransferUserTransactionsModel(
-        amount = 75000,
+        amount = 75000.00,
         recipient_account_number = "1198153105",
         transaction_reference = "000013220519124631000219551848",
         paid_at = "2022-05-19T11:55:43.000Z",
@@ -113,7 +114,7 @@ val testPbtTransactions = arrayListOf(
         terminalId = "0987654321"
     ),
     GetZenithPayByTransferUserTransactionsModel(
-        amount = 200000,
+        amount = 200000.00,
         recipient_account_number = "1198153105",
         transaction_reference = "000013220519124631000219551847",
         paid_at = "2022-05-20T12:55:43.000Z",

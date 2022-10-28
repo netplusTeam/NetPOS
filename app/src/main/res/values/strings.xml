@@ -157,6 +157,7 @@
     <string name="time_out">Timed out, please try again later!</string>
     <string name="processing">Processing…</string>
     <string name="failed">Failed! Please try again later</string>
+    <string name="please_login">Please login</string>
 
     <string-array name="viewPagerDestinationsTabLayoutTexts">
         <item>Last Transaction</item>

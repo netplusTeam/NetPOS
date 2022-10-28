@@ -282,3 +282,39 @@ class NipInterceptor : Interceptor {
         return chain.proceed(builder.build())
     }
 }
+
+
+class ZenithPayByTransferClient {
+    companion object {
+
+        private fun getBaseOkhttpClientBuilder(): OkHttpClient.Builder {
+            val okHttpClientBuilder = OkHttpClient.Builder()
+
+            val loggingInterceptor = HttpLoggingInterceptor()
+            loggingInterceptor.level = HttpLoggingInterceptor.Level.BODY
+            okHttpClientBuilder.addInterceptor(loggingInterceptor)
+
+            return okHttpClientBuilder
+        }
+
+        private fun getOkHttpClient() =
+            getBaseOkhttpClientBuilder()
+                .addInterceptor(TokenInterceptor())
+                .build()
+
+        private const val BASE_URL = "https://api.zenith-pbt.netpluspay.com/"
+        private var INSTANCE: ZenithPayByTransferService? = null
+        fun getInstance(): ZenithPayByTransferService = INSTANCE ?: synchronized(this) {
+            INSTANCE ?: Retrofit.Builder()
+                .baseUrl(BASE_URL)
+                .client(getOkHttpClient())
+                .addCallAdapterFactory(RxJava2CallAdapterFactory.create())
+                .addConverterFactory(GsonConverterFactory.create())
+                .build()
+                .create(ZenithPayByTransferService::class.java)
+                .also {
+                    INSTANCE = it
+                }
+        }
+    }
+}

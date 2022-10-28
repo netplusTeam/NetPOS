@@ -81,14 +81,14 @@ class ViewAllPBTTransactions @Inject constructor() : BaseFragment() {
         adapterListener = object : TransactionClickListener {
             override fun invoke(p1: TransactionResponse) {
                 viewModel.setClickedTransaction(
-                    p1.mapToZenithPbtTransactionModel().copy(amount = p1.amount.div(100).toInt())
+                    p1.mapToZenithPbtTransactionModel().copy(amount = p1.amount.div(100).toDouble())
                 )
                 addFragmentWithoutRemove(ZenithPbtTransactionDetailsFragment())
             }
         }
         rvAdapter = EODAdapter(adapterListener)
         transactions = viewModel.getTransactions().map {
-            it.mapZenithPayByTransferToNormalTransaction().copy(amount = it.amount * 100L)
+            it.mapZenithPayByTransferToNormalTransaction().copy(amount = (it.amount * 100).toLong())
         }
         rvAdapter.submitList(transactions)
         initViews()

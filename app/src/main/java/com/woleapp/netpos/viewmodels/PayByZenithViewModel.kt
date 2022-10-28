@@ -9,6 +9,7 @@ import com.woleapp.netpos.model.GetZenithPayByTransferUserTransactionsModel
 import com.woleapp.netpos.network.ZenithPayByTransferRepository
 import com.woleapp.netpos.network.ZenithPayByTransferRepositoryLocal
 import com.woleapp.netpos.util.PREF_ZENITH_PBT_USER_ACCOUNT
+import com.woleapp.netpos.util.RxUtils.getSingleTransformer
 import com.woleapp.netpos.util.Singletons
 import com.woleapp.netpos.util.disposeWith
 import com.woleapp.netpos.util.resourceWrapper.Resource
@@ -28,7 +29,7 @@ class PayByZenithViewModel @Inject constructor(
     private val _clickedTransaction: MutableLiveData<GetZenithPayByTransferUserTransactionsModel> =
         MutableLiveData()
     val clickedTransaction: LiveData<GetZenithPayByTransferUserTransactionsModel> get() = _clickedTransaction
-    private val terminalId = Singletons.getCurrentlyLoggedInUser()?.terminal_id ?: ""
+    private val terminalId = Singletons.getCurrentlyLoggedInUser()?.terminal_id
     private val _lastTransaction: MutableLiveData<GetZenithPayByTransferUserTransactionsModel> =
         MutableLiveData()
     val lastTransaction: LiveData<GetZenithPayByTransferUserTransactionsModel> get() = _lastTransaction
@@ -48,22 +49,24 @@ class PayByZenithViewModel @Inject constructor(
     val zenithPbtTransactions: LiveData<List<GetZenithPayByTransferUserTransactionsModel>> get() = _zenithPbtTransactions
 
     fun getZenithPbtUserAccount() {
-        compositeDisposable.add(
-            zenithPbtRepository.getUserVirtualAccount()
-                .subscribeOn(Schedulers.io())
-                .observeOn(AndroidSchedulers.mainThread())
-                .subscribe { data, error ->
-                    data?.let {
-                        Prefs.putString(
-                            PREF_ZENITH_PBT_USER_ACCOUNT,
-                            gson.toJson(it.user)
-                        )
+        terminalId?.let { tid ->
+            compositeDisposable.add(
+                zenithPbtRepository.getUserVirtualAccount(tid)
+                    .subscribeOn(Schedulers.io())
+                    .observeOn(AndroidSchedulers.mainThread())
+                    .subscribe { data, error ->
+                        data?.let {
+                            Prefs.putString(
+                                PREF_ZENITH_PBT_USER_ACCOUNT,
+                                gson.toJson(it.user)
+                            )
+                        }
+                        error?.let {
+                            Timber.d(it.localizedMessage)
+                        }
                     }
-                    error?.let {
-                        Timber.d(it.localizedMessage)
-                    }
-                }
-        )
+            )
+        }
     }
 
     fun getZenithPbtTransactions(date: String, requestParam: String = "2033ALWF") {
@@ -79,6 +82,14 @@ class PayByZenithViewModel @Inject constructor(
                         Timber.d(it.localizedMessage)
                     }
                 }
+        )
+    }
+
+    fun registerDeviceToken(token: String) {
+        compositeDisposable.add(
+            zenithPbtRepository.registerDeviceToken(token)
+                .compose(getSingleTransformer())
+                .subscribe()
         )
     }
 
@@ -98,7 +109,7 @@ class PayByZenithViewModel @Inject constructor(
         )
     }
 
-    fun saveTestTransactions(testTransactions: List<GetZenithPayByTransferUserTransactionsModel>) {
+    fun saveMultipleTransactionsToDatabase(testTransactions: List<GetZenithPayByTransferUserTransactionsModel>) {
         compositeDisposable.add(
             zenithPbtRepositoryLocal.saveMultipleTransactions(testTransactions)
                 .subscribeOn(Schedulers.io())

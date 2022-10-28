@@ -14,6 +14,7 @@ import android.location.LocationManager
 import android.os.Bundle
 import android.util.Log
 import android.widget.Toast
+import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
 import androidx.databinding.DataBindingUtil
 import androidx.fragment.app.Fragment
@@ -29,11 +30,8 @@ import com.woleapp.netpos.nibss.CONFIGURATION_STATUS
 import com.woleapp.netpos.nibss.NetPosTerminalConfig
 import com.woleapp.netpos.receivers.BatteryReceiver
 import com.woleapp.netpos.ui.fragments.DashboardFragment
-import com.woleapp.netpos.util.JWTHelper
-import com.woleapp.netpos.util.PREF_LAST_LOCATION
-import com.woleapp.netpos.util.PREF_USER
-import com.woleapp.netpos.util.PREF_USER_TOKEN
-import com.woleapp.netpos.util.Singletons.gson
+import com.woleapp.netpos.util.*
+import com.woleapp.netpos.viewmodels.PayByZenithViewModel
 import dagger.hilt.android.AndroidEntryPoint
 import io.reactivex.disposables.CompositeDisposable
 import pub.devrel.easypermissions.EasyPermissions
@@ -47,6 +45,7 @@ const val TAG2 = "FIRE_BASE_TOKEN_2"
 class MainActivity : AppCompatActivity(), EasyPermissions.PermissionCallbacks {
 
     private lateinit var firebaseInstance: FirebaseMessaging
+    private val payByTransferViewModel: PayByZenithViewModel by viewModels()
 
     private var progressDialog: ProgressDialog? = null
     private lateinit var alertDialog: AlertDialog
@@ -147,6 +146,15 @@ class MainActivity : AppCompatActivity(), EasyPermissions.PermissionCallbacks {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        binding = DataBindingUtil.setContentView(this, R.layout.activity_main)
+        val user = Singletons.gson.fromJson(Prefs.getString(PREF_USER, ""), User::class.java)
+        if (Prefs.getString(PREF_USER, "").isEmpty()) {
+            Toast.makeText(this, getString(R.string.please_login), Toast.LENGTH_LONG).show()
+            onBackPressed()
+            return
+        } else {
+            binding.dashboardHeader.username.text = user.business_name
+        }
         firebaseInstance = FirebaseMessaging.getInstance()
 
         subscribeToFireBaseMessagingTopic(firebaseInstance, FIREBASE_TOPIC_UPDATE)
@@ -155,7 +163,6 @@ class MainActivity : AppCompatActivity(), EasyPermissions.PermissionCallbacks {
             sendTokenToBackend(it)
         }
 
-        binding = DataBindingUtil.setContentView(this, R.layout.activity_main)
         // loadCerts()
         if (!EasyPermissions.hasPermissions(
                 applicationContext,
@@ -193,8 +200,6 @@ class MainActivity : AppCompatActivity(), EasyPermissions.PermissionCallbacks {
             }
             create()
         }
-        val user = gson.fromJson(Prefs.getString(PREF_USER, ""), User::class.java)
-        binding.dashboardHeader.username.text = user.business_name
         binding.dashboardHeader.logout.setOnClickListener {
             logout()
         }
@@ -271,6 +276,7 @@ class MainActivity : AppCompatActivity(), EasyPermissions.PermissionCallbacks {
 
     private fun sendTokenToBackend(token: String) {
         Timber.d("FIRE_BASE_TOKEN_1==>%s", token)
+        payByTransferViewModel.registerDeviceToken(token)
     }
 
     private fun getFireBaseToken(
