@@ -13,7 +13,7 @@ interface StormApiService {
     @POST("api/auth")
     fun userToken(
         @Body credentials: JsonObject?
-    ): Single<TokenResp>
+    ): Single<AppLoginResponse>
 
     @POST("api/auth")
     fun userToken(

@@ -158,6 +158,7 @@
     <string name="processing">Processing…</string>
     <string name="failed">Failed! Please try again later</string>
     <string name="please_login">Please login</string>
+    <string name="pin_too_short">Pin too short</string>
 
     <string-array name="viewPagerDestinationsTabLayoutTexts">
         <item>Last Transaction</item>
