@@ -2,6 +2,7 @@
 
 package com.woleapp.netpos.ui.fragments
 
+import android.Manifest
 import android.app.ProgressDialog
 import android.content.DialogInterface
 import android.os.Bundle
@@ -11,6 +12,7 @@ import android.view.ViewGroup
 import android.view.WindowManager
 import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
+import androidx.databinding.ViewDataBinding
 import androidx.fragment.app.viewModels
 import com.danbamitale.epmslib.entities.TransactionType
 import com.google.android.material.snackbar.Snackbar
@@ -21,17 +23,23 @@ import com.woleapp.netpos.database.AppDatabase
 import com.woleapp.netpos.databinding.DialogPrintTypeBinding
 import com.woleapp.netpos.databinding.DialogTransactionResultBinding
 import com.woleapp.netpos.databinding.FragmentSalesBinding
+import com.woleapp.netpos.databinding.LayoutPosReceiptPdfBinding
 import com.woleapp.netpos.model.Vend
 import com.woleapp.netpos.nibss.NetPosTerminalConfig
 import com.woleapp.netpos.util.*
+import com.woleapp.netpos.util.pdfUtils.createPdf
+import com.woleapp.netpos.util.pdfUtils.initViewsForPdfLayout
+import com.woleapp.netpos.util.pdfUtils.sharePdf
 import com.woleapp.netpos.viewmodels.SalesViewModel
 import com.woleapp.netpos.viewmodels.SalesViewModelProvider
 import io.reactivex.Observable
 import io.reactivex.android.schedulers.AndroidSchedulers
 import io.reactivex.disposables.CompositeDisposable
 import io.reactivex.schedulers.Schedulers
+import kotlinx.android.synthetic.main.dialog_print_type.*
 import timber.log.Timber
 import java.io.BufferedReader
+import java.io.File
 import java.io.InputStreamReader
 import java.io.PrintWriter
 import java.net.InetSocketAddress
@@ -58,6 +66,8 @@ class SalesFragment : BaseFragment() {
             AppDatabase.getDatabaseInstance(requireContext()).transactionTrackingTableDao()
         )
     }
+    private lateinit var receiptPdf: File
+    private lateinit var pdfView: LayoutPosReceiptPdfBinding
     private lateinit var transactionType: TransactionType
     private lateinit var alertDialog: AlertDialog
     private lateinit var receiptDialogBinding: DialogTransactionResultBinding
@@ -95,10 +105,11 @@ class SalesFragment : BaseFragment() {
                 setView(dialogPrintTypeBinding.root)
                 dialogPrintTypeBinding.apply {
                     cancel.setOnClickListener {
-                        printTypeDialog.dismiss()
+                        printTypeDialog.cancel()
                         viewModel.finish()
                     }
                     customer.setOnClickListener {
+                        printTypeDialog.cancel()
                         viewModel.printReceipt(
                             requireContext(),
                             isMerchantCopy = false,
@@ -106,11 +117,24 @@ class SalesFragment : BaseFragment() {
                         )
                     }
                     merchant.setOnClickListener {
+                        printTypeDialog.cancel()
                         viewModel.printReceipt(
                             requireContext(),
                             isMerchantCopy = true,
                             selected = true
                         )
+                    }
+                    download.setOnClickListener {
+                        printTypeDialog.cancel()
+                        viewModel.downloadOrShareReceipt(PREF_VALUE_PRINT_DOWNLOAD_RECEIPT)
+                    }
+                    share.setOnClickListener {
+                        printTypeDialog.cancel()
+                        viewModel.downloadOrShareReceipt(PREF_VALUE_PRINT_SHARE_RECEIPT)
+                    }
+                    downloadAndShare.setOnClickListener {
+                        printTypeDialog.cancel()
+                        viewModel.downloadOrShareReceipt(PREF_VALUE_PRINT_DOWNLOAD_AND_SHARE_RECEIPT)
                     }
                 }
             }.create()
@@ -297,6 +321,60 @@ class SalesFragment : BaseFragment() {
         return binding.root
     }
 
+    private fun getPermissionAndCreatePdf(view: ViewDataBinding) {
+        ModelMapper.genericPermissionHandler(
+            requireActivity(),
+            requireContext(),
+            Manifest.permission.WRITE_EXTERNAL_STORAGE,
+            WRITE_PERMISSION_REQUEST_CODE,
+            getString(R.string.storage_permission_rationale_for_download)
+        ) {
+            receiptPdf = createPdf(view, this)
+        }
+    }
+
+    private fun downloadPdfImpl() {
+        viewModel.currentLastTransactionResponse.value?.let { transResponse ->
+            initViewsForPdfLayout(
+                pdfView,
+                transResponse
+            )
+            getPermissionAndCreatePdf(pdfView)
+        }
+    }
+
+    private fun handlePdfReceiptPrinting() {
+        viewModel.downloadOrShareReceiptAsPdfLiveData.observe(viewLifecycleOwner) { event ->
+            event.getContentIfNotHandled()?.let {
+                when (it) {
+                    PREF_VALUE_PRINT_SHARE_RECEIPT -> {
+                        downloadPdfImpl()
+                        sharePdf(receiptPdf, this)
+                        showSnackBar(
+                            getString(R.string.fileDownloaded),
+                            binding.root
+                        )
+                    }
+                    PREF_VALUE_PRINT_DOWNLOAD_RECEIPT -> {
+                        downloadPdfImpl()
+                        showSnackBar(
+                            getString(R.string.fileDownloaded),
+                            binding.root
+                        )
+                    }
+                    PREF_VALUE_PRINT_DOWNLOAD_AND_SHARE_RECEIPT -> {
+                        downloadPdfImpl()
+                        showSnackBar(
+                            getString(R.string.fileDownloaded),
+                            binding.root
+                        )
+                        sharePdf(receiptPdf, this)
+                    }
+                }
+            }
+        }
+    }
+
     private fun showSnackBar(message: String) {
         if (message == "Transaction not approved") {
             AlertDialog.Builder(requireContext())
@@ -318,7 +396,13 @@ class SalesFragment : BaseFragment() {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
+        pdfView = LayoutPosReceiptPdfBinding.inflate(layoutInflater)
         vend()
+    }
+
+    override fun onResume() {
+        super.onResume()
+        handlePdfReceiptPrinting()
     }
 
     private fun vend() {

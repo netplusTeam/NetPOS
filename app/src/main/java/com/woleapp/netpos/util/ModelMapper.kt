@@ -1,5 +1,9 @@
 package com.woleapp.netpos.util
 
+import android.app.Activity
+import android.content.Context
+import androidx.fragment.app.Fragment
+import androidx.lifecycle.LifecycleOwner
 import com.danbamitale.epmslib.entities.* // ktlint-disable no-wildcard-imports
 import com.danbamitale.epmslib.utils.IsoAccountType
 import com.woleapp.netpos.model.Row
@@ -7,6 +11,7 @@ import com.woleapp.netpos.model.TransactionResponseModelFromGateWay
 import com.woleapp.netpos.util.RandomNumUtil.formattedTime
 import com.woleapp.netpos.util.RandomNumUtil.getDateInMillis
 import com.woleapp.netpos.util.RandomNumUtil.getDateInMillis2
+import pub.devrel.easypermissions.EasyPermissions
 
 object ModelMapper {
     fun mapTransFromGateWayToEntity(trans: List<TransactionResponse>) =
@@ -86,6 +91,7 @@ object ModelMapper {
                 originalForwardingInstCode = it.originalForwardingInstCode ?: ""
                 responseCode = it.responseCode ?: ""
                 terminalId = it.terminalId ?: ""
+                localDate_13 = it.localDate?.plus("<===>REPRINT") ?: "<===>REPRINT"
                 transactionTimeInMillis =
                     if (it.transactionTime?.contains("-") == true) getDateInMillis(it.transactionTime!!) else it.transactionTime?.toLong()
                         ?: 0L
@@ -131,4 +137,54 @@ object ModelMapper {
             transactionType = this@mapRequestDataToTransactionResponse.transactionType
             transmissionDateTime = formattedTime
         }
+
+    private fun requestForPermission(
+        host: LifecycleOwner,
+        requestCode: Int,
+        permissionRationale: String,
+        permissionToRequest: String
+    ) {
+        if (host is Fragment) {
+            EasyPermissions.requestPermissions(
+                host,
+                permissionRationale,
+                requestCode,
+                permissionToRequest
+            )
+        } else {
+            host as Activity
+            EasyPermissions.requestPermissions(
+                host,
+                permissionRationale,
+                requestCode,
+                permissionToRequest
+            )
+        }
+    }
+
+    private fun checkForPermission(context: Context, perms: String) =
+        EasyPermissions.hasPermissions(
+            context,
+            perms
+        )
+
+    fun genericPermissionHandler(
+        host: LifecycleOwner,
+        context: Context,
+        perm: String,
+        permCode: Int,
+        permRationale: String,
+        fn: () -> Unit
+    ) {
+        if (checkForPermission(context, perm)) {
+            fn()
+        } else {
+            requestForPermission(
+                host,
+                permCode,
+                permRationale,
+                perm
+            )
+        }
+    }
 }

@@ -93,7 +93,10 @@ class DashboardFragment : BaseFragment() {
         endOfDayProgressDialog = ProgressDialog(requireContext()).apply {
             this.setCancelable(false)
             this.setMessage(getString(R.string.please_wait))
-            this.setButton(DialogInterface.BUTTON_POSITIVE, getString(R.string.cancel)) { dialog, _ ->
+            this.setButton(
+                DialogInterface.BUTTON_POSITIVE,
+                getString(R.string.cancel)
+            ) { dialog, _ ->
                 compositeDisposable.clear()
                 dialog.cancel()
             }
@@ -175,7 +178,9 @@ class DashboardFragment : BaseFragment() {
                     add(
                         Service(
                             2,
-                            if (BuildConfig.FLAVOR == "zenith") getString(R.string.pay_by_transfer) else getString(R.string.bank_transfer),
+                            if (BuildConfig.FLAVOR == "zenith") getString(R.string.pay_by_transfer) else getString(
+                                R.string.bank_transfer
+                            ),
                             R.drawable.ic_lending
                         )
                     )
@@ -290,7 +295,11 @@ class DashboardFragment : BaseFragment() {
         accountType: IsoAccountType = IsoAccountType.DEFAULT_UNSPECIFIED
     ) {
         if (NetPosTerminalConfig.getKeyHolder() == null) {
-            Toast.makeText(requireContext(), getString(R.string.terminal_not_configured), Toast.LENGTH_LONG).show()
+            Toast.makeText(
+                requireContext(),
+                getString(R.string.terminal_not_configured),
+                Toast.LENGTH_LONG
+            ).show()
             return
         }
 
@@ -342,7 +351,10 @@ class DashboardFragment : BaseFragment() {
                         "${it.responseMessage}(${it.responseCode})"
                     }
 
-                    showMessage(if (it.isApproved) getString(R.string.approved) else getString(R.string.declined), messageString)
+                    showMessage(
+                        if (it.isApproved) getString(R.string.approved) else getString(R.string.declined),
+                        messageString
+                    )
                 }
             }.disposeWith(compositeDisposable)
     }
@@ -421,7 +433,13 @@ class DashboardFragment : BaseFragment() {
             }
         endOfDay.view.setOnClickListener {
             if (transactions.isNotEmpty()) {
-                transactionViewModel.setEndOfDayList(transactions)
+                transactionViewModel.setEndOfDayList(
+                    transactions.map { trns ->
+                        trns.copy(
+                            localDate_13 = trns.localDate_13 + PDF_REPRINT_IDENTIFIER
+                        )
+                    }
+                )
                 bottomSheet.dismiss()
                 addFragmentWithoutRemove(TransactionHistoryFragment.newInstance(HISTORY_ACTION_EOD))
             } else {

@@ -15,4 +15,19 @@ object DateTimeUtil {
         calendar.timeInMillis = milliSecondsString
         return formatter.format(calendar.time)
     }
+
+    fun getCurrentDateTimeAsFormattedString(): String {
+        val formattedTime =
+            SimpleDateFormat(
+                "yyyy-MM-dd hh:mm a",
+                Locale.getDefault()
+            ).format(System.currentTimeMillis())
+                .format(Date())
+
+        return formattedTime.replace(
+            formattedTime.takeLast(3),
+            "_${formattedTime.takeLast(3).trim()}"
+        ).replace(":", "_")
+            .replace("-", "_").replace(" ", "_at_")
+    }
 }

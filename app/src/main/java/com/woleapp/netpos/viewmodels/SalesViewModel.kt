@@ -86,6 +86,7 @@ class SalesViewModel(
     private val compositeDisposable: CompositeDisposable by lazy { CompositeDisposable() }
     val transactionState = MutableLiveData(STATE_PAYMENT_STAND_BY)
     private val lastTransactionResponse = MutableLiveData<TransactionResponse>()
+    val currentLastTransactionResponse: LiveData<TransactionResponse> get() = lastTransactionResponse
     val amount: MutableLiveData<String> = MutableLiveData<String>("")
     var amountLong = 0L
     var pin = MutableLiveData("")
@@ -127,6 +128,10 @@ class SalesViewModel(
 
     val message: LiveData<Event<String>>
         get() = _message
+
+    private val _downloadOrShareReceiptAsPdfMutableLiveData: MutableLiveData<Event<String>> =
+        MutableLiveData()
+    val downloadOrShareReceiptAsPdfLiveData: LiveData<Event<String>> get() = _downloadOrShareReceiptAsPdfMutableLiveData
 
     private val _showReceiptTypeMutableLiveData = MutableLiveData<Event<Boolean>>()
 
@@ -495,11 +500,33 @@ class SalesViewModel(
                 PREF_VALUE_PRINT_ASK_BEFORE_PRINTING -> _showReceiptTypeMutableLiveData.postValue(
                     Event(true)
                 )
+                PREF_VALUE_PRINT_SHARE_RECEIPT -> _downloadOrShareReceiptAsPdfMutableLiveData.postValue(
+                    Event(PREF_VALUE_PRINT_SHARE_RECEIPT)
+                )
+                PREF_VALUE_PRINT_DOWNLOAD_RECEIPT -> _downloadOrShareReceiptAsPdfMutableLiveData.postValue(
+                    Event(PREF_VALUE_PRINT_DOWNLOAD_RECEIPT)
+                )
+                PREF_VALUE_PRINT_DOWNLOAD_AND_SHARE_RECEIPT -> _downloadOrShareReceiptAsPdfMutableLiveData.postValue(
+                    Event(PREF_VALUE_PRINT_DOWNLOAD_AND_SHARE_RECEIPT)
+                )
             }
         } else {
-            _showPrintDialog.postValue(
-                Event(transactionResponse.buildSMSText(remark.value ?: "").toString())
-            )
+            when (Prefs.getString(PREF_PRINTER_SETTINGS, "")) {
+                PREF_VALUE_PRINT_SHARE_RECEIPT -> _downloadOrShareReceiptAsPdfMutableLiveData.postValue(
+                    Event(PREF_VALUE_PRINT_SHARE_RECEIPT)
+                )
+                PREF_VALUE_PRINT_DOWNLOAD_RECEIPT -> _downloadOrShareReceiptAsPdfMutableLiveData.postValue(
+                    Event(PREF_VALUE_PRINT_DOWNLOAD_RECEIPT)
+                )
+                PREF_VALUE_PRINT_DOWNLOAD_AND_SHARE_RECEIPT -> _downloadOrShareReceiptAsPdfMutableLiveData.postValue(
+                    Event(PREF_VALUE_PRINT_DOWNLOAD_AND_SHARE_RECEIPT)
+                )
+                else -> {
+                    _showPrintDialog.postValue(
+                        Event(transactionResponse.buildSMSText().toString())
+                    )
+                }
+            }
         }
     }
 
@@ -862,5 +889,9 @@ class SalesViewModel(
                     t2?.let { Timber.e(it.localizedMessage) }
                 }
         }
+    }
+
+    fun downloadOrShareReceipt(action: String = PREF_VALUE_PRINT_DOWNLOAD_AND_SHARE_RECEIPT) {
+        _downloadOrShareReceiptAsPdfMutableLiveData.postValue(Event(action))
     }
 }
