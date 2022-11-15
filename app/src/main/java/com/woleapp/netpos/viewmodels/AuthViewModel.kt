@@ -71,6 +71,7 @@ class AuthViewModel : ViewModel() {
             }
         stormApiService!!.userToken(credentials)
             .flatMap {
+                Timber.d("ADDRESS--->$it")
                 Timber.e(it.toString())
                 if (BuildConfig.BUILD_TYPE.equals(
                         "releaseAdmin",
@@ -90,6 +91,26 @@ class AuthViewModel : ViewModel() {
                 Prefs.putString(PREF_USER_TOKEN, userToken)
                 val userTokenDecoded = JWT(userToken)
                 val user = User().apply {
+//                    this.business_phone_number =
+//                        if(it.data.phoneNumber.isNotEmpty()){
+//                            it.data.phoneNumber
+//                        }else{
+//                            null
+//                        }
+//                    this.business_address =
+//                        if(it.data.business_address.isNotEmpty()){
+//                            it.data.business_address
+//                        }else{
+//                            null
+//                        }
+                    this.business_phone_number =
+                        if (userTokenDecoded.claims.containsKey("phone_number")) userTokenDecoded.getClaim(
+                            "phone_number"
+                        ).asString() else null
+                    this.business_address =
+                        if (userTokenDecoded.claims.containsKey("business_address")) userTokenDecoded.getClaim(
+                            "business_address"
+                        ).asString() else null
                     this.terminal_id =
                         if (userTokenDecoded.claims.containsKey("terminalId")) userTokenDecoded.getClaim(
                             "terminalId"
@@ -117,6 +138,8 @@ class AuthViewModel : ViewModel() {
             .observeOn(AndroidSchedulers.mainThread())
             .subscribe { res, error ->
                 res?.let {
+                    Timber.d("NEWADDRESS--->${it.business_address}")
+                    Timber.d("NEWPHONADDRESS--->${it.business_phone_number}")
                     Prefs.putString(PREF_USER, gson.toJson(it))
                     Prefs.putBoolean(PREF_AUTHENTICATED, true)
                     _authDone.value = Event(true)

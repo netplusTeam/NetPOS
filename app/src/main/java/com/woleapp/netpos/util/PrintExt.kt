@@ -397,9 +397,9 @@ fun TransactionResponse.buildReceipt(
         remark?.let {
             if (it.isNotEmpty()) builder.appendRemark(it)
         }
-        builder.appendAppName(BuildConfig.FLAVOR.uppercase())
+        builder.appendAppName("App Version: ${BuildConfig.FLAVOR.uppercase()}")
         builder.appendAppVersion(BuildConfig.VERSION_NAME)
-        builder.appendAuthorizationCode(authCode)
+        builder.appendAuthorizationCode("$authCode \nPhone Number: ${Singletons.getCurrentlyLoggedInUser()?.business_phone_number}")
         builder.appendCardHolderName("Card Holder: $cardHolder")
         builder.appendCardNumber("Masked Pan: $maskedPan")
         builder.appendCardScheme("Card Type: $cardLabel")
@@ -418,6 +418,9 @@ fun TransactionResponse.buildReceipt(
             }
             }"
         )
+        if (!Singletons.getCurrentlyLoggedInUser()?.business_address.isNullOrEmpty()){
+            builder.appendMerchantAddress("Merchant Address: ${Singletons.getCurrentlyLoggedInUser()?.business_address}")
+        }
         builder.isReprint = isReprint
         if (isMerchantCopy) {
             builder.isMerchantCopy

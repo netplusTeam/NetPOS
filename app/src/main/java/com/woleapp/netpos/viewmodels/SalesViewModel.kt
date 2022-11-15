@@ -355,11 +355,16 @@ class SalesViewModel(
                 it.cardLabel = cardScheme!!
                 it.amount = requestData.amount
                 it.transmissionDateTime = getDate(it.transactionTimeInMillis)
-                lastTransactionResponse.postValue(it)
+
+                val modifiedResponseCode =
+                    if (it.responseCode == "22" || it.responseCode == "34" || it.responseCode == "59" || it.responseCode == "A3") "06" else it.responseCode
+
+                lastTransactionResponse.postValue(it.copy(responseCode = modifiedResponseCode))
                 temporalRrnForLastTransaction.postValue(customRrn)
                 _message.postValue(Event(if (it.responseCode == "00" || it.responseCode == "16") "Transaction Approved" else "Transaction Not approved"))
                 transactionResponseDao
-                    .insertNewTransaction(it)
+                    .insertNewTransaction(it.copy(responseCode = modifiedResponseCode))
+
             }.flatMap {
                 val resp = lastTransactionResponse.value!!
                 if (resp.responseCode == "00") {
