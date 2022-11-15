@@ -2,6 +2,7 @@
 
 package com.woleapp.netpos.ui.fragments
 
+import android.Manifest
 import android.app.ProgressDialog
 import android.os.Bundle
 import android.view.LayoutInflater
@@ -10,21 +11,28 @@ import android.view.ViewGroup
 import android.view.WindowManager
 import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
+import androidx.databinding.ViewDataBinding
 import androidx.fragment.app.activityViewModels
 import com.google.android.material.snackbar.Snackbar
 import com.woleapp.netpos.R
 import com.woleapp.netpos.databinding.DialogPrintTypeBinding
 import com.woleapp.netpos.databinding.DialogTransactionResultBinding
 import com.woleapp.netpos.databinding.FragmentTransactionDetailsBinding
+import com.woleapp.netpos.databinding.LayoutPosReceiptPdfBinding
 import com.woleapp.netpos.nibss.NetPosTerminalConfig
-import com.woleapp.netpos.util.HISTORY_ACTION_DEFAULT
-import com.woleapp.netpos.util.HISTORY_ACTION_PREAUTH
-import com.woleapp.netpos.util.builder
-import com.woleapp.netpos.util.showCardDialog
+import com.woleapp.netpos.util.* // ktlint-disable no-wildcard-imports
+import com.woleapp.netpos.util.ModelMapper.genericPermissionHandler
+import com.woleapp.netpos.util.pdfUtils.createPdf
+import com.woleapp.netpos.util.pdfUtils.initViewsForPdfLayout
+import com.woleapp.netpos.util.pdfUtils.sharePdf
 import com.woleapp.netpos.viewmodels.TransactionsViewModel
+import kotlinx.android.synthetic.main.dialog_print_type.*
 import timber.log.Timber
+import java.io.File
 
 class TransactionDetailsFragment : BaseFragment() {
+    private lateinit var receiptPdf: File
+    private lateinit var pdfView: LayoutPosReceiptPdfBinding
     private val viewModel by activityViewModels<TransactionsViewModel>()
     private lateinit var binding: FragmentTransactionDetailsBinding
     private lateinit var progressDialog: ProgressDialog
@@ -33,6 +41,7 @@ class TransactionDetailsFragment : BaseFragment() {
     private lateinit var dialogPrintTypeBinding: DialogPrintTypeBinding
     private lateinit var printTypeDialog: AlertDialog
     private lateinit var printerErrorDialog: AlertDialog
+
     override fun onCreateView(
         inflater: LayoutInflater,
         container: ViewGroup?,
@@ -55,14 +64,28 @@ class TransactionDetailsFragment : BaseFragment() {
                 setView(dialogPrintTypeBinding.root)
                 dialogPrintTypeBinding.apply {
                     cancel.setOnClickListener {
-                        printTypeDialog.dismiss()
+                        printTypeDialog.cancel()
                         // viewModel.finish()
                     }
                     customer.setOnClickListener {
+                        printTypeDialog.cancel()
                         viewModel.startPrintingReceipt(requireContext(), isMerchantCopy = false)
                     }
                     merchant.setOnClickListener {
+                        printTypeDialog.cancel()
                         viewModel.startPrintingReceipt(requireContext(), isMerchantCopy = true)
+                    }
+                    download.setOnClickListener {
+                        printTypeDialog.cancel()
+                        viewModel.downloadOrShareReceipt(PREF_VALUE_PRINT_DOWNLOAD_RECEIPT)
+                    }
+                    share.setOnClickListener {
+                        printTypeDialog.cancel()
+                        viewModel.downloadOrShareReceipt(PREF_VALUE_PRINT_SHARE_RECEIPT)
+                    }
+                    downloadAndShare.setOnClickListener {
+                        printTypeDialog.cancel()
+                        viewModel.downloadOrShareReceipt(PREF_VALUE_PRINT_DOWNLOAD_AND_SHARE_RECEIPT)
                     }
                 }
             }.create()
@@ -89,11 +112,13 @@ class TransactionDetailsFragment : BaseFragment() {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
+        pdfView = LayoutPosReceiptPdfBinding.inflate(layoutInflater)
         viewModel.selectedAction.observe(viewLifecycleOwner) {
-            if (it == HISTORY_ACTION_DEFAULT)
+            if (it == HISTORY_ACTION_DEFAULT) {
                 binding.actionButton.visibility = View.GONE
-            else
+            } else {
                 binding.actionButton.text = it
+            }
             if (it == HISTORY_ACTION_PREAUTH) {
                 binding.actionButton.visibility = View.GONE
                 if (viewModel.lastTransactionResponse.value!!.responseCode == "00") {
@@ -129,8 +154,9 @@ class TransactionDetailsFragment : BaseFragment() {
         }
         viewModel.beginGetCardDetails.observe(viewLifecycleOwner) { event ->
             event.getContentIfNotHandled()?.let { startCardReader ->
-                if (startCardReader)
+                if (startCardReader) {
                     gotoAction { viewModel.refundTransaction(requireContext()) }
+                }
             }
         }
         viewModel.message.observe(viewLifecycleOwner) {
@@ -177,10 +203,12 @@ class TransactionDetailsFragment : BaseFragment() {
         alertDialog.window?.setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_ADJUST_PAN)
         viewModel.showPrintDialog.observe(viewLifecycleOwner) { event ->
             event.getContentIfNotHandled()?.let {
-                if (printTypeDialog.isShowing)
+                if (printTypeDialog.isShowing) {
                     printTypeDialog.cancel()
-                if (printerErrorDialog.isShowing)
+                }
+                if (printerErrorDialog.isShowing) {
                     printerErrorDialog.cancel()
+                }
                 alertDialog.apply {
                     receiptDialogBinding.transactionContent.text = it
                     show()
@@ -193,8 +221,12 @@ class TransactionDetailsFragment : BaseFragment() {
         }
         viewModel.shouldRefreshNibssKeys.observe(viewLifecycleOwner) { event ->
             event.getContentIfNotHandled()?.let {
-                if (it)
-                    NetPosTerminalConfig.init(requireContext().applicationContext, configureSilently = true)
+                if (it) {
+                    NetPosTerminalConfig.init(
+                        requireContext().applicationContext,
+                        configureSilently = true
+                    )
+                }
             }
         }
 
@@ -206,14 +238,43 @@ class TransactionDetailsFragment : BaseFragment() {
 
         viewModel.showPrinterError.observe(viewLifecycleOwner) { event ->
             event.getContentIfNotHandled()?.let {
-                if (printTypeDialog.isShowing)
+                if (printTypeDialog.isShowing) {
                     printTypeDialog.cancel()
-                if (printerErrorDialog.isShowing)
+                }
+                if (printerErrorDialog.isShowing) {
                     printerErrorDialog.cancel()
+                }
                 printerErrorDialog.apply {
                     setMessage(it)
                 }.show()
             }
+        }
+    }
+
+    override fun onResume() {
+        super.onResume()
+        handlePdfReceiptPrinting()
+    }
+
+    private fun getPermissionAndCreatePdf(view: ViewDataBinding) {
+        genericPermissionHandler(
+            requireActivity(),
+            requireContext(),
+            Manifest.permission.WRITE_EXTERNAL_STORAGE,
+            WRITE_PERMISSION_REQUEST_CODE,
+            getString(R.string.storage_permission_rationale_for_download)
+        ) {
+            receiptPdf = createPdf(view, this)
+        }
+    }
+
+    private fun downloadPdfImpl() {
+        viewModel.lastTransactionResponse.value?.let { transResponse ->
+            initViewsForPdfLayout(
+                pdfView,
+                transResponse
+            )
+            getPermissionAndCreatePdf(pdfView)
         }
     }
 
@@ -258,7 +319,40 @@ class TransactionDetailsFragment : BaseFragment() {
             requireActivity().findViewById(
                 R.id.container_main
             ),
-            message, Snackbar.LENGTH_LONG
+            message,
+            Snackbar.LENGTH_LONG
         ).show()
+    }
+
+    private fun handlePdfReceiptPrinting() {
+        viewModel.downloadOrShareReceiptAsPdfLiveData.observe(viewLifecycleOwner) { event ->
+            event.getContentIfNotHandled()?.let {
+                when (it) {
+                    PREF_VALUE_PRINT_SHARE_RECEIPT -> {
+                        downloadPdfImpl()
+                        sharePdf(receiptPdf, this)
+                        showSnackBar(
+                            getString(R.string.fileDownloaded),
+                            binding.root
+                        )
+                    }
+                    PREF_VALUE_PRINT_DOWNLOAD_RECEIPT -> {
+                        downloadPdfImpl()
+                        showSnackBar(
+                            getString(R.string.fileDownloaded),
+                            binding.root
+                        )
+                    }
+                    PREF_VALUE_PRINT_DOWNLOAD_AND_SHARE_RECEIPT -> {
+                        downloadPdfImpl()
+                        showSnackBar(
+                            getString(R.string.fileDownloaded),
+                            binding.root
+                        )
+                        sharePdf(receiptPdf, this)
+                    }
+                }
+            }
+        }
     }
 }

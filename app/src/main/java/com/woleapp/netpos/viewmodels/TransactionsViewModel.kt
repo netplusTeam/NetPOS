@@ -48,6 +48,11 @@ class TransactionsViewModel(private val appDatabase: AppDatabase) : ViewModel() 
     val showPrinterError: LiveData<Event<String>>
         get() = _showPrinterError
 
+    private val _downloadOrShareReceiptAsPdfMutableLiveData = MutableLiveData<Event<String>>()
+
+    val downloadOrShareReceiptAsPdfLiveData: LiveData<Event<String>>
+        get() = _downloadOrShareReceiptAsPdfMutableLiveData
+
     private val _showReceiptTypeMutableLiveData = MutableLiveData<Event<Boolean>>()
 
     val showReceiptType: LiveData<Event<Boolean>>
@@ -108,7 +113,13 @@ class TransactionsViewModel(private val appDatabase: AppDatabase) : ViewModel() 
 
         pagedTransaction = LivePagedListBuilder(
             appDatabase.transactionResponseDao()
-                .getTransactions(NetPosTerminalConfig.getTerminalId()),
+                .getTransactions(NetPosTerminalConfig.getTerminalId()).map {
+                    it.copy(
+                        localDate_13 = it.localDate_13.plus(
+                            PDF_REPRINT_IDENTIFIER
+                        )
+                    )
+                },
             config
         ).setBoundaryCallback(transactionBoundaryCallBack)
             .build()
@@ -228,11 +239,17 @@ class TransactionsViewModel(private val appDatabase: AppDatabase) : ViewModel() 
         }
     }
 
+    fun downloadOrShareReceipt(action: String = PREF_VALUE_PRINT_DOWNLOAD_AND_SHARE_RECEIPT) {
+        _downloadOrShareReceiptAsPdfMutableLiveData.postValue(Event(action))
+    }
+
     private fun printReceipt(context: Context) {
-        val transactionResponse = lastTransactionResponse.value!!
-            .apply {
-                this.cardExpiry = ""
-            }
+        val modifiedTransaction = lastTransactionResponse.value!!
+        val transactionResponse =
+            modifiedTransaction.copy(localDate_13 = modifiedTransaction.localDate_13 + PDF_REPRINT_IDENTIFIER)
+                .apply {
+                    this.cardExpiry = ""
+                }
 
         if (Build.MODEL.equals("Pro", true) || Build.MODEL.equals("P3", true)) {
             when (Prefs.getString(PREF_PRINTER_SETTINGS, PREF_VALUE_PRINT_CUSTOMER_COPY_ONLY)) {
@@ -250,11 +267,33 @@ class TransactionsViewModel(private val appDatabase: AppDatabase) : ViewModel() 
                 PREF_VALUE_PRINT_ASK_BEFORE_PRINTING -> _showReceiptTypeMutableLiveData.postValue(
                     Event(true)
                 )
+                PREF_VALUE_PRINT_SHARE_RECEIPT -> _downloadOrShareReceiptAsPdfMutableLiveData.postValue(
+                    Event(PREF_VALUE_PRINT_SHARE_RECEIPT)
+                )
+                PREF_VALUE_PRINT_DOWNLOAD_RECEIPT -> _downloadOrShareReceiptAsPdfMutableLiveData.postValue(
+                    Event(PREF_VALUE_PRINT_DOWNLOAD_RECEIPT)
+                )
+                PREF_VALUE_PRINT_DOWNLOAD_AND_SHARE_RECEIPT -> _downloadOrShareReceiptAsPdfMutableLiveData.postValue(
+                    Event(PREF_VALUE_PRINT_DOWNLOAD_AND_SHARE_RECEIPT)
+                )
             }
         } else {
-            _showPrintDialog.postValue(
-                Event(transactionResponse.buildSMSText().toString())
-            )
+            when (Prefs.getString(PREF_PRINTER_SETTINGS, "")) {
+                PREF_VALUE_PRINT_SHARE_RECEIPT -> _downloadOrShareReceiptAsPdfMutableLiveData.postValue(
+                    Event(PREF_VALUE_PRINT_SHARE_RECEIPT)
+                )
+                PREF_VALUE_PRINT_DOWNLOAD_RECEIPT -> _downloadOrShareReceiptAsPdfMutableLiveData.postValue(
+                    Event(PREF_VALUE_PRINT_DOWNLOAD_RECEIPT)
+                )
+                PREF_VALUE_PRINT_DOWNLOAD_AND_SHARE_RECEIPT -> _downloadOrShareReceiptAsPdfMutableLiveData.postValue(
+                    Event(PREF_VALUE_PRINT_DOWNLOAD_AND_SHARE_RECEIPT)
+                )
+                else -> {
+                    _showPrintDialog.postValue(
+                        Event(transactionResponse.buildSMSText().toString())
+                    )
+                }
+            }
         }
 
 //        if (Build.MODEL.equals("Pro", true) || Build.MODEL.equals(
@@ -283,11 +322,12 @@ class TransactionsViewModel(private val appDatabase: AppDatabase) : ViewModel() 
         printBoth: Boolean = false
     ) {
         inProgress.value = true
-        val transactionResponse = lastTransactionResponse.value
-        transactionResponse?.apply {
-            this.cardExpiry = ""
-            // this.cardHolder = this
-        }
+        val modifiedTransaction = lastTransactionResponse.value
+        val transactionResponse =
+            modifiedTransaction?.copy(localDate_13 = modifiedTransaction.localDate_13 + PDF_REPRINT_IDENTIFIER)
+                .apply {
+                    this?.cardExpiry = ""
+                }
         transactionResponse?.print(context, isMerchantCopy = isMerchantCopy, isReprint = true)
             ?.subscribeOn(Schedulers.io())
             ?.observeOn(AndroidSchedulers.mainThread())

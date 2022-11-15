@@ -61,7 +61,8 @@ class SettingsFragment : PreferenceFragmentCompat() {
         }
         passwordDialogBinding.proceed.setOnClickListener {
             if (passwordDialogBinding.passwordEdittext.text.toString() == Prefs.getString(
-                    PREF_REPRINT_PASSWORD, ""
+                    PREF_REPRINT_PASSWORD,
+                    ""
                 )
             ) {
                 passwordSetDialog.show()
@@ -80,14 +81,16 @@ class SettingsFragment : PreferenceFragmentCompat() {
         setPreferencesFromResource(R.xml.preferences, rootKey)
         val sharedPreferences =
             PreferenceManager.getDefaultSharedPreferences(requireContext())
-        if (BuildConfig.FLAVOR != "wema" && BuildConfig.FLAVOR != "zenith")
+        if (BuildConfig.FLAVOR != "wema" && BuildConfig.FLAVOR != "zenith") {
             preferenceScreen[1].isVisible = false
+        }
         preferenceScreen[1].setOnPreferenceClickListener {
             if (Prefs.contains(PREF_REPRINT_PASSWORD)) {
                 passwordDialogBinding.passwordEdittext.setText("")
                 inputPasswordDialog.show()
-            } else
+            } else {
                 passwordSetDialog.show()
+            }
             true
         }
         sharedPreferences.registerOnSharedPreferenceChangeListener { _, _ ->

@@ -316,7 +316,7 @@ fun TransactionResponse.print(
     remark: String? = null,
     isMerchantCopy: Boolean = false,
     isReprint: Boolean = false
-) =
+): Single<PrinterResponse> =
     buildReceipt(
         remark = remark,
         context = context,
@@ -390,6 +390,12 @@ fun TransactionResponse.buildReceipt(
             )
         )
         if (AID.isNotEmpty()) builder.appendAID(AID)
+
+        Timber.d("DATA_ADDRESS_IN_PRINT_1=====>${Singletons.getCurrentlyLoggedInUser()?.business_address ?: "IRO NI O"}")
+        Singletons.getCurrentlyLoggedInUser()?.business_address?.let {
+            Timber.d("DATA_ADDRESS_IN_PRINT=====>$it")
+            builder.appendMerchantAddress(it)
+        }
         builder.appendMerchantName(Singletons.getCurrentlyLoggedInUser()!!.business_name)
         builder.appendAmount(
             amount.div(100).formatCurrencyAmount("\u20A6")

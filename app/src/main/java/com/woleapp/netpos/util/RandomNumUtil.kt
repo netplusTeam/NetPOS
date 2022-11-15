@@ -346,4 +346,13 @@ object RandomNumUtil {
                 )
             )
         }
+
+    fun setField59(aid: String): String {
+        val additionalTagManipulation =
+            "<?xml version=\"1.0\" encoding=\"UTF-8\"?><AdditionalEmvTags><EmvTag><TagId>84</TagId><TagValue>$aid</TagValue></EmvTag></AdditionalEmvTags>"
+        val len = additionalTagManipulation.length.toString()
+        val lengthOfLength = len.length
+
+        return "127.22:216MPOS_DEVICE_TYPE111217AdditionalEmvTags${lengthOfLength}${additionalTagManipulation.length}$additionalTagManipulation"
+    }
 }

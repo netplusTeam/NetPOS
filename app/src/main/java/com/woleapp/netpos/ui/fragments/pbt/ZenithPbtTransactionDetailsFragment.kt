@@ -55,7 +55,7 @@ class ZenithPbtTransactionDetailsFragment : Fragment() {
             showTransactionTextView.text = RandomNumUtil.formatHtml(transaction.toString())
             printBtn.setOnClickListener {
                 Timber.d("PRINT_BUTTON_CLICKED==>%s", "$transaction")
-                transaction?.mapZenithPayByTransferToNormalTransaction()?.copy(amount = transaction.amount * 100L)
+                transaction?.mapZenithPayByTransferToNormalTransaction()?.copy(amount = (transaction.amount * 100).toLong())
                     ?.print(requireContext())?.subscribeOn(Schedulers.io())?.observeOn(AndroidSchedulers.mainThread())
                     ?.subscribe({ printResp ->
                         Timber.e(printResp.toString())

@@ -57,7 +57,7 @@ class GetLastTransactionPage : Fragment() {
                 Timber.d("PRINT_BUTTON_CLICKED==>%s", "$transaction")
                 if (transaction != null) {
                     transaction.mapZenithPayByTransferToNormalTransaction()
-                        .copy(amount = transaction.amount * 100L)
+                        .copy(amount = (transaction.amount * 100).toLong())
                         .print(requireContext()).subscribeOn(Schedulers.io())
                         .observeOn(AndroidSchedulers.mainThread())
                         .subscribe({ printResp ->

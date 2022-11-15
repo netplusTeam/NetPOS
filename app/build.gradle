@@ -30,13 +30,14 @@ android {
 //    buildToolsVersion "29.0.3"
     buildFeatures.dataBinding = true
     ndkVersion "21.3.6528147"
+
     defaultConfig {
         vectorDrawables.useSupportLibrary = true
         applicationId "com.woleapp.netpos"
         minSdkVersion 21
         targetSdkVersion 30
-        versionCode 144
-        versionName "1.1.144"
+        versionCode 146
+        versionName "1.1.146"
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         def environmentPath
         if (appModeProd == "true")

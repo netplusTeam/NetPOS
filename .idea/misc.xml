@@ -46,6 +46,8 @@
         <entry key="app/src/main/res/layout/dialog_fragment_mcc.xml" value="0.3651041666666667" />
         <entry key="app/src/main/res/layout/dialog_fragment_zenith_mcc.xml" value="0.3594871794871795" />
         <entry key="app/src/main/res/layout/dialog_password_reset.xml" value="0.24583333333333332" />
+        <entry key="app/src/main/res/layout/dialog_print_type.xml" value="0.2947916666666667" />
+        <entry key="app/src/main/res/layout/dialog_select_account_type.xml" value="0.29375" />
         <entry key="app/src/main/res/layout/dialog_transaction_result.xml" value="0.19375" />
         <entry key="app/src/main/res/layout/fragment_create_bluecode_merchant.xml" value="0.3594871794871795" />
         <entry key="app/src/main/res/layout/fragment_dashboard.xml" value="0.17608032226562498" />
@@ -63,7 +65,10 @@
         <entry key="app/src/main/res/layout/layout_enter_password.xml" value="0.2953125" />
         <entry key="app/src/main/res/layout/layout_loading_dialog.xml" value="0.2947916666666667" />
         <entry key="app/src/main/res/layout/layout_pay_with_transfer.xml" value="0.3836563110351563" />
+        <entry key="app/src/main/res/layout/layout_pos_receipt_pdf.xml" value="0.25" />
         <entry key="app/src/main/res/layout/layout_print_end_of_day.xml" value="0.246875" />
+        <entry key="app/src/main/res/layout/layout_qr_receipt_pdf.xml" value="0.2947916666666667" />
+        <entry key="app/src/main/res/layout/layout_randomized_pin_block.xml" value="0.29375" />
         <entry key="app/src/main/res/layout/layout_reprint_password_pref_text.xml" value="0.2953125" />
         <entry key="app/src/main/res/layout/layout_service_item.xml" value="0.19375" />
         <entry key="app/src/main/res/layout/layout_transaction_item.xml" value="0.2947916666666667" />
@@ -78,6 +83,7 @@
         <entry key="app/src/zenith/res/drawable/splash_background.xml" value="0.2235" />
         <entry key="app/src/zenith/res/layout/dialog_select_qr_type_dialog.xml" value="0.3651041666666667" />
         <entry key="app/src/zenith/res/layout/layout_enter_password.xml" value="0.3651041666666667" />
+        <entry key="app/src/zenith/res/layout/layout_pos_receipt_pdf.xml" value="0.2947916666666667" />
         <entry key="app/src/zenith/res/layout/layout_reprint_password_pref_text.xml" value="0.3651041666666667" />
         <entry key="app/src/zenith/res/mipmap-anydpi-v26/ic_launcher.xml" value="0.209" />
       </map>

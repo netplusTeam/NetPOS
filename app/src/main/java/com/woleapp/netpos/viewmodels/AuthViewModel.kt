@@ -71,17 +71,18 @@ class AuthViewModel : ViewModel() {
             }
         stormApiService!!.userToken(credentials)
             .flatMap {
-                Timber.d("ADDRESS--->$it")
+                Timber.d("DATA_GOTTEN_USER_DATA_TOKENRESPONSE===>$it")
                 Timber.e(it.toString())
                 if (BuildConfig.BUILD_TYPE.equals(
                         "releaseAdmin",
                         true
                     ) || BuildConfig.BUILD_TYPE.equals("nibssserverdebug", true)
-                )
+                ) {
                     if (username == "dapo@webmallng.com") {
                         // raise a fake exception to stop the process
                         throw Exception("ADMIN")
                     }
+                }
                 if (!it.success) {
                     throw Exception("Login Failed, Check Credentials")
                 }
@@ -119,6 +120,8 @@ class AuthViewModel : ViewModel() {
                         if (userTokenDecoded.claims.containsKey("businessName")) userTokenDecoded.getClaim(
                             "businessName"
                         ).asString() else null
+                    this.business_address = "asdkljasldkf"
+                    this.business_phone_number = "alksdjlkasd"
                     this.netplus_id =
                         if (userTokenDecoded.claims.containsKey("stormId")) userTokenDecoded.getClaim(
                             "stormId"
@@ -189,9 +192,9 @@ class AuthViewModel : ViewModel() {
                         Event("Password reset failed")
                     } else {
                         val res = JSONObject(Gson().toJson(it.body()))
-                        if (!res.getBoolean("success"))
+                        if (!res.getBoolean("success")) {
                             Event("Password reset failed")
-                        else {
+                        } else {
                             _passwordResetSent.value = Event(true)
                             Event("A password reset mail has been sent to $username")
                         }
@@ -209,7 +212,10 @@ class AuthViewModel : ViewModel() {
         this.netplus_id = UUID.randomUUID().toString()
         this.mid = "2101JJ41MFDJ999EWR9"
         this.partnerId = UUID.randomUUID().toString()
-        Prefs.putString(PREF_USER_TOKEN, "eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiJ9.eyJzdG9ybUlkIjoiZDg0ZDRjYmEtMmQxNC00Y2ViLTk0NGYtYTBhNDgzNDRiNzY4IiwiYXBwbmFtZSI6InN0b3JtX2FwcCIsImJ1c2luZXNzTmFtZSI6Ik5ldHBsdXNEb3RDb20iLCJyb2xlcyI6WyJuZXRwbHVzLXNlcnZpY2UiXSwicGVybWlzc2lvbnMiOlsic3Rvcm0iXSwiaWF0IjoxNjQ2MzgzNTQ4LCJleHAiOjE2NDY0Njk5NDgsImlzcyI6InN0b3JtOmFjY291bnRzIiwic3ViIjoic2VydmljZSJ9.F15WuaqsoXozmTT7v4bfff5GnOYafNenA_ZgRXMSFMKUpYbf3PiPs3hnlh8lPmC7Fcp-0jEm7d_zBYp1RYcwmpyeuyzQVtwtj1j0WiiGJcIU9JQrwt7cZ-78Uutts0hFZwBKkOiiFuROUD2UX3npxef6hxVhn2poVxq-N5CEHdu79BUBAeWDhj-QIFCQAqAqMONgHPffSqqRP4rVxYwAG2OHnEX00aBtVohJX2bEYt6Lr2SN2BVwCKquCIfXgz2gGAL-Sv1U_vEmCkxkHt0ELXbBzjle-r4IT-KKG8pPnq06iYhScyHLujAvZ_dUDYpKkJzLxGH2dBCMypEbhqKn4g")
+        Prefs.putString(
+            PREF_USER_TOKEN,
+            "eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiJ9.eyJzdG9ybUlkIjoiZDg0ZDRjYmEtMmQxNC00Y2ViLTk0NGYtYTBhNDgzNDRiNzY4IiwiYXBwbmFtZSI6InN0b3JtX2FwcCIsImJ1c2luZXNzTmFtZSI6Ik5ldHBsdXNEb3RDb20iLCJyb2xlcyI6WyJuZXRwbHVzLXNlcnZpY2UiXSwicGVybWlzc2lvbnMiOlsic3Rvcm0iXSwiaWF0IjoxNjQ2MzgzNTQ4LCJleHAiOjE2NDY0Njk5NDgsImlzcyI6InN0b3JtOmFjY291bnRzIiwic3ViIjoic2VydmljZSJ9.F15WuaqsoXozmTT7v4bfff5GnOYafNenA_ZgRXMSFMKUpYbf3PiPs3hnlh8lPmC7Fcp-0jEm7d_zBYp1RYcwmpyeuyzQVtwtj1j0WiiGJcIU9JQrwt7cZ-78Uutts0hFZwBKkOiiFuROUD2UX3npxef6hxVhn2poVxq-N5CEHdu79BUBAeWDhj-QIFCQAqAqMONgHPffSqqRP4rVxYwAG2OHnEX00aBtVohJX2bEYt6Lr2SN2BVwCKquCIfXgz2gGAL-Sv1U_vEmCkxkHt0ELXbBzjle-r4IT-KKG8pPnq06iYhScyHLujAvZ_dUDYpKkJzLxGH2dBCMypEbhqKn4g"
+        )
     }
 
     override fun onCleared() {
