@@ -8,7 +8,7 @@ import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.paging.LivePagedListBuilder
 import androidx.paging.PagedList
-import com.danbamitale.epmslib.entities.*
+import com.danbamitale.epmslib.entities.* // ktlint-disable no-wildcard-imports
 import com.danbamitale.epmslib.processors.TransactionProcessor
 import com.danbamitale.epmslib.utils.IsoAccountType
 import com.netpluspay.netpossdk.printer.PrinterResponse
@@ -19,7 +19,7 @@ import com.woleapp.netpos.model.GetEodFromNewServiceModel
 import com.woleapp.netpos.model.User
 import com.woleapp.netpos.network.StormApiClient
 import com.woleapp.netpos.nibss.NetPosTerminalConfig
-import com.woleapp.netpos.util.*
+import com.woleapp.netpos.util.* // ktlint-disable no-wildcard-imports
 import io.reactivex.Single
 import io.reactivex.android.schedulers.AndroidSchedulers
 import io.reactivex.disposables.CompositeDisposable

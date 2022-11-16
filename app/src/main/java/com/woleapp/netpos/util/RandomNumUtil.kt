@@ -66,7 +66,7 @@ object RandomNumUtil {
     @SuppressLint("SimpleDateFormat")
     fun getDateInMillis2(dateTime: String): Long {
         val formatter: DateTimeFormatter =
-            DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss", Locale.ENGLISH)
+            DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")
         val localDate: LocalDateTime = LocalDateTime.parse(dateTime, formatter)
         return localDate.atOffset(ZoneOffset.UTC).toInstant().toEpochMilli() + 3600000
     }
