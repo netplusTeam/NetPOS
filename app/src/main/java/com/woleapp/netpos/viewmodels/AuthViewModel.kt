@@ -92,33 +92,33 @@ class AuthViewModel : ViewModel() {
                 Prefs.putString(PREF_USER_TOKEN, userToken)
                 val userTokenDecoded = JWT(userToken)
                 val user = User().apply {
-                    this.terminal_id =
-                        if (userTokenDecoded.claims.containsKey("terminalId")) userTokenDecoded.getClaim(
-                            "terminalId"
-                        ).asString() else null
-                    this.business_name =
-                        if (userTokenDecoded.claims.containsKey("businessName")) userTokenDecoded.getClaim(
-                            "businessName"
-                        ).asString() else null
+                    this.business_phone_number =
+                        if (userTokenDecoded.claims.containsKey("phoneNumber")) userTokenDecoded.getClaim(
+                            "phoneNumber"
+                        ).asString() else " "
                     this.business_address =
                         if (userTokenDecoded.claims.containsKey("business_address")) userTokenDecoded.getClaim(
                             "business_address"
-                        ).asString() else ""
-                    this.business_phone_number =
-                        if (userTokenDecoded.claims.containsKey("business_phone_number")) userTokenDecoded.getClaim(
-                            "business_phone_number"
-                        ).asString() else ""
+                        ).asString() else " "
+                    this.terminal_id =
+                        if (userTokenDecoded.claims.containsKey("terminalId")) userTokenDecoded.getClaim(
+                            "terminalId"
+                        ).asString() else " "
+                    this.business_name =
+                        if (userTokenDecoded.claims.containsKey("businessName")) userTokenDecoded.getClaim(
+                            "businessName"
+                        ).asString() else " "
                     this.netplus_id =
                         if (userTokenDecoded.claims.containsKey("stormId")) userTokenDecoded.getClaim(
                             "stormId"
-                        ).asString() else null
+                        ).asString() else " "
                     this.mid =
                         if (userTokenDecoded.claims.containsKey("mid")) userTokenDecoded.getClaim("mid")
-                            .asString() else null
+                            .asString() else " "
                     this.partnerId =
                         if (userTokenDecoded.claims.containsKey("partnerId")) userTokenDecoded.getClaim(
                             "partnerId"
-                        ).asString() else null
+                        ).asString() else " "
                 }
                 Timber.e(user.terminal_id)
                 Single.just(user)
