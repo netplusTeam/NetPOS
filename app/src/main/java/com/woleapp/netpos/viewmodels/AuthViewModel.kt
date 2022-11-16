@@ -92,26 +92,6 @@ class AuthViewModel : ViewModel() {
                 Prefs.putString(PREF_USER_TOKEN, userToken)
                 val userTokenDecoded = JWT(userToken)
                 val user = User().apply {
-//                    this.business_phone_number =
-//                        if(it.data.phoneNumber.isNotEmpty()){
-//                            it.data.phoneNumber
-//                        }else{
-//                            null
-//                        }
-//                    this.business_address =
-//                        if(it.data.business_address.isNotEmpty()){
-//                            it.data.business_address
-//                        }else{
-//                            null
-//                        }
-                    this.business_phone_number =
-                        if (userTokenDecoded.claims.containsKey("phone_number")) userTokenDecoded.getClaim(
-                            "phone_number"
-                        ).asString() else null
-                    this.business_address =
-                        if (userTokenDecoded.claims.containsKey("business_address")) userTokenDecoded.getClaim(
-                            "business_address"
-                        ).asString() else null
                     this.terminal_id =
                         if (userTokenDecoded.claims.containsKey("terminalId")) userTokenDecoded.getClaim(
                             "terminalId"
@@ -120,8 +100,14 @@ class AuthViewModel : ViewModel() {
                         if (userTokenDecoded.claims.containsKey("businessName")) userTokenDecoded.getClaim(
                             "businessName"
                         ).asString() else null
-                    this.business_address = "asdkljasldkf"
-                    this.business_phone_number = "alksdjlkasd"
+                    this.business_address =
+                        if (userTokenDecoded.claims.containsKey("business_address")) userTokenDecoded.getClaim(
+                            "business_address"
+                        ).asString() else ""
+                    this.business_phone_number =
+                        if (userTokenDecoded.claims.containsKey("business_phone_number")) userTokenDecoded.getClaim(
+                            "business_phone_number"
+                        ).asString() else ""
                     this.netplus_id =
                         if (userTokenDecoded.claims.containsKey("stormId")) userTokenDecoded.getClaim(
                             "stormId"

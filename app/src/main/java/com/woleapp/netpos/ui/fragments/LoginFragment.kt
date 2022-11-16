@@ -104,8 +104,9 @@ class LoginFragment : BaseFragment() {
 
         viewModel.passwordResetSent.observe(viewLifecycleOwner) { event ->
             event.getContentIfNotHandled()?.let {
-                if (it && passwordResetDialog.isShowing)
+                if (it && passwordResetDialog.isShowing) {
                     passwordResetDialog.cancel()
+                }
             }
         }
     }
