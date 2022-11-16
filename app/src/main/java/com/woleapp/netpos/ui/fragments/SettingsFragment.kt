@@ -84,7 +84,6 @@ class SettingsFragment : PreferenceFragmentCompat() {
         if (BuildConfig.FLAVOR != "wema" && BuildConfig.FLAVOR != "zenith") {
             preferenceScreen[1].isVisible = false
         }
-
         preferenceScreen[1].setOnPreferenceClickListener {
             if (Prefs.contains(PREF_REPRINT_PASSWORD)) {
                 passwordDialogBinding.passwordEdittext.setText("")

@@ -229,6 +229,7 @@ object RandomNumUtil {
         }
     }
 
+
 //    fun mapDanbamitaleResponseToResponseWithRrn(
 //        input: TransactionResponse,
 //        remark: String

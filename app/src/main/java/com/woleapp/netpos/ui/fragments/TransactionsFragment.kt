@@ -74,7 +74,6 @@ class TransactionsFragment : BaseFragment() {
         }
         return binding.root
     }
-
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         when (BuildConfig.FLAVOR) {
@@ -165,7 +164,7 @@ class TransactionsFragment : BaseFragment() {
                     QRFragment()
                 }
                 5 -> {
-                    if (BuildConfig.FLAVOR == "wema" && Prefs.contains(PREF_REPRINT_PASSWORD)) {
+                    if ((BuildConfig.FLAVOR == "wema" || BuildConfig.FLAVOR == "zenith") && Prefs.contains(PREF_REPRINT_PASSWORD)) {
                         inputPasswordDialog.show()
                         return@ServiceAdapter
                     }

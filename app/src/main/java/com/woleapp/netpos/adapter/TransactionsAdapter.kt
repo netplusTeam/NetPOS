@@ -49,9 +49,9 @@ class TransactionsViewHolder private constructor(val binding: LayoutTransactionI
         binding.executePendingBindings()
         val cardDetails =
             "${transactionResponse.cardLabel.ifEmpty { "card" }} ending with ${
-            transactionResponse.maskedPan.takeLast(
-                4
-            )
+                transactionResponse.maskedPan.takeLast(
+                    4
+                )
             }"
         binding.cardDetails.text = cardDetails
         binding.transactionStatus.text =
@@ -60,6 +60,7 @@ class TransactionsViewHolder private constructor(val binding: LayoutTransactionI
         binding.transactionRef.text = transactionResponse.RRN
         binding.transactionAmount.text =
             transactionResponse.amount.div(100).formatCurrencyAmount("\u20A6")
-        binding.transactionDate.text = transactionResponse.transactionTimeInMillis.formatDate()
+        binding.transactionDate.text =
+            (transactionResponse.transactionTimeInMillis - 7200000).formatDate()
     }
 }
