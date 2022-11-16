@@ -346,6 +346,12 @@ fun TransactionResponse.builder() = StringBuilder().apply {
 
 fun TransactionResponse.buildSMSText(s: String? = null): StringBuilder = StringBuilder().apply {
     append("POS $transactionType ${if (responseCode == "00") "Approved" else "Declined"}\n\n")
+    if (!Singletons.getCurrentlyLoggedInUser()?.business_address.isNullOrEmpty()){
+        append("Merchant Address: ${Singletons.getCurrentlyLoggedInUser()?.business_address}\n")
+    }
+    if (!Singletons.getCurrentlyLoggedInUser()?.business_phone_number.isNullOrEmpty()){
+        append("Merchant Phone Number: ${Singletons.getCurrentlyLoggedInUser()?.business_phone_number}\n")
+    }
     append("Response Code: $responseCode\n")
     append(
         "Message: ${
