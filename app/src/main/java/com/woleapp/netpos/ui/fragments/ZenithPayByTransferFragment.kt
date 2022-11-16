@@ -72,7 +72,7 @@ class ZenithPayByTransferFragment : BaseFragment() {
         userZenithPbtVirtualAccount =
             gson.fromJson(savedUserVirtualAccount, GetPayByTransferUserAccountModel::class.java)
         if (savedUserVirtualAccount.trim().isEmpty()) {
-            zenithPbtViewModel.getZenithPbtUserAccount()
+//            zenithPbtViewModel.getZenithPbtUserAccount()
             val virtualAccount = Prefs.getString(PREF_ZENITH_PBT_USER_ACCOUNT, "")
             userZenithPbtVirtualAccount =
                 gson.fromJson(virtualAccount, GetPayByTransferUserAccountModel::class.java)
