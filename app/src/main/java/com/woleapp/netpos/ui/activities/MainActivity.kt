@@ -30,6 +30,7 @@ import com.woleapp.netpos.nibss.CONFIGURATION_STATUS
 import com.woleapp.netpos.nibss.NetPosTerminalConfig
 import com.woleapp.netpos.receivers.BatteryReceiver
 import com.woleapp.netpos.ui.fragments.DashboardFragment
+import com.woleapp.netpos.ui.fragments.TransactionsFragment
 import com.woleapp.netpos.util.*
 import com.woleapp.netpos.viewmodels.PayByZenithViewModel
 import dagger.hilt.android.AndroidEntryPoint
@@ -286,7 +287,7 @@ class MainActivity : AppCompatActivity(), EasyPermissions.PermissionCallbacks {
         firebaseMessagingInstance.token.addOnCompleteListener(
             OnCompleteListener { task ->
                 if (!task.isSuccessful) {
-                    Log.w(TAG1, "Fetching FCM registration token failed", task.exception)
+                    Log.w(TAG1, "Fetching FCM registgitration token failed", task.exception)
                     return@OnCompleteListener
                 }
 
