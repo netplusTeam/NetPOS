@@ -61,23 +61,14 @@ object Module {
     @Named("defaultOkHttpClient")
     fun providesDefaultOkHttpClient(
         @Named("loginInterceptor") loggingInterceptor: Interceptor
-    ): OkHttpClient {
-        return if (BuildConfig.DEBUG) {
-            OkHttpClient().newBuilder()
-                .connectTimeout(20, TimeUnit.SECONDS)
-                .readTimeout(20, TimeUnit.SECONDS)
-                .retryOnConnectionFailure(true)
-                .addInterceptor(loggingInterceptor)
-                .build()
-        } else {
-            OkHttpClient().newBuilder()
-                .connectTimeout(20, TimeUnit.SECONDS)
-                .readTimeout(20, TimeUnit.SECONDS)
-                .retryOnConnectionFailure(true)
-                .addInterceptor(loggingInterceptor)
-                .build()
-        }
-    }
+    ): OkHttpClient =
+        OkHttpClient().newBuilder()
+            .connectTimeout(120, TimeUnit.SECONDS)
+            .readTimeout(120, TimeUnit.SECONDS)
+            .writeTimeout(120, TimeUnit.SECONDS)
+            .retryOnConnectionFailure(true)
+            .addInterceptor(loggingInterceptor)
+            .build()
 
     @Singleton
     @Provides
@@ -86,25 +77,15 @@ object Module {
         @ApplicationContext context: Context,
         @Named("loginInterceptor") loggingInterceptor: Interceptor,
         @Named("zenithPayByTransferHeaderInterceptor") zenithPayByTransferHeaderInterceptor: Interceptor
-    ): OkHttpClient {
-        return if (BuildConfig.DEBUG) {
-            OkHttpClient().newBuilder()
-                .connectTimeout(20, TimeUnit.SECONDS)
-                .readTimeout(20, TimeUnit.SECONDS)
-                .retryOnConnectionFailure(true)
-                .addInterceptor(zenithPayByTransferHeaderInterceptor)
-                .addInterceptor(loggingInterceptor)
-                .build()
-        } else {
-            OkHttpClient().newBuilder()
-                .connectTimeout(20, TimeUnit.SECONDS)
-                .readTimeout(20, TimeUnit.SECONDS)
-                .retryOnConnectionFailure(true)
-                .addInterceptor(zenithPayByTransferHeaderInterceptor)
-                .addInterceptor(loggingInterceptor)
-                .build()
-        }
-    }
+    ): OkHttpClient =
+        OkHttpClient().newBuilder()
+            .connectTimeout(120, TimeUnit.SECONDS)
+            .writeTimeout(120, TimeUnit.SECONDS)
+            .readTimeout(120, TimeUnit.SECONDS)
+            .retryOnConnectionFailure(true)
+            .addInterceptor(zenithPayByTransferHeaderInterceptor)
+            .addInterceptor(loggingInterceptor)
+            .build()
 
     @Provides
     @Singleton

@@ -10,7 +10,7 @@ interface TransactionTrackingTableDao {
     fun insertTransactionForTracking(transResponse: TransactionResponseXForTracking): Single<Long>
 
     @Delete
-    fun deleteTransactionAfterSuccessfulUpdateAtBackend(updatedTrans: TransactionResponseXForTracking)
+    fun deleteTransactionAfterSuccessfulUpdateAtBackend(updatedTrans: TransactionResponseXForTracking): Single<Int>
 
     @Query("SELECT * FROM transactionTrackingTable")
     fun getAllYetToBeUpdatedTransactions(): List<TransactionResponseXForTracking>
