@@ -36,7 +36,6 @@ import io.reactivex.Observable
 import io.reactivex.android.schedulers.AndroidSchedulers
 import io.reactivex.disposables.CompositeDisposable
 import io.reactivex.schedulers.Schedulers
-import kotlinx.android.synthetic.main.dialog_print_type.*
 import timber.log.Timber
 import java.io.BufferedReader
 import java.io.File
