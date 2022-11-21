@@ -254,9 +254,9 @@ class DashboardFragment : BaseFragment() {
                 2 -> {
                     if (BuildConfig.FLAVOR == "zenith") {
                         addFragmentWithoutRemove(ZenithPayByTransferFragment())
-                    }else if (BuildConfig.FLAVOR == "tingopay") {
+                    } else if (BuildConfig.FLAVOR == "tingopay") {
                         showToast("Not yet available")
-                    } else{
+                    } else {
                         addFragmentWithoutRemove(NipNotificationFragment.newInstance())
                     }
                 }

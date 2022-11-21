@@ -68,6 +68,7 @@ class SalesViewModel(
     private val transactionResponseDao: TransactionResponseDao,
     private val transactionTrackingTableDao: TransactionTrackingTableDao
 ) : ViewModel() {
+    private lateinit var lastTransaction: TransactionResponse
     private val _partnerThreshold: MutableLiveData<GetPartnerInterSwitchThresholdResponse> =
         MutableLiveData()
     private val temporalRrnForLastTransaction: MutableLiveData<String> = MutableLiveData("")
@@ -174,7 +175,7 @@ class SalesViewModel(
                 t2?.let {
                     Log.d("ERROR_SV1", "ERROR SAVING 1")
                 }
-            }.disposeWith(compositeDisposable)
+            }
     }
 
     private fun logTransactionAfterConnectingToNibss(
@@ -183,44 +184,19 @@ class SalesViewModel(
         status: String
     ): Single<LogToBackendResponse> {
         val dataToLog = DataToLogAfterConnectingToNibss(status, transactionResponse, rrn)
-        return stormApiService!!.updateLogAfterConnectingToNibss(rrn, dataToLog).map {
-            if (it.code() in 200..209) {
-                it.body()
-            } else {
+        return stormApiService!!.updateLogAfterConnectingToNibss(rrn, dataToLog)
+            .doOnError {
+                Timber.d("SAVE_TRANSACTION_FOR_LATER_TRACKING=====>%s", "YES_SAVED_TO_DB")
                 val data = TransactionResponseXForTracking(rrn, transactionResponse, status)
                 saveTransactionForTracking(data)
-//                lastTransactionResponse.value?.let { transResp ->
-//                    mapDanbamitaleResponseToResponseX(
-//                        transResp
-//                    )
-//                }?.let {
-//                    temporalRrnForLastTransaction.value?.let { it1 ->
-//                        TransactionResponseXForTracking(
-//                            it1,
-//                            it
-//                        )
-//                    }?.let { it2 -> saveTransactionForTracking(it2) }
-//                }
-//                it.body()
-                it.body()
+            }.flatMap {
+                // 785431481148
+                Timber.d("SAVE_TRANSACTION_FOR_LATER_TRACKING=====>%s", "NO_NOT_SAVED_TO_DB")
+                Single.just(it.body())
             }
-        }
     }
 
     fun makePayment(context: Context, transactionType: TransactionType = TransactionType.PURCHASE) {
-//        // First save the last transaction
-//        lastTransactionResponse.value?.let {
-//            mapDanbamitaleResponseToResponseX(
-//                it
-//            )
-//        }?.let {
-//            temporalRrnForLastTransaction.value?.let { it1 ->
-//                TransactionResponseXForTracking(
-//                    it1,
-//                    it
-//                )
-//            }?.let { it2 -> saveTransactionForTracking(it2) }
-//        }
         Timber.e(cardData.toString())
         val configData: ConfigData = NetPosTerminalConfig.getConfigData() ?: kotlin.run {
             _message.value =
@@ -364,24 +340,37 @@ class SalesViewModel(
                 val modifiedResponseCode =
                     if (it.responseCode == "22" || it.responseCode == "34" || it.responseCode == "59" || it.responseCode == "A3") "06" else it.responseCode
 
-                lastTransactionResponse.postValue(it.copy(responseCode = modifiedResponseCode))
+                val transRespons = it.copy(responseCode = modifiedResponseCode)
+
+                Timber.d("TRANSACTION_JUST_PERFORMED====>%s", gson.toJson(transRespons))
+
+                lastTransactionResponse.postValue(transRespons)
+                lastTransaction = transRespons
                 temporalRrnForLastTransaction.postValue(customRrn)
                 _message.postValue(Event(if (it.responseCode == "00" || it.responseCode == "16") "Transaction Approved" else "Transaction Not approved"))
                 transactionResponseDao
                     .insertNewTransaction(it.copy(responseCode = modifiedResponseCode))
             }.flatMap {
-                val resp = lastTransactionResponse.value!!
-                if (resp.responseCode == "00") {
+                Timber.d("ATTEMPT_TO_UPDATE_DATA_AT_BACKEND=====>%s", "YES_GOT_HERE")
+                if (lastTransaction.responseCode == "00") {
+                    Timber.d(
+                        "ATTEMPT_TO_UPDATE_DATA_AT_BACKEND_AS_SUCCESS=====>%s",
+                        "YES_GOT_HERE_IN_SUCCESS_BLOCK"
+                    )
                     logTransactionAfterConnectingToNibss(
                         customRrn,
-                        mapDanbamitaleResponseToResponseX(resp),
+                        mapDanbamitaleResponseToResponseX(lastTransaction),
                         "APPROVED"
                     )
                 } else {
+                    Timber.d(
+                        "ATTEMPT_TO_UPDATE_DATA_AT_BACKEND_AS_ERROR=====>%s",
+                        "YES_GOT_HERE_IN_ERROR_BLOCK"
+                    )
                     logTransactionAfterConnectingToNibss(
                         rrn = customRrn,
-                        transactionResponse = mapDanbamitaleResponseToResponseX(resp),
-                        status = resp.responseMessage
+                        transactionResponse = mapDanbamitaleResponseToResponseX(lastTransaction),
+                        status = lastTransaction.responseMessage
                     )
                 }
             }
@@ -393,8 +382,10 @@ class SalesViewModel(
             }.subscribe { t1, throwable ->
                 t1?.let {
                     // _finish.value = Event(true)
+                    Timber.d("RESPONSE_FROM_LOG_TO_BACKEDN=======>%s", gson.toJson(it))
                 }
                 throwable?.let {
+                    Timber.d("ERROR_FROM_LOG_TO_BACKEDN=======>%s", gson.toJson(it))
 //                    _message.value = Event("Error: ${it.localizedMessage}")
                     Timber.e(it)
                 }
@@ -680,57 +671,68 @@ class SalesViewModel(
     }
 
     private fun getIswToken(context: Context): String {
-        val req = TokenPassportRequest(context.getString(R.string.wemaAgencyMD), terminalId)
-        return try {
-            var iswToken = ""
-            getTokenClient.getToken(req)
-                .doOnError {
-                    Timber.d("TOKEN_ERROR==>${it.localizedMessage}")
-                }
-                .subscribeOn(Schedulers.io())
-                .observeOn(AndroidSchedulers.mainThread())
-                .subscribe { t1, t2 ->
-                    t1?.let {
-                        if (it.responseCode != "00") {
-                            Toast.makeText(
-                                context,
-                                context.getString(R.string.terminal_val_failed),
-                                Toast.LENGTH_LONG
-                            ).show()
-                            return@subscribe
+        val savedIswToken = Prefs.getString(ISW_TOKEN, "")
+        return if (savedIswToken.isEmpty()) {
+            val req = TokenPassportRequest(context.getString(R.string.wemaAgencyMD), terminalId)
+            return try {
+                var iswToken = ""
+                getTokenClient.getToken(req)
+                    .doOnError {
+                        Timber.d("TOKEN_ERROR==>${it.localizedMessage}")
+                    }
+                    .subscribeOn(Schedulers.io())
+                    .observeOn(AndroidSchedulers.mainThread())
+                    .subscribe { t1, t2 ->
+                        t1?.let {
+                            if (it.responseCode != "00") {
+                                Toast.makeText(
+                                    context,
+                                    context.getString(R.string.terminal_val_failed),
+                                    Toast.LENGTH_LONG
+                                ).show()
+                                return@subscribe
+                            }
+                            Prefs.putString(ISW_TOKEN, it.token)
+                            iswToken = it.token
                         }
-                        Prefs.putString(ISW_TOKEN, it.token)
-                        iswToken = it.token
-                    }
-                    t2?.let {
-                    }
-                }.disposeWith(compositeDisposable)
-            iswToken
-        } catch (e: Exception) {
-            "RUBISH"
+                        t2?.let {
+                        }
+                    }.disposeWith(compositeDisposable)
+                iswToken
+            } catch (e: Exception) {
+                ""
+            }
+        } else {
+            savedIswToken
         }
     }
 
     private fun getThreshold() {
-        newStormService.getPartnerInterSwitchThreshold(
-            partnerId
+        val iswThreshold = Prefs.getString(
+            partnerId + "iswThreshold",
+            ""
         )
-            .subscribeOn(Schedulers.io())
-            .observeOn(AndroidSchedulers.mainThread())
-            .subscribe(
-                { data ->
-                    // Save the threshold to sharedPrefs
-                    val thresholdObjectInString = gson.toJson(data)
-                    Prefs.putString(
-                        partnerId + "iswThreshold",
-                        thresholdObjectInString
-                    )
-                    _partnerThreshold.postValue(data)
-                },
-                { throwable ->
-                    Timber.e(throwable)
-                }
-            ).disposeWith(compositeDisposable)
+        if (iswThreshold.isEmpty()) {
+            newStormService.getPartnerInterSwitchThreshold(
+                partnerId
+            )
+                .subscribeOn(Schedulers.io())
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribe(
+                    { data ->
+                        // Save the threshold to sharedPrefs
+                        val thresholdObjectInString = gson.toJson(data)
+                        Prefs.putString(
+                            partnerId + "iswThreshold",
+                            thresholdObjectInString
+                        )
+                        _partnerThreshold.postValue(data)
+                    },
+                    { throwable ->
+                        Timber.e(throwable)
+                    }
+                ).disposeWith(compositeDisposable)
+        }
     }
 
     private fun processTransactionViaInterSwitchMakePayment(

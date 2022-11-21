@@ -195,7 +195,10 @@ class MainActivity : AppCompatActivity(), EasyPermissions.PermissionCallbacks {
         subscribeToFireBaseMessagingTopic(firebaseInstance, FIREBASE_TOPIC_UPDATE)
 
         getFireBaseToken(firebaseInstance) {
-            sendTokenToBackend(it)
+            val previousDeviceToken = Prefs.getString(PREF_FIREBASE_APP_TOKEN, "")
+            if (previousDeviceToken != it) {
+                sendTokenToBackend(it)
+            }
         }
 
         // loadCerts()
@@ -353,6 +356,7 @@ class MainActivity : AppCompatActivity(), EasyPermissions.PermissionCallbacks {
 
                 // Get new FCM registration token
                 val token = task.result
+                Prefs.putString(PREF_FIREBASE_APP_TOKEN, token)
                 actionToPerformWithTheReceivedToken(token)
             }
         )
