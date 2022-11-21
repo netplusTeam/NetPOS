@@ -155,8 +155,8 @@ private fun initViewsForPosReceipt(
                     R.string.date_time_place_holder,
                     it.transactionTimeInMillis.formatDate()
                 )
-            isReprint.visibility =
-                if (it.localDate_13.contains(PDF_REPRINT_IDENTIFIER)) View.VISIBLE else View.GONE
+//            isReprint.visibility =
+//                if (it.localDate_13.contains(PDF_REPRINT_IDENTIFIER)) View.VISIBLE else View.GONE
             transAmount.text = pdfView.appVersion.context.getString(
                 R.string.amount_place_holder,
                 it.amount.div(100).toDouble().formatCurrencyAmountUsingCurrentModule()

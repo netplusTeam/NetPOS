@@ -414,43 +414,6 @@
     },
     {
       "client_info": {
-        "mobilesdk_app_id": "1:407232811618:android:9cab31258f302458f5b73b",
-        "android_client_info": {
-          "package_name": "com.woleapp.netpos.contactless.debug"
-        }
-      },
-      "oauth_client": [
-        {
-          "client_id": "407232811618-ffveu4mgonkont0guc81b3of355mnl7b.apps.googleusercontent.com",
-          "client_type": 1,
-          "android_info": {
-            "package_name": "com.woleapp.netpos.contactless.debug",
-            "certificate_hash": "d63b0a7a6a6a542ab3bf2133c65462e24660398d"
-          }
-        },
-        {
-          "client_id": "407232811618-ccp697t0tsad9c53o3k50s46l8s0ugcd.apps.googleusercontent.com",
-          "client_type": 3
-        }
-      ],
-      "api_key": [
-        {
-          "current_key": "AIzaSyBXBvZYFLfY7XIkSAypMcxVT0ArfG_2HmI"
-        }
-      ],
-      "services": {
-        "appinvite_service": {
-          "other_platform_oauth_client": [
-            {
-              "client_id": "407232811618-ccp697t0tsad9c53o3k50s46l8s0ugcd.apps.googleusercontent.com",
-              "client_type": 3
-            }
-          ]
-        }
-      }
-    },
-    {
-      "client_info": {
         "mobilesdk_app_id": "1:407232811618:android:c1b302f9939dcc08f5b73b",
         "android_client_info": {
           "package_name": "com.woleapp.netpos.debug"
@@ -636,6 +599,43 @@
     },
     {
       "client_info": {
+        "mobilesdk_app_id": "1:407232811618:android:07fc06cf7da387aaf5b73b",
+        "android_client_info": {
+          "package_name": "com.woleapp.netpos.noLogOut"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "407232811618-4d1sleg0m60bop00t4ndj4qgdum3emif.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.woleapp.netpos.noLogOut",
+            "certificate_hash": "d63b0a7a6a6a542ab3bf2133c65462e24660398d"
+          }
+        },
+        {
+          "client_id": "407232811618-ccp697t0tsad9c53o3k50s46l8s0ugcd.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBXBvZYFLfY7XIkSAypMcxVT0ArfG_2HmI"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "407232811618-ccp697t0tsad9c53o3k50s46l8s0ugcd.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    },
+    {
+      "client_info": {
         "mobilesdk_app_id": "1:407232811618:android:395cc8911d11098af5b73b",
         "android_client_info": {
           "package_name": "com.woleapp.netpos.providus"
@@ -684,6 +684,43 @@
           "client_type": 1,
           "android_info": {
             "package_name": "com.woleapp.netpos.providus.debug",
+            "certificate_hash": "d63b0a7a6a6a542ab3bf2133c65462e24660398d"
+          }
+        },
+        {
+          "client_id": "407232811618-ccp697t0tsad9c53o3k50s46l8s0ugcd.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBXBvZYFLfY7XIkSAypMcxVT0ArfG_2HmI"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "407232811618-ccp697t0tsad9c53o3k50s46l8s0ugcd.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:407232811618:android:254f5fe539c59b1cf5b73b",
+        "android_client_info": {
+          "package_name": "com.woleapp.netpos.tingopay"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "407232811618-rilj0c292fkp2mgebtj5i6nfij3nchoq.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.woleapp.netpos.tingopay",
             "certificate_hash": "d63b0a7a6a6a542ab3bf2133c65462e24660398d"
           }
         },

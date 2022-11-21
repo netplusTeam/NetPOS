@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <dimen name="services_text">16sp</dimen>
+    <dimen name="app_text_size">16sp</dimen>
+    <dimen name="purchase_input_text_size">16sp</dimen>
+</resources>

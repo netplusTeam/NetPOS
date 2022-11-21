@@ -23,5 +23,18 @@
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintTop_toBottomOf="@id/dashboard_header" />
 
+        <com.google.android.material.bottomnavigation.BottomNavigationView
+            android:id="@+id/dashboard_bottom_navigation_view"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:background="@color/white"
+            android:elevation="10dp"
+            android:paddingTop="6dp"
+            app:labelVisibilityMode="labeled"
+            app:layout_constraintBottom_toBottomOf="@+id/container_main"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:menu="@menu/bottom_nav" />
+
     </androidx.constraintlayout.widget.ConstraintLayout>
 </layout>

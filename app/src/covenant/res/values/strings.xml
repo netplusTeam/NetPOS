@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Zenith NetPOS</string>
+    <string name="select_qr_type">Select QR Type</string>
+    <string name="masterpass_qr_type">MasterCard</string>
+    <string name="mvisa_qr_type">Visa</string>
+    <string name="nibss_qr_type">Nibss</string>
+</resources>

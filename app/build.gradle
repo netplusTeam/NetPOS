@@ -125,6 +125,10 @@ android {
             dimension "whiteLabels"
             applicationIdSuffix ".tingopay"
         }
+        covenant{
+            dimension "whiteLabels"
+            applicationIdSuffix ".covenant"
+        }
     }
 
     variantFilter { variant ->
@@ -158,6 +162,9 @@ android {
             java.srcDirs('src/defaults/java')
         }
         tingopay {
+            java.srcDirs('src/defaults/java')
+        }
+        covenant {
             java.srcDirs('src/defaults/java')
         }
     }
