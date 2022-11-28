@@ -42,8 +42,8 @@ android {
         applicationId "com.woleapp.netpos"
         minSdkVersion 21
         targetSdkVersion 30
-        versionCode 147
-        versionName "1.1.147"
+        versionCode 148
+        versionName "1.1.148"
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         def environmentPath
         if (appModeProd == "true")
@@ -267,10 +267,6 @@ dependencies {
     def work_version = "2.5.0"
     implementation "androidx.work:work-runtime-ktx:$work_version"
 
-//    //firebase
-//    implementation platform('com.google.firebase:firebase-bom:29.1.0')
-//    implementation 'com.google.firebase:firebase-messaging'
-//    implementation 'com.google.firebase:firebase-messaging-ktx'
     // Firebase
     implementation platform('com.google.firebase:firebase-bom:30.4.1')
     implementation 'com.google.firebase:firebase-analytics-ktx'

@@ -29,7 +29,7 @@
             android:layout_height="@dimen/dimen_40dp"
             android:layout_margin="@dimen/dimen_8dp"
             android:contentDescription="@string/netpos_logo"
-            android:src="@drawable/ic_app_logo_white"
+            android:src="@drawable/ic_app_logo"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent" />
 

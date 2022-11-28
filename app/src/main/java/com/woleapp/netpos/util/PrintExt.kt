@@ -346,10 +346,10 @@ fun TransactionResponse.builder() = StringBuilder().apply {
 
 fun TransactionResponse.buildSMSText(s: String? = null): StringBuilder = StringBuilder().apply {
     append("POS $transactionType ${if (responseCode == "00") "Approved" else "Declined"}\n\n")
-    if (!Singletons.getCurrentlyLoggedInUser()?.business_address.isNullOrEmpty()){
+    if (!Singletons.getCurrentlyLoggedInUser()?.business_address.isNullOrEmpty()) {
         append("Merchant Address: ${Singletons.getCurrentlyLoggedInUser()?.business_address}\n")
     }
-    if (!Singletons.getCurrentlyLoggedInUser()?.business_phone_number.isNullOrEmpty()){
+    if (!Singletons.getCurrentlyLoggedInUser()?.business_phone_number.isNullOrEmpty()) {
         append("Merchant Phone Number: ${Singletons.getCurrentlyLoggedInUser()?.business_phone_number}\n")
     }
     append("Response Code: $responseCode\n")
@@ -430,7 +430,7 @@ fun TransactionResponse.buildReceipt(
             }
             }"
         )
-        if (!Singletons.getCurrentlyLoggedInUser()?.business_address.isNullOrEmpty()){
+        if (!Singletons.getCurrentlyLoggedInUser()?.business_address.isNullOrEmpty()) {
             builder.appendMerchantAddress("Merchant Address: ${Singletons.getCurrentlyLoggedInUser()?.business_address}")
         }
         builder.isReprint = isReprint

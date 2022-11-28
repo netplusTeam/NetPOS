@@ -26,6 +26,24 @@ fun Button.processButtonState(transactionState: Int) {
     }
 }
 
+@BindingAdapter("quickCashOutButtonState")
+fun Button.processQuickCashOutButtonState(transactionState: Int) {
+    when (transactionState) {
+        STATE_PAYMENT_STAND_BY -> {
+            text = context.getString(R.string.quick_cashout)
+            isEnabled = true
+        }
+        STATE_PAYMENT_STARTED -> {
+            text = context.getString(R.string.processing_transaction)
+            isEnabled = false
+        }
+        STATE_PAYMENT_APPROVED -> {
+            text = context.getString(R.string.payment_approved)
+            isEnabled = false
+        }
+    }
+}
+
 @BindingAdapter("paymentProgress")
 fun ProgressBar.paymentProgress(transactionState: Int) {
     visibility = if (transactionState == STATE_PAYMENT_STAND_BY)
