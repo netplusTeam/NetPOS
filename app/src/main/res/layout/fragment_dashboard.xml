@@ -46,6 +46,7 @@
             android:layout_marginHorizontal="@dimen/dimen_30dp"
             android:autofillHints=""
             android:ems="10"
+            android:focusedByDefault="false"
             android:hint="@string/enter_amount"
             android:inputType="number"
             android:paddingHorizontal="@dimen/dimen_10dp"
