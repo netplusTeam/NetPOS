@@ -14,12 +14,6 @@
         android:title="@string/menu_item_transactions" />
 
     <item
-        android:id="@+id/balance"
-        android:enabled="true"
-        android:icon="@drawable/ic_write"
-        android:title="@string/check_bal" />
-
-    <item
         android:id="@+id/endOfDay"
         android:enabled="true"
         android:icon="@drawable/ic_end_of_day"
@@ -31,6 +25,10 @@
         android:icon="@drawable/ic_baseline_settings"
         android:title="@string/menu_item_settings" />
 
-
+    <item
+        android:id="@+id/balance"
+        android:enabled="true"
+        android:icon="@drawable/ic_write"
+        android:title="@string/check_bal" />
 
 </menu>
