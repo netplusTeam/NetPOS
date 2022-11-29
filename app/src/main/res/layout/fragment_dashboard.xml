@@ -62,7 +62,7 @@
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_marginTop="@dimen/dimen_10dp"
-            android:text="@string/quick_cashout"
+            android:text="@string/process_transaction"
             app:layout_constraintEnd_toEndOf="@+id/editTextTextPersonName"
             app:layout_constraintStart_toStartOf="@+id/editTextTextPersonName"
             app:layout_constraintTop_toBottomOf="@+id/editTextTextPersonName"

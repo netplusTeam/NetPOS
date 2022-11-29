@@ -209,6 +209,7 @@
     <string name="quick_cashout">Quick Cashout</string>
     <string name="enter_amount">Enter Amount</string>
     <string name="enter_amount_to_pay">Enter amount to pay</string>
+    <string name="process_transaction">Process Transaction</string>
 
     <string-array name="viewPagerDestinationsTabLayoutTexts">
         <item>Last Transaction</item>

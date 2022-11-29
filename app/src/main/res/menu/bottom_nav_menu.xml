@@ -5,7 +5,7 @@
         android:id="@+id/fast_pay"
         android:enabled="true"
         android:icon="@drawable/fast_pay"
-        android:title="@string/fastpay" />
+        android:title="@string/purchase" />
 
     <item
         android:id="@+id/transaction"
