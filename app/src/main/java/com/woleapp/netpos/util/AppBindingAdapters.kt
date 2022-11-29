@@ -30,7 +30,7 @@ fun Button.processButtonState(transactionState: Int) {
 fun Button.processQuickCashOutButtonState(transactionState: Int) {
     when (transactionState) {
         STATE_PAYMENT_STAND_BY -> {
-            text = context.getString(R.string.quick_cashout)
+            text = context.getString(R.string.process_transaction)
             isEnabled = true
         }
         STATE_PAYMENT_STARTED -> {
