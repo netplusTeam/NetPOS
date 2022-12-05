@@ -17,7 +17,6 @@ import com.google.gson.JsonObject
 import com.isw.gateway.TransactionProcessorWrapper
 import com.isw.iswclient.request.IswParameters
 import com.netpluspay.netpossdk.NetPosSdk
-import com.netpluspay.netpossdk.printer.PrinterResponse
 import com.pixplicity.easyprefs.library.Prefs
 import com.woleapp.netpos.BuildConfig
 import com.woleapp.netpos.R
@@ -44,11 +43,6 @@ import io.reactivex.android.schedulers.AndroidSchedulers
 import io.reactivex.disposables.CompositeDisposable
 import io.reactivex.schedulers.Schedulers
 import timber.log.Timber
-import java.io.BufferedReader
-import java.io.InputStreamReader
-import java.io.PrintWriter
-import java.net.InetSocketAddress
-import java.net.Socket
 
 class SalesViewModelProvider(
     private val transactionResponseDao: TransactionResponseDao,
@@ -348,37 +342,24 @@ class SalesViewModel(
                 lastTransaction = transRespons
                 temporalRrnForLastTransaction.postValue(customRrn)
                 _message.postValue(Event(if (it.responseCode == "00" || it.responseCode == "16") "Transaction Approved" else "Transaction Not approved"))
+                Single.just(lastTransaction)
+            }.flatMap {
+                val modifiedResponseCode =
+                    if (it.responseCode == "22" || it.responseCode == "34" || it.responseCode == "59" || it.responseCode == "A3") "06" else it.responseCode
                 transactionResponseDao
                     .insertNewTransaction(it.copy(responseCode = modifiedResponseCode))
-            }.flatMap {
-                Timber.d("ATTEMPT_TO_UPDATE_DATA_AT_BACKEND=====>%s", "YES_GOT_HERE")
-                if (lastTransaction.responseCode == "00") {
-                    Timber.d(
-                        "ATTEMPT_TO_UPDATE_DATA_AT_BACKEND_AS_SUCCESS=====>%s",
-                        "YES_GOT_HERE_IN_SUCCESS_BLOCK"
-                    )
-                    logTransactionAfterConnectingToNibss(
-                        customRrn,
-                        mapDanbamitaleResponseToResponseX(lastTransaction),
-                        "APPROVED"
-                    )
-                } else {
-                    Timber.d(
-                        "ATTEMPT_TO_UPDATE_DATA_AT_BACKEND_AS_ERROR=====>%s",
-                        "YES_GOT_HERE_IN_ERROR_BLOCK"
-                    )
-                    logTransactionAfterConnectingToNibss(
-                        rrn = customRrn,
-                        transactionResponse = mapDanbamitaleResponseToResponseX(lastTransaction),
-                        status = lastTransaction.responseMessage
-                    )
-                }
             }
             .subscribeOn(Schedulers.io())
             .observeOn(AndroidSchedulers.mainThread())
             .doFinally {
                 transactionState.value = STATE_PAYMENT_STAND_BY
                 printReceipt(context)
+
+                handleUpdateOfTransactionPayloadInBackend(lastTransaction, customRrn)
+                    .subscribeOn(Schedulers.io())
+                    .observeOn(AndroidSchedulers.mainThread())
+                    .subscribe { _, _ ->
+                    }.disposeWith(compositeDisposable)
             }.subscribe { t1, throwable ->
                 t1?.let {
                     // _finish.value = Event(true)
@@ -409,33 +390,24 @@ class SalesViewModel(
                 it.cardHolder = customerName.value!!
                 it.cardLabel = cardScheme!!
                 it.amount = requestData.amount
-                lastTransactionResponse.postValue(it)
                 temporalRrnForLastTransaction.postValue(customRrn)
+                val modifiedResponseCode =
+                    if (it.responseCode == "22" || it.responseCode == "34" || it.responseCode == "59" || it.responseCode == "A3") "06" else it.responseCode
+
+                val transRespons = it.copy(responseCode = modifiedResponseCode)
+                lastTransactionResponse.postValue(transRespons)
+                lastTransaction = transRespons
                 _message.postValue(Event(if (it.responseCode == "00") "Transaction Approved" else "Transaction Not approved"))
                 Timber.d("DATA_TO_SAVE=====>%s", it)
                 transactionResponseDao
                     .insertNewTransaction(it)
-            }.flatMap {
-                val resp = lastTransactionResponse.value!!
-                if (resp.responseCode == "00") {
-                    logTransactionAfterConnectingToNibss(
-                        customRrn,
-                        mapDanbamitaleResponseToResponseX(resp),
-                        "APPROVED"
-                    )
-                } else {
-                    logTransactionAfterConnectingToNibss(
-                        rrn = customRrn,
-                        transactionResponse = mapDanbamitaleResponseToResponseX(resp),
-                        status = resp.responseMessage
-                    )
-                }
             }
             .subscribeOn(Schedulers.io())
             .observeOn(AndroidSchedulers.mainThread())
             .doFinally {
                 transactionState.value = STATE_PAYMENT_STAND_BY
                 printReceipt(context)
+                handleUpdateOfTransactionPayloadInBackend(lastTransaction, customRrn)
             }.subscribe { t1, throwable ->
                 t1?.let {
                     // _finish.value = Event(true)
@@ -556,43 +528,6 @@ class SalesViewModel(
             }?.disposeWith(compositeDisposable)
     }
 
-    fun printReceipt2(context: Context) {
-        val transactionResponse = lastTransactionResponse.value!!
-        if (Build.MODEL == "P3" || Build.MODEL.equals(
-                "PRO",
-                true
-            )
-        ) transactionResponse.print(context, remark.value ?: "")
-            .subscribeOn(Schedulers.io()) else {
-            _showPrintDialog.postValue(
-                Event(
-                    transactionResponse.buildSMSText(remark.value ?: "").toString()
-                )
-            )
-            Single.just(PrinterResponse())
-        }.subscribeOn(Schedulers.io())
-            .observeOn(AndroidSchedulers.mainThread())
-            .subscribe { t1, t2 ->
-                t1?.let {
-                    //                    event.apply {
-//                        this.event = MqttEvents.PRINTING_RECEIPT.event
-//                        this.code = it.code.toString()
-//                        this.timestamp = System.currentTimeMillis()
-//                        this.data = PrinterEventData(
-//                            lastTransactionResponse.value!!.RRN,
-//                            "Printer code name"
-//                        )
-//                        this.status = it.message
-//                    }
-//                    MqttHelper.sendPayload(MqttTopics.PRINTING_RECEIPT, event)
-                    // _message.value = Event("")
-                }
-                t2?.let {
-                    _showPrinterError.value = Event(it.localizedMessage ?: "")
-                }
-            }.disposeWith(compositeDisposable)
-    }
-
     fun finish() {
         _finish.value = Event(true)
     }
@@ -609,33 +544,6 @@ class SalesViewModel(
 
     fun isVend(vend: Boolean) {
         isVend = vend
-    }
-
-    private fun sendVendResponse(context: Context, out: String) {
-        Single.fromCallable {
-            Socket().run {
-                soTimeout = 120_000
-                connect(InetSocketAddress(VEND_PROD_IP, VEND_PROD_PORT))
-                val reader = BufferedReader(InputStreamReader(getInputStream()))
-                Timber.e(reader.readLine())
-                val printWriter = PrintWriter(getOutputStream(), true)
-                printWriter.println(out)
-                reader.readLine()
-            }
-        }.subscribeOn(Schedulers.io())
-            .observeOn(AndroidSchedulers.mainThread())
-            .doFinally {
-            }
-            .subscribe { t1, t2 ->
-                t1?.let {
-                    Timber.e(it)
-                    // Toast.makeText(context, "received", Toast.LENGTH_SHORT).show()
-                }
-                t2?.let {
-                    Toast.makeText(context, it.localizedMessage, Toast.LENGTH_SHORT).show()
-                    Timber.e(it)
-                }
-            }.disposeWith(compositeDisposable)
     }
 
     private val _cashTransactionCompleted = MutableLiveData<Event<Boolean>>()
@@ -895,5 +803,24 @@ class SalesViewModel(
 
     fun downloadOrShareReceipt(action: String = PREF_VALUE_PRINT_DOWNLOAD_AND_SHARE_RECEIPT) {
         _downloadOrShareReceiptAsPdfMutableLiveData.postValue(Event(action))
+    }
+
+    private fun handleUpdateOfTransactionPayloadInBackend(
+        transactionResp: TransactionResponse,
+        rrn: String
+    ): Single<LogToBackendResponse> {
+        return if (transactionResp.responseCode == "00") {
+            logTransactionAfterConnectingToNibss(
+                rrn,
+                mapDanbamitaleResponseToResponseX(transactionResp),
+                "APPROVED"
+            )
+        } else {
+            logTransactionAfterConnectingToNibss(
+                rrn = rrn,
+                transactionResponse = mapDanbamitaleResponseToResponseX(transactionResp),
+                status = transactionResp.responseMessage
+            )
+        }
     }
 }
