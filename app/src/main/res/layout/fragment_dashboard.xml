@@ -11,73 +11,97 @@
 
     </data>
 
-    <androidx.constraintlayout.widget.ConstraintLayout
+
+    <androidx.core.widget.NestedScrollView
         android:layout_width="match_parent"
-        android:layout_height="match_parent">
+        android:layout_height="match_parent"
+        android:background="@android:color/white"
+        android:clickable="true"
+        android:focusable="true">
 
-        <com.woleapp.netpos.ui.widgets.GridRecyclerView
-            android:id="@+id/rv_dashboard"
+        <androidx.constraintlayout.widget.ConstraintLayout
             android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:layout_marginVertical="@dimen/dimen_10dp"
-            android:clickable="true"
-            android:focusable="true"
-            android:scrollbars="none"
-            android:visibility="gone"
-            app:layoutManager="androidx.recyclerview.widget.GridLayoutManager"
-            app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toStartOf="parent"
-            app:spanCount="2"
-            tools:listitem="@layout/layout_service_item" />
+            android:layout_height="match_parent">
 
-        <androidx.constraintlayout.widget.Guideline
-            android:id="@+id/guideline2"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:orientation="horizontal"
-            app:layout_constraintGuide_percent="0.25" />
+            <com.woleapp.netpos.ui.widgets.GridRecyclerView
+                android:id="@+id/rv_dashboard"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:layout_marginVertical="@dimen/dimen_10dp"
+                android:clickable="true"
+                android:focusable="true"
+                android:scrollbars="none"
+                android:visibility="gone"
+                app:layoutManager="androidx.recyclerview.widget.GridLayoutManager"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:spanCount="2"
+                tools:listitem="@layout/layout_service_item" />
 
-        <EditText
-            android:id="@+id/editTextTextPersonName"
-            style="@style/ServicesInputLayout"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginHorizontal="@dimen/dimen_30dp"
-            android:autofillHints=""
-            android:ems="10"
-            android:focusedByDefault="false"
-            android:hint="@string/enter_amount"
-            android:inputType="number"
-            android:paddingHorizontal="@dimen/dimen_10dp"
-            android:text="@={viewmodel.amount}"
-            android:textSize="@dimen/dimen_16sp"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintHorizontal_bias="0.497"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toTopOf="@+id/guideline2" />
+            <androidx.constraintlayout.widget.Guideline
+                android:id="@+id/guideline2"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                app:layout_constraintGuide_percent="0.25" />
 
-        <Button
-            android:id="@+id/button"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="@dimen/dimen_10dp"
-            android:text="@string/process_transaction"
-            app:layout_constraintEnd_toEndOf="@+id/editTextTextPersonName"
-            app:layout_constraintStart_toStartOf="@+id/editTextTextPersonName"
-            app:layout_constraintTop_toBottomOf="@+id/editTextTextPersonName"
-            app:quickCashOutButtonState="@{viewmodel.transactionState}" />
+            <EditText
+                android:id="@+id/editTextTextPersonName"
+                style="@style/ServicesInputLayout"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginHorizontal="@dimen/dimen_30dp"
+                android:autofillHints=""
+                android:ems="10"
+                android:focusedByDefault="false"
+                android:hint="@string/enter_amount"
+                android:inputType="number"
+                android:paddingHorizontal="@dimen/dimen_10dp"
+                android:text="@={viewmodel.amount}"
+                android:textSize="@dimen/dimen_16sp"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintHorizontal_bias="0.497"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toTopOf="@+id/guideline2" />
+
+            <EditText
+                android:id="@+id/transactionRemark"
+                style="@style/ServicesInputLayout"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:autofillHints="@string/remark"
+                android:hint="@string/enter_remark"
+                android:inputType="text"
+                android:text="@={viewmodel.remark}"
+                android:textSize="@dimen/purchase_input_text_size"
+                android:visibility="gone"
+                app:layout_constraintEnd_toEndOf="@+id/editTextTextPersonName"
+                app:layout_constraintStart_toStartOf="@+id/editTextTextPersonName"
+                app:layout_constraintTop_toBottomOf="@id/editTextTextPersonName" />
+
+            <Button
+                android:id="@+id/button"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="@dimen/dimen_10dp"
+                android:text="@string/process_transaction"
+                app:layout_constraintEnd_toEndOf="@+id/editTextTextPersonName"
+                app:layout_constraintStart_toStartOf="@+id/editTextTextPersonName"
+                app:layout_constraintTop_toBottomOf="@+id/transactionRemark"
+                app:quickCashOutButtonState="@{viewmodel.transactionState}" />
 
 
-        <ProgressBar
-            android:layout_width="wrap_content"
-            android:layout_height="0dp"
-            android:elevation="2dp"
-            android:paddingVertical="12dp"
-            app:layout_constraintBottom_toBottomOf="@+id/button"
-            app:layout_constraintEnd_toEndOf="@+id/button"
-            app:layout_constraintTop_toTopOf="@+id/button"
-            app:paymentProgress="@{viewmodel.transactionState}" />
+            <ProgressBar
+                android:layout_width="wrap_content"
+                android:layout_height="0dp"
+                android:elevation="2dp"
+                android:paddingVertical="12dp"
+                app:layout_constraintBottom_toBottomOf="@+id/button"
+                app:layout_constraintEnd_toEndOf="@+id/button"
+                app:layout_constraintTop_toTopOf="@+id/button"
+                app:paymentProgress="@{viewmodel.transactionState}" />
 
-    </androidx.constraintlayout.widget.ConstraintLayout>
+        </androidx.constraintlayout.widget.ConstraintLayout>
+    </androidx.core.widget.NestedScrollView>
 </layout>

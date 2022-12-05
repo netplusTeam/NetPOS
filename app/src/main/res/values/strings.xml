@@ -210,6 +210,7 @@
     <string name="enter_amount">Enter Amount</string>
     <string name="enter_amount_to_pay">Enter amount to pay</string>
     <string name="process_transaction">Process Transaction</string>
+    <string name="enter_remark">Enter Remark</string>
 
     <string-array name="viewPagerDestinationsTabLayoutTexts">
         <item>Last Transaction</item>

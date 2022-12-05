@@ -12,6 +12,7 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.view.WindowManager
+import android.widget.EditText
 import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
 import androidx.databinding.ViewDataBinding
@@ -70,6 +71,7 @@ class DashboardFragment : BaseFragment() {
     private lateinit var workManager: WorkManager
     private lateinit var progressDialog: ProgressDialog
     private lateinit var binding: FragmentDashboardBinding
+    private lateinit var transRemark: EditText
     private lateinit var adapter: ServiceAdapter
     private var compositeDisposable = CompositeDisposable()
     private val stormApiService = StormApiClient.getStormApiLoginInstance()
@@ -125,6 +127,7 @@ class DashboardFragment : BaseFragment() {
             }
         }
         getIswToken(requireContext())
+        transRemark = binding.transactionRemark
 
         receiptDialogBinding = DialogTransactionResultBinding.inflate(inflater, null, false)
             .apply { executePendingBindings() }
@@ -501,6 +504,10 @@ class DashboardFragment : BaseFragment() {
         pdfView = LayoutPosReceiptPdfBinding.inflate(layoutInflater)
         binding.rvDashboard.layoutManager = GridLayoutManager(context, 2)
         binding.rvDashboard.adapter = adapter
+
+        if (BuildConfig.FLAVOR.contains("konga", true)) {
+            transRemark.visibility = View.VISIBLE
+        }
 
         handlePdfReceiptPrinting()
     }

@@ -150,7 +150,7 @@ class SalesViewModel(
                 return
             }
             ) * 100
-        if (BuildConfig.FLAVOR == "konga" && (remark.value.isNullOrEmpty() || remark.value!!.length < 10)) {
+        if (BuildConfig.FLAVOR == "konga" && (remark.value.isNullOrEmpty() || remark.value!!.length < 6)) {
             _message.value = Event("Remark too short")
             return
         }
