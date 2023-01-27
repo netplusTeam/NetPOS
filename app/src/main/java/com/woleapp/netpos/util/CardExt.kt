@@ -52,8 +52,9 @@ fun showCardDialog(
 ): LiveData<Event<ICCCardHelper>> {
     var configurationFinished = false
     val liveData: MutableLiveData<Event<ICCCardHelper>> = MutableLiveData()
-    if (NetPosTerminalConfig.liveData.hasActiveObservers())
+    if (NetPosTerminalConfig.liveData.hasActiveObservers()) {
         NetPosTerminalConfig.liveData.removeObservers(lifecycleOwner)
+    }
     val progressDialog = ProgressDialog(context)
     progressDialog.setMessage("connecting, please wait...")
     var observer: Observer<Event<Int>>? = null
@@ -64,20 +65,23 @@ fun showCardDialog(
                 0 -> progressDialog.show()
                 1 -> {
                     configurationFinished = true
-                    if (progressDialog.isShowing)
+                    if (progressDialog.isShowing) {
                         progressDialog.dismiss()
+                    }
                     getCardLiveData(context, amount, cashBackAmount, liveData, compositeDisposable)
                     NetPosTerminalConfig.liveData.removeObserver(observer!!)
                 }
                 -1 -> {
                     configurationFinished = true
-                    if (progressDialog.isShowing)
+                    if (progressDialog.isShowing) {
                         progressDialog.dismiss()
+                    }
                     if (NetPosTerminalConfig.getTerminalId().isEmpty()) {
                         Toast.makeText(context, "No TID found on account", Toast.LENGTH_SHORT)
                             .show()
-                    } else
+                    } else {
                         Toast.makeText(context, "Connection Failed", Toast.LENGTH_SHORT).show()
+                    }
                 }
                 else -> {
                 }
@@ -109,11 +113,16 @@ fun getCardLiveData(
 ) {
     val dialog = ProgressDialog(context)
         .apply {
+            Timber.d("TROUBLE_SHOOTING====>%s", "CARD_READER_SOMETHING_GOT_HERE_1")
             setMessage("Waiting for card")
             // setCancelable(false)
         }
     var iccCardHelper: ICCCardHelper? = null
-    val cardService = CardReaderService(context, listOf(DEV_ICC, DEV_PICC), keyMode = POIHsmManage.PED_PINBLOCK_FETCH_MODE_TPK)
+    val cardService = CardReaderService(
+        context,
+        listOf(DEV_ICC, DEV_PICC),
+        keyMode = POIHsmManage.PED_PINBLOCK_FETCH_MODE_TPK
+    )
     val c = cardService.initiateICCCardPayment(
         amount,
         cashBackAmount
@@ -124,9 +133,6 @@ fun getCardLiveData(
             when (it) {
                 is CardReaderEvent.CardRead -> {
                     val cardResult: CardReadResult = it.data
-
-//                    Timber.e(cardResult.iccDataString)
-//                    Timber.e(cardResult.nibssIccSubset)
                     val card = CardData(
                         track2Data = cardResult.track2Data!!,
                         nibssIccSubset = cardResult.nibssIccSubset,
@@ -140,8 +146,6 @@ fun getCardLiveData(
                         }
                     }
                     Timber.e(card.toString())
-                    // Timber.e(cardResult.iccDataString)
-                    // Timber.e(card.toString())
                     iccCardHelper = ICCCardHelper(
                         cardReadResult = cardResult,
                         customerName = cardResult.cardHolderName,
@@ -162,8 +166,12 @@ fun getCardLiveData(
                 }
                 is CardReaderEvent.CardDetected -> {
                     val mode = when (it.mode) {
-                        DEV_ICC -> "EMV"
-                        DEV_PICC -> "EMV Contactless"
+                        DEV_ICC -> {
+                            "EMV"
+                        }
+                        DEV_PICC -> {
+                            "EMV Contactless"
+                        }
                         else -> "MAGNETIC STRIPE"
                     }
                     dialog.setMessage("Reading Card with $mode Please Wait")
@@ -203,6 +211,7 @@ fun sendCardEvent(s: String, s1: String, cardReaderMqttEvent: CardReaderMqttEven
     }
     MqttHelper.sendPayload(MqttTopics.CARD_READER_EVENTS, event)
 }
+
 private fun showSelectAccountTypeDialog(
     context: Activity,
     iccCardHelper: ICCCardHelper,

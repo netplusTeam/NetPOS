@@ -128,7 +128,7 @@ class NetPosTerminalConfig {
                             Prefs.putLong(LAST_POS_CONFIGURATION_TIME, System.currentTimeMillis())
                             Prefs.putString(PREF_CONFIG_DATA, gson.toJson(pair.second))
                             Prefs.putString(PREF_KEYHOLDER, gson.toJson(pair.first))
-                            writeTpkKey(DeviceConfig.TPKIndex, pair.first!!.clearPinKey)
+                            writeTpkKey(DeviceConfig.TPKIndex, pair.first!!.clearPinKey, context)
                             this.configData = pair.second
                         }
                         configurationStatus = 1

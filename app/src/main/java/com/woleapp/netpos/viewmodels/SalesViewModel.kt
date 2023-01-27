@@ -9,6 +9,7 @@ import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import com.danbamitale.epmslib.entities.* // ktlint-disable no-wildcard-imports
+import com.danbamitale.epmslib.extensions.maskPan
 import com.danbamitale.epmslib.processors.TransactionProcessor
 import com.danbamitale.epmslib.utils.IsoAccountType
 import com.danbamitale.epmslib.utils.MessageReasonCode
@@ -28,6 +29,7 @@ import com.woleapp.netpos.model.AppConstants.ISW_TOKEN
 import com.woleapp.netpos.network.* // ktlint-disable no-wildcard-imports
 import com.woleapp.netpos.nibss.NetPosTerminalConfig
 import com.woleapp.netpos.util.* // ktlint-disable no-wildcard-imports
+import com.woleapp.netpos.util.ConnectionErrorConstants.isConnectionError
 import com.woleapp.netpos.util.ModelMapper.mapRequestDataToTransactionResponse
 import com.woleapp.netpos.util.RandomNumUtil.dateStr2Long
 import com.woleapp.netpos.util.RandomNumUtil.formattedTime
@@ -36,6 +38,8 @@ import com.woleapp.netpos.util.RandomNumUtil.getCurrentDateTime
 import com.woleapp.netpos.util.RandomNumUtil.getDate
 import com.woleapp.netpos.util.RandomNumUtil.getTransactionResponseToLog
 import com.woleapp.netpos.util.RandomNumUtil.mapDanbamitaleResponseToResponseX
+import com.woleapp.netpos.util.ResponseCodeWarrantingForReversalConstants.doesResponseCodeWarrantsReversal
+import com.woleapp.netpos.util.ResponseCodeWarrantingForReversalConstants.wasTransactionCompletedPartially
 import com.woleapp.netpos.util.Singletons.getKeyHolder
 import com.woleapp.netpos.util.Singletons.gson
 import io.reactivex.Single
@@ -223,7 +227,7 @@ class SalesViewModel(
 
         val transactionToLog = cardData?.expiryDate?.let {
             customerName.value?.let { it1 ->
-                user?.netplus_id?.let { it2 ->
+                Singletons.getConfigData()?.cardAcceptorIdCode?.let { it2 ->
                     val newAmount = amountLong.toDouble()/*amount.value!!.toDoubleOrNull() */
                     TransactionToLogBeforeConnectingToNibbs(
                         status = "PENDING",
@@ -245,7 +249,7 @@ class SalesViewModel(
                             id = 0,
                             localDate_13 = getDate(),
                             localTime_12 = transTime,
-                            maskedPan = cardData!!.pan,
+                            maskedPan = cardData!!.pan.maskPan(),
                             merchantId = it2,
                             originalForwardingInstCode = "",
                             otherAmount = requestData.otherAmount.toInt(),
@@ -315,6 +319,31 @@ class SalesViewModel(
         customRrn: String
     ) {
         processor.processTransaction(context, requestData, cardData!!)
+            .flatMap labelCheckForReversal@{ transRes ->
+                Timber.d("ORIGINAL_TRANSACTION_RECEIVED=====>%s", gson.toJson(transRes))
+                return@labelCheckForReversal when {
+                    isConnectionError(transRes.responseMessage) -> {
+                        saveTransactionToDb(transRes)
+                        Timber.d("REVERSAL_CALLED?=====>%s", "YES_11")
+                        triggerReversal(processor, context)
+                        Single.just(transRes)
+                    }
+                    wasTransactionCompletedPartially(transRes.responseCode) -> {
+                        saveTransactionToDb(transRes)
+                        Timber.d("REVERSAL_CALLED?=====>%s", "YES_22")
+                        triggerReversal(processor, context)
+                        Single.just(transRes)
+                    }
+                    doesResponseCodeWarrantsReversal(transRes.responseCode) -> {
+                        saveTransactionToDb(transRes)
+                        Timber.d("REVERSAL_CALLED?=====>%s", "YES_33")
+                        triggerReversal(processor, context)
+                        Single.just(transRes)
+                    }
+                    else ->
+                        Single.just(transRes)
+                }
+            }
             .onErrorResumeNext {
                 saveReversalTransaction(requestData)
                 processor.rollback(context, MessageReasonCode.Timeout)
@@ -336,8 +365,6 @@ class SalesViewModel(
 
                 val transRespons = it.copy(responseCode = modifiedResponseCode)
 
-                Timber.d("TRANSACTION_JUST_PERFORMED====>%s", gson.toJson(transRespons))
-
                 lastTransactionResponse.postValue(transRespons)
                 lastTransaction = transRespons
                 temporalRrnForLastTransaction.postValue(customRrn)
@@ -354,6 +381,17 @@ class SalesViewModel(
             .doFinally {
                 transactionState.value = STATE_PAYMENT_STAND_BY
                 printReceipt(context)
+
+                val modifiedResponseCode =
+                    if (lastTransaction.responseCode == "22" || lastTransaction.responseCode == "34" || lastTransaction.responseCode == "59" || lastTransaction.responseCode == "A3") "06" else lastTransaction.responseCode
+                transactionResponseDao
+                    .insertNewTransaction(lastTransaction.copy(responseCode = modifiedResponseCode))
+                    .subscribeOn(Schedulers.io())
+                    .observeOn(AndroidSchedulers.mainThread())
+                    .subscribe { t1, t2 ->
+                        t1.let { Timber.d(it.toString()) }
+                        t2.let { Timber.d(it.localizedMessage) }
+                    }.disposeWith(compositeDisposable)
 
                 handleUpdateOfTransactionPayloadInBackend(lastTransaction, customRrn)
                     .subscribeOn(Schedulers.io())
@@ -424,6 +462,20 @@ class SalesViewModel(
         compositeDisposable.clear()
     }
 
+    private fun saveTransactionToDb(transResponse: TransactionResponse) {
+        val modifiedResponseCode =
+            if (transResponse.responseCode == "22" || transResponse.responseCode == "34" || transResponse.responseCode == "59" || transResponse.responseCode == "A3") "06" else transResponse.responseCode
+
+        transactionResponseDao
+            .insertNewTransaction(transResponse.copy(responseCode = modifiedResponseCode))
+            .subscribeOn(Schedulers.io())
+            .observeOn(AndroidSchedulers.mainThread())
+            .subscribe { t1, t2 ->
+                t1?.let { Timber.d(it.toString()) }
+                t2?.let { Timber.d(it.localizedMessage) }
+            }.disposeWith(compositeDisposable)
+    }
+
     fun setAccountType(accountType: IsoAccountType) {
         this.isoAccountType = accountType
     }
@@ -437,6 +489,18 @@ class SalesViewModel(
             lastTransactionResponse.value!!.buildSMSText(remark.value ?: "")
                 .toString()
         )
+    }
+
+    private fun triggerReversal(processor: TransactionProcessor, context: Context) {
+        processor.rollback(context, MessageReasonCode.Timeout)
+            .subscribeOn(Schedulers.io())
+            .observeOn(AndroidSchedulers.mainThread())
+            .subscribe { data, error ->
+                data?.let {
+                    Timber.d("REVERSAL_RESPONSE=====>%s", gson.toJson(it))
+                }
+                error?.let { Timber.d("REVERSAL_ERROR_RESPONSE=====>%s", it.localizedMessage) }
+            }
     }
 
     private fun printReceipt(context: Context) {

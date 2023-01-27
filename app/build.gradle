@@ -40,10 +40,10 @@ android {
     defaultConfig {
         vectorDrawables.useSupportLibrary = true
         applicationId "com.woleapp.netpos"
-        minSdkVersion 21
+        minSdkVersion 23
         targetSdkVersion 30
-        versionCode 165
-        versionName "1.1.165"
+        versionCode 168
+        versionName "1.1.168"
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         def environmentPath
         if (appModeProd == "true")
@@ -197,7 +197,7 @@ dependencies {
 //    implementation project (path: ':nibssDirect')
 
     //netpos sdk
-    implementation "com.netpluspay.netpossdk:netpossdk:1.0.24"
+    implementation "com.netpluspay.netpossdk:netpossdk:1.0.25"
     //implementation project(path: ':netpossdk')
 
     //Timber
