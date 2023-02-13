@@ -119,6 +119,9 @@ class SalesViewModel(
         get() = _toastMessage
     private val _getCardData = MutableLiveData<Event<Boolean>>()
 
+    private val _showTransactionResponseDialog: MutableLiveData<Event<String>> = MutableLiveData()
+    val showTransactionResponseDialog: LiveData<Event<String>> get() = _showTransactionResponseDialog
+
     val showPrintDialog: LiveData<Event<String>>
         get() = _showPrintDialog
 
@@ -380,7 +383,16 @@ class SalesViewModel(
             .observeOn(AndroidSchedulers.mainThread())
             .doFinally {
                 transactionState.value = STATE_PAYMENT_STAND_BY
-                printReceipt(context)
+                val transactionResponse = lastTransactionResponse.value ?: gatewayErrorTransactionResponse(
+                    amountLong,
+                    TransactionType.PURCHASE,
+                    isoAccountType!!
+                ).apply {
+                    this.cardExpiry = ""
+                    this.cardHolder = customerName.value ?: ""
+                }
+                showTransactionReceipt(transactionResponse.buildSMSText(remark.value ?: "").toString())
+                // printReceipt(context)
 
                 val modifiedResponseCode =
                     if (lastTransaction.responseCode == "22" || lastTransaction.responseCode == "34" || lastTransaction.responseCode == "59" || lastTransaction.responseCode == "A3") "06" else lastTransaction.responseCode
@@ -444,7 +456,17 @@ class SalesViewModel(
             .observeOn(AndroidSchedulers.mainThread())
             .doFinally {
                 transactionState.value = STATE_PAYMENT_STAND_BY
-                printReceipt(context)
+                val transactionResponse = lastTransactionResponse.value ?: gatewayErrorTransactionResponse(
+                    amountLong,
+                    TransactionType.PURCHASE,
+                    isoAccountType!!
+                ).apply {
+                    this.cardExpiry = ""
+                    this.cardHolder = customerName.value ?: ""
+                }
+                showTransactionReceipt(transactionResponse.buildSMSText(remark.value ?: "").toString())
+                // SHOW TRANSACTION RECEIPT FIRST BEFORE PRINTING
+                // printReceipt(context)
                 handleUpdateOfTransactionPayloadInBackend(lastTransaction, customRrn)
             }.subscribe { t1, throwable ->
                 t1?.let {
@@ -503,6 +525,16 @@ class SalesViewModel(
             }
     }
 
+    private fun showTransactionReceipt(transactionResp: String) {
+        _showTransactionResponseDialog.postValue(
+            Event(transactionResp)
+        )
+    }
+
+    fun printReceiptAfterShowTransactionReceipt(context: Context) {
+        printReceipt(context)
+    }
+
     private fun printReceipt(context: Context) {
         val transactionResponse = lastTransactionResponse.value ?: gatewayErrorTransactionResponse(
             amountLong,
@@ -536,6 +568,9 @@ class SalesViewModel(
                 PREF_VALUE_PRINT_DOWNLOAD_AND_SHARE_RECEIPT -> _downloadOrShareReceiptAsPdfMutableLiveData.postValue(
                     Event(PREF_VALUE_PRINT_DOWNLOAD_AND_SHARE_RECEIPT)
                 )
+                else -> {
+                    printReceipt(context, isMerchantCopy = false)
+                }
             }
         } else {
             when (Prefs.getString(PREF_PRINTER_SETTINGS, "")) {
@@ -548,9 +583,12 @@ class SalesViewModel(
                 PREF_VALUE_PRINT_DOWNLOAD_AND_SHARE_RECEIPT -> _downloadOrShareReceiptAsPdfMutableLiveData.postValue(
                     Event(PREF_VALUE_PRINT_DOWNLOAD_AND_SHARE_RECEIPT)
                 )
+                PREF_VALUE_PRINT_SMS -> _showPrintDialog.postValue(
+                    Event(transactionResponse.buildSMSText().toString())
+                )
                 else -> {
-                    _showPrintDialog.postValue(
-                        Event(transactionResponse.buildSMSText().toString())
+                    _downloadOrShareReceiptAsPdfMutableLiveData.postValue(
+                        Event(PREF_VALUE_PRINT_DOWNLOAD_AND_SHARE_RECEIPT)
                     )
                 }
             }

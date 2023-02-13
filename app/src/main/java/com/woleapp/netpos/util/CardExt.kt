@@ -113,7 +113,6 @@ fun getCardLiveData(
 ) {
     val dialog = ProgressDialog(context)
         .apply {
-            Timber.d("TROUBLE_SHOOTING====>%s", "CARD_READER_SOMETHING_GOT_HERE_1")
             setMessage("Waiting for card")
             // setCancelable(false)
         }
@@ -175,7 +174,6 @@ fun getCardLiveData(
                         else -> "MAGNETIC STRIPE"
                     }
                     dialog.setMessage("Reading Card with $mode Please Wait")
-                    Timber.e("Card Detected")
                 }
                 else -> {
                 }

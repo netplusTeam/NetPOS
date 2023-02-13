@@ -20,10 +20,7 @@ import com.google.gson.JsonObject
 import com.netpluspay.netpossdk.NetPosSdk
 import com.woleapp.netpos.R
 import com.woleapp.netpos.database.AppDatabase
-import com.woleapp.netpos.databinding.DialogPrintTypeBinding
-import com.woleapp.netpos.databinding.DialogTransactionResultBinding
-import com.woleapp.netpos.databinding.FragmentSalesBinding
-import com.woleapp.netpos.databinding.LayoutPosReceiptPdfBinding
+import com.woleapp.netpos.databinding.*
 import com.woleapp.netpos.model.Vend
 import com.woleapp.netpos.nibss.NetPosTerminalConfig
 import com.woleapp.netpos.util.*
@@ -71,6 +68,8 @@ class SalesFragment : BaseFragment() {
     private lateinit var alertDialog: AlertDialog
     private lateinit var receiptDialogBinding: DialogTransactionResultBinding
     private lateinit var dialogPrintTypeBinding: DialogPrintTypeBinding
+    private lateinit var transactionResultDialogBinding: DialogTransactionResultShowResultBinding
+    private lateinit var transactionResultDialog: AlertDialog
     private lateinit var printTypeDialog: AlertDialog
     private lateinit var printerErrorDialog: AlertDialog
     private val compositeDisposable = CompositeDisposable()
@@ -89,6 +88,13 @@ class SalesFragment : BaseFragment() {
                 TransactionType.PURCHASE.name
             ) ?: TransactionType.PURCHASE.name
         )
+
+        transactionResultDialogBinding =
+            DialogTransactionResultShowResultBinding.inflate(inflater, null, false)
+                .apply { executePendingBindings() }
+
+        transactionResultDialog = createTransactionResultDialog()
+
         if (transactionType == TransactionType.DEPOSIT) {
             binding.enterName.visibility = View.GONE
         }
@@ -320,6 +326,17 @@ class SalesFragment : BaseFragment() {
         return binding.root
     }
 
+    private fun createTransactionResultDialog(): AlertDialog =
+        AlertDialog.Builder(requireContext()).setCancelable(false).apply {
+            setView(transactionResultDialogBinding.root)
+            transactionResultDialogBinding.apply {
+                sendButton.setOnClickListener {
+                    transactionResultDialog.dismiss()
+                    viewModel.printReceiptAfterShowTransactionReceipt(requireContext())
+                }
+            }
+        }.create()
+
     private fun getPermissionAndCreatePdf(view: ViewDataBinding) {
         ModelMapper.genericPermissionHandler(
             requireActivity(),
@@ -402,6 +419,15 @@ class SalesFragment : BaseFragment() {
     override fun onResume() {
         super.onResume()
         handlePdfReceiptPrinting()
+        viewModel.showTransactionResponseDialog.observe(viewLifecycleOwner) { event ->
+            event.getContentIfNotHandled()?.let {
+                transactionResultDialogBinding.transactionContent.text = it
+                transactionResultDialog.apply {
+                    setCancelable(false)
+                    show()
+                }
+            }
+        }
     }
 
     private fun vend() {

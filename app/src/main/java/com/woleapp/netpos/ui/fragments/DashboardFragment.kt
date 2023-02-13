@@ -91,7 +91,9 @@ class DashboardFragment : BaseFragment() {
     private lateinit var receiptPdf: File
     private lateinit var pdfView: LayoutPosReceiptPdfBinding
     private lateinit var alertDialog: AlertDialog
+    private lateinit var transactionResultDialog: AlertDialog
     private lateinit var receiptDialogBinding: DialogTransactionResultBinding
+    private lateinit var transactionResultDialogBinding: DialogTransactionResultShowResultBinding
     private lateinit var dialogPrintTypeBinding: DialogPrintTypeBinding
     private lateinit var printTypeDialog: AlertDialog
     private lateinit var printerErrorDialog: AlertDialog
@@ -128,6 +130,12 @@ class DashboardFragment : BaseFragment() {
         }
         getIswToken(requireContext())
         transRemark = binding.transactionRemark
+
+        transactionResultDialogBinding =
+            DialogTransactionResultShowResultBinding.inflate(inflater, null, false)
+                .apply { executePendingBindings() }
+
+        transactionResultDialog = createTransactionResultDialog()
 
         receiptDialogBinding = DialogTransactionResultBinding.inflate(inflater, null, false)
             .apply { executePendingBindings() }
@@ -203,6 +211,16 @@ class DashboardFragment : BaseFragment() {
             val virtualAccount = Prefs.getString(PREF_ZENITH_PBT_USER_ACCOUNT, "")
             userZenithPbtVirtualAccount =
                 gson.fromJson(virtualAccount, GetPayByTransferUserAccountModel::class.java)
+        }
+
+        viewModel.showTransactionResponseDialog.observe(viewLifecycleOwner) { event ->
+            event.getContentIfNotHandled()?.let {
+                transactionResultDialogBinding.transactionContent.text = it
+                transactionResultDialog.apply {
+                    setCancelable(false)
+                    show()
+                }
+            }
         }
     }
 
@@ -834,6 +852,17 @@ class DashboardFragment : BaseFragment() {
             Snackbar.LENGTH_LONG
         ).show()
     }
+
+    private fun createTransactionResultDialog(): AlertDialog =
+        AlertDialog.Builder(requireContext()).setCancelable(false).apply {
+            setView(transactionResultDialogBinding.root)
+            transactionResultDialogBinding.apply {
+                sendButton.setOnClickListener {
+                    transactionResultDialog.dismiss()
+                    viewModel.printReceiptAfterShowTransactionReceipt(requireContext())
+                }
+            }
+        }.create()
 
     private fun implementationCopiedFromDashBoard() {
         viewModel.message.observe(viewLifecycleOwner) {
