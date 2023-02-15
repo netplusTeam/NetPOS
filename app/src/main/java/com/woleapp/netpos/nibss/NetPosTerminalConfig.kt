@@ -89,6 +89,10 @@ class NetPosTerminalConfig {
             val req = when {
                 DateUtils.isToday(Prefs.getLong(LAST_POS_CONFIGURATION_TIME, 0)).not() -> {
                     Timber.e("last configuration time was not today, configure terminal now")
+                    Timber.d(
+                        "CONFIGURATION_CHECKER%s",
+                        "Last configuration time was not today, restart the terminal the application to configure your terminal"
+                    )
                     configureTerminal(context)
                 }
                 keyHolder != null && configData != null -> {
@@ -128,7 +132,7 @@ class NetPosTerminalConfig {
                             Prefs.putLong(LAST_POS_CONFIGURATION_TIME, System.currentTimeMillis())
                             Prefs.putString(PREF_CONFIG_DATA, gson.toJson(pair.second))
                             Prefs.putString(PREF_KEYHOLDER, gson.toJson(pair.first))
-                            writeTpkKey(DeviceConfig.TPKIndex, pair.first!!.clearPinKey, context)
+                            writeTpkKey(DeviceConfig.TPKIndex, pair.first!!.clearPinKey)
                             this.configData = pair.second
                         }
                         configurationStatus = 1
