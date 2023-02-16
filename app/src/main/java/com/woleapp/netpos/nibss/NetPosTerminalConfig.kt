@@ -89,10 +89,6 @@ class NetPosTerminalConfig {
             val req = when {
                 DateUtils.isToday(Prefs.getLong(LAST_POS_CONFIGURATION_TIME, 0)).not() -> {
                     Timber.e("last configuration time was not today, configure terminal now")
-                    Timber.d(
-                        "CONFIGURATION_CHECKER%s",
-                        "Last configuration time was not today, restart the terminal the application to configure your terminal"
-                    )
                     configureTerminal(context)
                 }
                 keyHolder != null && configData != null -> {

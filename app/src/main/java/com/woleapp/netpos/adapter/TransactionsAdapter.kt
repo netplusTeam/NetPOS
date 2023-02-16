@@ -61,6 +61,6 @@ class TransactionsViewHolder private constructor(val binding: LayoutTransactionI
         binding.transactionAmount.text =
             transactionResponse.amount.div(100).formatCurrencyAmount("\u20A6")
         binding.transactionDate.text =
-            (transactionResponse.transactionTimeInMillis - 7200000).formatDate()
+            (transactionResponse.transactionTimeInMillis).formatDate()
     }
 }

@@ -489,6 +489,7 @@ class MainActivity : AppCompatActivity(), EasyPermissions.PermissionCallbacks {
     }
 
     private fun showEndOfDayBottomSheetDialog(transactions: List<TransactionResponse>) {
+        Timber.d("INSIDE_SHOW_BOTTOM===>%s", gson.toJson(transactions))
         val approvedList = transactions.filter { it.responseCode == "00" }
         val declinedList = transactions.filter { it.responseCode != "00" }
         val endOfDay =
@@ -580,6 +581,7 @@ class MainActivity : AppCompatActivity(), EasyPermissions.PermissionCallbacks {
                 Timber.d("ERROR_HAPPENING=========>%s", it.localizedMessage)
             }
             .flatMap { transactionList ->
+                Timber.d("CHECKING_TIME==>%s", gson.toJson(transactionList))
                 Single.just(
                     GateWayTransactionResponse(
                         ModelMapper.mapTransFromGateWayToEntity(transactionList),
@@ -631,6 +633,7 @@ class MainActivity : AppCompatActivity(), EasyPermissions.PermissionCallbacks {
             RandomNumUtil.getDateInMilliSecsForLocalForEndOfDay(df.format(be))
         )
             .flatMap { gateWayResp ->
+                Timber.d("GOT_HERE_A===>%s", gson.toJson(gateWayResp))
                 if (gateWayResp.result.isEmpty()) {
                     return@flatMap stormApiService.getTransactionsFromNewService(
                         parameters.terminalId,
@@ -681,9 +684,17 @@ class MainActivity : AppCompatActivity(), EasyPermissions.PermissionCallbacks {
                     } catch (e: Exception) {
                         when (it) {
                             is GetEndOfDayModelFromNewServer -> {
+                                Timber.d(
+                                    "FINAL_DATA_GetEndOfDayModelFromNewServer===>%s",
+                                    gson.toJson(it)
+                                )
                                 showEndOfDayBottomSheetDialog(it.data.rows.mapRowToTransactionResponse())
                             }
                             is GateWayTransactionResponse -> {
+                                Timber.d(
+                                    "FINAL_DATA_GateWayTransactionResponse===>%s",
+                                    gson.toJson(it)
+                                )
                                 showEndOfDayBottomSheetDialog(
                                     ModelMapper.mapEntityToTransFromGateWay(
                                         it.result
@@ -691,6 +702,7 @@ class MainActivity : AppCompatActivity(), EasyPermissions.PermissionCallbacks {
                                 )
                             }
                             is NewEodModel -> {
+                                Timber.d("FINAL_DATA_NewEodModel_AA===>%s", gson.toJson(it))
                                 showEndOfDayBottomSheetDialog(it.value.data.rows.mapRowToTransactionResponse())
                             }
                             else -> {

@@ -643,6 +643,7 @@ class DashboardFragment : BaseFragment() {
                 Timber.d("ERROR_HAPPENING=========>%s", it.localizedMessage)
             }
             .flatMap { transactionList ->
+                Timber.d("CHECKING_TIME==>%s", gson.toJson(transactionList))
                 Single.just(
                     GateWayTransactionResponse(
                         mapTransFromGateWayToEntity(transactionList),
@@ -740,6 +741,7 @@ class DashboardFragment : BaseFragment() {
                 t1?.let {
                     try {
                         val response = gson.fromJson(gson.toJson(it), NewEodModel::class.java)
+                        Timber.d("CHECKING_TIME_2==>%s", gson.toJson(response))
                         showEndOfDayBottomSheetDialog(response.value.data.rows.mapRowToTransactionResponse())
                     } catch (e: Exception) {
                         when (it) {

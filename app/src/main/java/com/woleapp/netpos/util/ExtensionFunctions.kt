@@ -23,11 +23,7 @@ import okhttp3.ResponseBody
 import retrofit2.HttpException
 import timber.log.Timber
 import java.text.SimpleDateFormat
-import java.time.LocalDateTime
-import java.time.ZoneId
-import java.time.ZonedDateTime
-import java.time.format.DateTimeFormatter
-import java.util.* // ktlint-disable no-wildcard-imports
+import java.util.*
 
 fun Long.formatDate(): String? =
     SimpleDateFormat("yyyy-MM-dd hh:mm:ss a", Locale.getDefault()).format(Date(this))
@@ -123,8 +119,9 @@ fun Throwable.getResponseBody(): String {
         } finally {
             body?.close()
         }
-    } else
+    } else {
         "{\"message\": \"An unexpected error occurred, Please try again\"}"
+    }
 }
 
 fun Throwable.isHttpException(): Boolean = (this is HttpException && this.code() in 400..599)

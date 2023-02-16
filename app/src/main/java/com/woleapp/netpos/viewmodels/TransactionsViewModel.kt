@@ -513,12 +513,9 @@ class TransactionsViewModel(private val appDatabase: AppDatabase) : ViewModel() 
 
     fun setEndOfDayList(eodList: List<TransactionResponse>) {
         this.endOfDayList = eodList
-        Log.d("SIZESIZE", eodList.size.toString())
         eodList.forEach {
-            println("ANOTHER_V" + it.localDate_13)
             println("ANOTHER_V" + it.transmissionDateTime)
             println("ANOTHER_V" + it.transactionTimeInMillis.toString())
-            println("ANOTHER_V" + it.localTime_12)
             print("============================================\n")
         }
     }
