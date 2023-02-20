@@ -368,7 +368,7 @@ class MainActivity : AppCompatActivity(), EasyPermissions.PermissionCallbacks {
         firebaseMessagingInstance.token.addOnCompleteListener(
             OnCompleteListener { task ->
                 if (!task.isSuccessful) {
-                    Log.w(TAG1, "Fetching FCM registgitration token failed", task.exception)
+                    Log.w(TAG1, "Fetching FCM registration token failed", task.exception)
                     return@OnCompleteListener
                 }
 
@@ -489,7 +489,6 @@ class MainActivity : AppCompatActivity(), EasyPermissions.PermissionCallbacks {
     }
 
     private fun showEndOfDayBottomSheetDialog(transactions: List<TransactionResponse>) {
-        Timber.d("INSIDE_SHOW_BOTTOM===>%s", gson.toJson(transactions))
         val approvedList = transactions.filter { it.responseCode == "00" }
         val declinedList = transactions.filter { it.responseCode != "00" }
         val endOfDay =
@@ -581,7 +580,6 @@ class MainActivity : AppCompatActivity(), EasyPermissions.PermissionCallbacks {
                 Timber.d("ERROR_HAPPENING=========>%s", it.localizedMessage)
             }
             .flatMap { transactionList ->
-                Timber.d("CHECKING_TIME==>%s", gson.toJson(transactionList))
                 Single.just(
                     GateWayTransactionResponse(
                         ModelMapper.mapTransFromGateWayToEntity(transactionList),
@@ -633,7 +631,6 @@ class MainActivity : AppCompatActivity(), EasyPermissions.PermissionCallbacks {
             RandomNumUtil.getDateInMilliSecsForLocalForEndOfDay(df.format(be))
         )
             .flatMap { gateWayResp ->
-                Timber.d("GOT_HERE_A===>%s", gson.toJson(gateWayResp))
                 if (gateWayResp.result.isEmpty()) {
                     return@flatMap stormApiService.getTransactionsFromNewService(
                         parameters.terminalId,

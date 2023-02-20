@@ -295,25 +295,6 @@ class TransactionsViewModel(private val appDatabase: AppDatabase) : ViewModel() 
                 }
             }
         }
-
-//        if (Build.MODEL.equals("Pro", true) || Build.MODEL.equals(
-//                "P3",
-//                true
-//            )
-//        ) transactionResponse.print(context, remark.value ?: "")
-//            .subscribeOn(Schedulers.io()) else {
-//            _showPrintDialog.postValue(
-//                Event(
-//                    transactionResponse.buildSMSText(remark.value ?: "").toString()
-//                )
-//            )
-//            Single.just(PrinterResponse(0, "SMS"))
-//        }.subscribeOn(Schedulers.io())
-//            .observeOn(AndroidSchedulers.mainThread())
-//            .subscribe { t1, t2 ->
-//
-//            }
-//            .disposeWith(compositeDisposable)
     }
 
     fun startPrintingReceipt(
@@ -352,44 +333,8 @@ class TransactionsViewModel(private val appDatabase: AppDatabase) : ViewModel() 
                     Timber.e(it)
                     _message.value = Event(it.localizedMessage ?: "Error")
                 }
-                // MqttHelper.sendPayload(MqttTopics.PRINTING_RECEIPT, printerEvent)
             }?.disposeWith(compositeDisposable)
     }
-
-//    fun startPrintingReceipt2(
-//        context: Context
-//    ) {
-//        inProgress.value = true
-//        printReceipt(context)
-//            .subscribeOn(Schedulers.io())
-//            .observeOn(AndroidSchedulers.mainThread())
-//            .subscribe { t1, t2 ->
-//                t1?.let {
-//                    event.apply {
-//                        this.event = MqttEvents.PRINTING_RECEIPT.event
-//                        this.code = it.code.toString()
-//                        this.timestamp = System.currentTimeMillis()
-//                        this.data =
-//                            lastTransactionResponse.value?.let { it1 ->
-//                                PrinterEventData(
-//                                    it1.RRN,
-//                                    it.message
-//                                )
-//                            }
-//                        this.status = it.message
-//                    }
-//                    MqttHelper.sendPayload(MqttTopics.PRINTING_RECEIPT, event)
-//                }
-//                _done.value = true
-//                inProgress.value = false
-//
-//                t2?.let {
-//                    _showPrinterError.value = Event(it.localizedMessage ?: "")
-//                    Timber.e(it)
-//                    _message.value = Event(it.localizedMessage ?: "")
-//                }
-//            }?.disposeWith(compositeDisposable)
-//    }
 
     fun showReceiptDialog() {
         _showPrintDialog.value = Event(
@@ -513,11 +458,6 @@ class TransactionsViewModel(private val appDatabase: AppDatabase) : ViewModel() 
 
     fun setEndOfDayList(eodList: List<TransactionResponse>) {
         this.endOfDayList = eodList
-        eodList.forEach {
-            println("ANOTHER_V" + it.transmissionDateTime)
-            println("ANOTHER_V" + it.transactionTimeInMillis.toString())
-            print("============================================\n")
-        }
     }
 
     fun getEodList() = endOfDayList

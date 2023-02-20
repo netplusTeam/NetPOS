@@ -98,7 +98,6 @@ fun previousEndOfDayPrintImplementation(
 fun List<TransactionResponse>.printEndOfDay(
     context: Context
 ): Single<PrinterResponse> {
-    Timber.d("DATA_TRANSACTION_TIME=======>%s", this.first().transactionTimeInMillis)
     if (Build.MODEL.equals("mini", true) || Build.MODEL.equals("p5", true)) {
         return Single.error(Throwable("Device cannot print"))
     }
@@ -153,32 +152,6 @@ fun List<TransactionResponse>.printEndOfDay(
         content = "MID: ${this@printEndOfDay.first().merchantId}"
     }
     printerManager.appendTextEntity(textPrintLine)
-// Old Implementation starts here
-//    forEach {
-//        if (it.responseCode == "00") {
-//            amountApproved = amountApproved.plus(it.amount)
-//        } else
-//            amountDeclined = amountDeclined.plus(it.amount)
-//
-//        textPrintLine.apply {
-//            isBold = true
-//            content = if (it.responseCode == "00") "Approved" else "Declined"
-//        }
-//        printerManager.appendTextEntity(textPrintLine)
-//        textPrintLine.apply {
-//            isBold = false
-//            content = "Amount: ${it.amount.div(100).formatCurrencyAmount("\u20A6")}"
-//        }
-//        printerManager.appendTextEntity(textPrintLine)
-//        textPrintLine.apply {
-//            content = "RRN: ${it.RRN}"
-//        }
-//        printerManager.appendTextEntity(textPrintLine)
-//        textPrintLine.apply {
-//            content = "Date: ${it.transactionTimeInMillis.formatDate()}"
-//        }
-//    }
-//    Old implementation ends here
 
     // New EOD implementation starts here
     drawStraightLine(printerManager, textPrintLine)
