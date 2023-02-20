@@ -4,13 +4,12 @@ import android.app.Activity
 import android.content.Context
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.LifecycleOwner
-import com.danbamitale.epmslib.entities.*
+import com.danbamitale.epmslib.entities.* // ktlint-disable no-wildcard-imports
 import com.danbamitale.epmslib.utils.IsoAccountType
 import com.woleapp.netpos.model.Row
 import com.woleapp.netpos.model.TransactionResponseModelFromGateWay
 import com.woleapp.netpos.util.RandomNumUtil.formattedTime
 import com.woleapp.netpos.util.RandomNumUtil.getDateInMillis
-import com.woleapp.netpos.util.RandomNumUtil.getDateInMillis3
 import pub.devrel.easypermissions.EasyPermissions
 
 object ModelMapper {

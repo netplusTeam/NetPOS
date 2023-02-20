@@ -4,7 +4,7 @@ apply plugin: 'kotlin-android-extensions'
 apply plugin: 'kotlin-kapt'
 apply plugin: 'com.github.sgtsilvio.gradle.android-retrofix'
 apply plugin: 'kotlin-kapt'
-apply plugin:  'dagger.hilt.android.plugin'
+apply plugin: 'dagger.hilt.android.plugin'
 //apply plugin: 'kotlin-parcelize'
 // Apply the Crashlytics Gradle plugin
 apply plugin: 'com.google.firebase.crashlytics'
@@ -42,8 +42,8 @@ android {
         applicationId "com.woleapp.netpos"
         minSdkVersion 23
         targetSdkVersion 30
-        versionCode 183
-        versionName "1.1.183"
+        versionCode 187
+        versionName "1.1.187"
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         def environmentPath
         if (appModeProd == "true")
@@ -123,11 +123,11 @@ android {
             dimension "whiteLabels"
             applicationIdSuffix ".heritage"
         }
-        aellacredit{
+        aellacredit {
             dimension "whiteLabels"
             applicationIdSuffix ".aellacredit"
         }
-        tingopay{
+        tingopay {
             dimension "whiteLabels"
             applicationIdSuffix ".tingopay"
         }
@@ -154,7 +154,7 @@ android {
         providus {
             java.srcDirs('src/defaults/java')
         }
-        wemacashout{
+        wemacashout {
             java.srcDirs('src/defaults/java')
         }
         heritage {
@@ -193,12 +193,9 @@ dependencies {
     implementation project(path: ':epmslib-release')
     implementation 'net.sf.j8583:j8583:1.12.0'
 
-    // Nibss Direct
-//    implementation project (path: ':nibssDirect')
-
     //netpos sdk
-    implementation "com.netpluspay.netpossdk:netpossdk:1.0.24"
-    //implementation project(path: ':netpossdk')
+    implementation "com.netpluspay.netpossdk:netpossdk:1.0.30"
+//    implementation project(':netposSdk')
 
     //Timber
     implementation 'com.jakewharton.timber:timber:4.7.1'

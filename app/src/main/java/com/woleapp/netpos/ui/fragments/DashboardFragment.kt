@@ -883,7 +883,7 @@ class DashboardFragment : BaseFragment() {
                     showCardDialog(
                         requireActivity(),
                         viewLifecycleOwner,
-                        viewModel.amountLong,
+                        (viewModel.amountLong / 100),
                         0L,
                         compositeDisposable
                     ).observe(viewLifecycleOwner) { event ->

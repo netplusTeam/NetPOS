@@ -52,7 +52,7 @@ class NetPosApp : Application() {
                 TerminalParameters()
                     .apply {
                         // online E068C8
-                        terminalCapability = "E0F8C8"
+                        terminalCapability = "E068C8"
                     }
             )
             Prefs.putBoolean("load_provided", true)

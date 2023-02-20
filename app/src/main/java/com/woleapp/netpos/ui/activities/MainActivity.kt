@@ -684,17 +684,9 @@ class MainActivity : AppCompatActivity(), EasyPermissions.PermissionCallbacks {
                     } catch (e: Exception) {
                         when (it) {
                             is GetEndOfDayModelFromNewServer -> {
-                                Timber.d(
-                                    "FINAL_DATA_GetEndOfDayModelFromNewServer===>%s",
-                                    gson.toJson(it)
-                                )
                                 showEndOfDayBottomSheetDialog(it.data.rows.mapRowToTransactionResponse())
                             }
                             is GateWayTransactionResponse -> {
-                                Timber.d(
-                                    "FINAL_DATA_GateWayTransactionResponse===>%s",
-                                    gson.toJson(it)
-                                )
                                 showEndOfDayBottomSheetDialog(
                                     ModelMapper.mapEntityToTransFromGateWay(
                                         it.result
@@ -702,7 +694,6 @@ class MainActivity : AppCompatActivity(), EasyPermissions.PermissionCallbacks {
                                 )
                             }
                             is NewEodModel -> {
-                                Timber.d("FINAL_DATA_NewEodModel_AA===>%s", gson.toJson(it))
                                 showEndOfDayBottomSheetDialog(it.value.data.rows.mapRowToTransactionResponse())
                             }
                             else -> {

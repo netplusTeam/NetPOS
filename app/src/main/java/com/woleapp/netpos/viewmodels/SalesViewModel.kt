@@ -327,21 +327,15 @@ class SalesViewModel(
                 return@labelCheckForReversal when {
                     isConnectionError(transRes.responseMessage) -> {
                         saveTransactionToDb(transRes)
-                        Timber.d("REVERSAL_CALLED?=====>%s", "YES_11")
                         triggerReversal(processor, context)
-                        Single.just(transRes)
                     }
                     wasTransactionCompletedPartially(transRes.responseCode) -> {
                         saveTransactionToDb(transRes)
-                        Timber.d("REVERSAL_CALLED?=====>%s", "YES_22")
                         triggerReversal(processor, context)
-                        Single.just(transRes)
                     }
                     doesResponseCodeWarrantsReversal(transRes.responseCode) -> {
                         saveTransactionToDb(transRes)
-                        Timber.d("REVERSAL_CALLED?=====>%s", "YES_33")
                         triggerReversal(processor, context)
-                        Single.just(transRes)
                     }
                     else ->
                         Single.just(transRes)
@@ -349,7 +343,7 @@ class SalesViewModel(
             }
             .onErrorResumeNext {
                 saveReversalTransaction(requestData)
-                processor.rollback(context, MessageReasonCode.Timeout)
+                triggerReversal(processor, context)
             }
             .flatMap {
                 transResp = it.copy(transmissionDateTime = getDate(it.transactionTimeInMillis))
@@ -383,16 +377,18 @@ class SalesViewModel(
             .observeOn(AndroidSchedulers.mainThread())
             .doFinally {
                 transactionState.value = STATE_PAYMENT_STAND_BY
-                val transactionResponse = lastTransactionResponse.value ?: gatewayErrorTransactionResponse(
-                    amountLong,
-                    TransactionType.PURCHASE,
-                    isoAccountType!!
-                ).apply {
-                    this.cardExpiry = ""
-                    this.cardHolder = customerName.value ?: ""
-                }
-                showTransactionReceipt(transactionResponse.buildSMSText(remark.value ?: "").toString())
-                // printReceipt(context)
+                val transactionResponse =
+                    lastTransactionResponse.value ?: gatewayErrorTransactionResponse(
+                        amountLong,
+                        TransactionType.PURCHASE,
+                        isoAccountType!!
+                    ).apply {
+                        this.cardExpiry = ""
+                        this.cardHolder = customerName.value ?: ""
+                    }
+                showTransactionReceipt(
+                    transactionResponse.buildSMSText(remark.value ?: "").toString()
+                )
 
                 val modifiedResponseCode =
                     if (lastTransaction.responseCode == "22" || lastTransaction.responseCode == "34" || lastTransaction.responseCode == "59" || lastTransaction.responseCode == "A3") "06" else lastTransaction.responseCode
@@ -417,7 +413,6 @@ class SalesViewModel(
                 }
                 throwable?.let {
                     Timber.d("ERROR_FROM_LOG_TO_BACKEDN=======>%s", gson.toJson(it))
-//                    _message.value = Event("Error: ${it.localizedMessage}")
                     Timber.e(it)
                 }
             }.disposeWith(compositeDisposable)
@@ -456,15 +451,18 @@ class SalesViewModel(
             .observeOn(AndroidSchedulers.mainThread())
             .doFinally {
                 transactionState.value = STATE_PAYMENT_STAND_BY
-                val transactionResponse = lastTransactionResponse.value ?: gatewayErrorTransactionResponse(
-                    amountLong,
-                    TransactionType.PURCHASE,
-                    isoAccountType!!
-                ).apply {
-                    this.cardExpiry = ""
-                    this.cardHolder = customerName.value ?: ""
-                }
-                showTransactionReceipt(transactionResponse.buildSMSText(remark.value ?: "").toString())
+                val transactionResponse =
+                    lastTransactionResponse.value ?: gatewayErrorTransactionResponse(
+                        amountLong,
+                        TransactionType.PURCHASE,
+                        isoAccountType!!
+                    ).apply {
+                        this.cardExpiry = ""
+                        this.cardHolder = customerName.value ?: ""
+                    }
+                showTransactionReceipt(
+                    transactionResponse.buildSMSText(remark.value ?: "").toString()
+                )
                 // SHOW TRANSACTION RECEIPT FIRST BEFORE PRINTING
                 // printReceipt(context)
                 handleUpdateOfTransactionPayloadInBackend(lastTransaction, customRrn)
@@ -513,17 +511,12 @@ class SalesViewModel(
         )
     }
 
-    private fun triggerReversal(processor: TransactionProcessor, context: Context) {
+    private fun triggerReversal(
+        processor: TransactionProcessor,
+        context: Context
+    ): Single<TransactionResponse> =
         processor.rollback(context, MessageReasonCode.Timeout)
             .subscribeOn(Schedulers.io())
-            .observeOn(AndroidSchedulers.mainThread())
-            .subscribe { data, error ->
-                data?.let {
-                    Timber.d("REVERSAL_RESPONSE=====>%s", gson.toJson(it))
-                }
-                error?.let { Timber.d("REVERSAL_ERROR_RESPONSE=====>%s", it.localizedMessage) }
-            }
-    }
 
     private fun showTransactionReceipt(transactionResp: String) {
         _showTransactionResponseDialog.postValue(
@@ -544,7 +537,6 @@ class SalesViewModel(
             this.cardExpiry = ""
             this.cardHolder = customerName.value ?: ""
         }
-        Log.d("MNAME2", Singletons.getCurrentlyLoggedInUser()!!.business_name ?: "Null")
 
         if (Build.MODEL.equals("Pro", true) || Build.MODEL.equals("P3", true)) {
             when (Prefs.getString(PREF_PRINTER_SETTINGS, PREF_VALUE_PRINT_CUSTOMER_COPY_ONLY)) {
