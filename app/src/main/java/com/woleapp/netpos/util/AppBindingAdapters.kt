@@ -47,7 +47,7 @@ fun Button.processQuickCashOutButtonState(transactionState: Int) {
 
 @BindingAdapter("setPrintButtonLabelText")
 fun Button.setPrintButtonLabelText(dormantInput: String) {
-    text = if (Build.MODEL.equals("Pro", true)) {
+    text = if (Build.MODEL.equals("Pro", true) || Build.MODEL.equals("P3", true)) {
         resources.getString(R.string.print)
     } else {
         resources.getString(R.string.download_or_share)
