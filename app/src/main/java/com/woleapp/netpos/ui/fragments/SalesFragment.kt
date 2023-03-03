@@ -20,10 +20,10 @@ import com.google.gson.JsonObject
 import com.netpluspay.netpossdk.NetPosSdk
 import com.woleapp.netpos.R
 import com.woleapp.netpos.database.AppDatabase
-import com.woleapp.netpos.databinding.*
+import com.woleapp.netpos.databinding.* // ktlint-disable no-wildcard-imports
 import com.woleapp.netpos.model.Vend
 import com.woleapp.netpos.nibss.NetPosTerminalConfig
-import com.woleapp.netpos.util.*
+import com.woleapp.netpos.util.* // ktlint-disable no-wildcard-imports
 import com.woleapp.netpos.util.pdfUtils.createPdf
 import com.woleapp.netpos.util.pdfUtils.initViewsForPdfLayout
 import com.woleapp.netpos.util.pdfUtils.sharePdf
@@ -167,18 +167,14 @@ class SalesFragment : BaseFragment() {
                 showSnackBar(s)
             }
         }
-        /*viewModel.getCardData.observe(viewLifecycleOwner){event ->
-            event.getContentIfNotHandled()?.let {
-                quickPay()
-            }
-        }*/
+
         viewModel.getCardData.observe(viewLifecycleOwner) { event ->
             event.getContentIfNotHandled()?.let { shouldGetCardData ->
                 if (shouldGetCardData) {
                     showCardDialog(
                         requireActivity(),
                         viewLifecycleOwner,
-                        viewModel.amountLong,
+                        viewModel.amountLong / 100,
                         0L,
                         compositeDisposable
                     ).observe(viewLifecycleOwner) { event ->
@@ -302,6 +298,7 @@ class SalesFragment : BaseFragment() {
             if (transactionType == TransactionType.DEPOSIT) {
                 viewModel.beginCashPayment()
             } else {
+                viewModel.setIsTransactionFromPurchaseFragment(true)
                 viewModel.validateField()
             }
         }

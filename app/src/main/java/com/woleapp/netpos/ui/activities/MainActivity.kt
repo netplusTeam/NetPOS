@@ -391,7 +391,7 @@ class MainActivity : AppCompatActivity(), EasyPermissions.PermissionCallbacks {
         showCardDialog(
             this,
             this,
-            1000,
+            0,
             0L
         ).observe(this) { event ->
             event.getContentIfNotHandled()?.let {

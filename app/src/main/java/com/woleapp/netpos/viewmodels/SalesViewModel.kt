@@ -119,14 +119,18 @@ class SalesViewModel(
         get() = _toastMessage
     private val _getCardData = MutableLiveData<Event<Boolean>>()
 
+    val getCardData: LiveData<Event<Boolean>>
+        get() = _getCardData
+
+    private val _isTransactionFromPurchaseFragment: MutableLiveData<Boolean> =
+        MutableLiveData(false)
+    val isTransactionFromPurchaseFragment: LiveData<Boolean> get() = _isTransactionFromPurchaseFragment
+
     private val _showTransactionResponseDialog: MutableLiveData<Event<String>> = MutableLiveData()
     val showTransactionResponseDialog: LiveData<Event<String>> get() = _showTransactionResponseDialog
 
     val showPrintDialog: LiveData<Event<String>>
         get() = _showPrintDialog
-
-    val getCardData: LiveData<Event<Boolean>>
-        get() = _getCardData
 
     val message: LiveData<Event<String>>
         get() = _message
@@ -177,6 +181,10 @@ class SalesViewModel(
                     Log.d("ERROR_SV1", "ERROR SAVING 1")
                 }
             }
+    }
+
+    fun setIsTransactionFromPurchaseFragment(value: Boolean) {
+        _isTransactionFromPurchaseFragment.postValue(value)
     }
 
     private fun logTransactionAfterConnectingToNibss(

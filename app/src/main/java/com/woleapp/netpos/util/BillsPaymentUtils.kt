@@ -1,15 +1,10 @@
 package com.woleapp.netpos.util
-
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import com.danbamitale.epmslib.entities.TransactionResponse
 import com.google.gson.JsonObject
 import com.pixplicity.easyprefs.library.Prefs
-import com.woleapp.netpos.model.MqttEvent
-import com.woleapp.netpos.model.MqttEvents
-import com.woleapp.netpos.model.SMSEvent
 import com.woleapp.netpos.network.StormApiClient
-
 import com.woleapp.netpos.network.StormApiService
 import io.reactivex.Single
 import io.reactivex.android.schedulers.AndroidSchedulers
@@ -112,15 +107,15 @@ fun sendSmS(
     _message: MutableLiveData<Event<String>>,
     compositeDisposable: CompositeDisposable
 ) {
-
     val req = if (checkAppToken().not()) {
         Timber.e("app token not found, get it first")
         getAppToken(StormApiClient.getBillsInstance())
             .flatMap {
                 sendSmSReq(transactionResponse, number)
             }
-    } else
+    } else {
         sendSmSReq(transactionResponse, number)
+    }
 
     req
         .subscribeOn(Schedulers.io())
@@ -134,7 +129,7 @@ fun sendSmS(
                 Timber.e(it)
                 val httpException = it as? HttpException
                 _message.value = Event(it.message ?: "")
-                //MqttHelper.sendPayload(MqttTopics.SMS_EVENTS, smsEvent)
+                // MqttHelper.sendPayload(MqttTopics.SMS_EVENTS, smsEvent)
                 _smsSent.value = Event(false)
             }
         }.disposeWith(compositeDisposable)

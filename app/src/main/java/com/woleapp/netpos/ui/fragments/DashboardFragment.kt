@@ -769,17 +769,6 @@ class DashboardFragment : BaseFragment() {
                     ).show()
                 }
             }.disposeWith(compositeDisposable)
-//        val livedata = AppDatabase.getDatabaseInstance(requireContext())
-//            .transactionResponseDao()
-//            .getEndOfDayTransaction(
-//                getBeginningOfDay(timestamp),
-//                getEndOfDayTimeStamp(timestamp),
-//                NetPosTerminalConfig.getTerminalId()
-//            )
-//        livedata.observe(viewLifecycleOwner) {
-//            showEndOfDayBottomSheetDialog(it)
-//            livedata.removeObservers(viewLifecycleOwner)
-//        }
     }
 
     private fun getPermissionAndCreatePdf(view: ViewDataBinding) {
@@ -872,18 +861,15 @@ class DashboardFragment : BaseFragment() {
                 showSnackBar(s)
             }
         }
-        /*viewModel.getCardData.observe(viewLifecycleOwner){event ->
-            event.getContentIfNotHandled()?.let {
-                quickPay()
-            }
-        }*/
+
         viewModel.getCardData.observe(viewLifecycleOwner) { event ->
             event.getContentIfNotHandled()?.let { shouldGetCardData ->
                 if (shouldGetCardData) {
+                    Timber.d("NOT_FROM_PURCHASE_2")
                     showCardDialog(
                         requireActivity(),
                         viewLifecycleOwner,
-                        (viewModel.amountLong / 100),
+                        viewModel.amountLong / 100,
                         0L,
                         compositeDisposable
                     ).observe(viewLifecycleOwner) { event ->
