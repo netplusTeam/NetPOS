@@ -17,14 +17,14 @@
 
         <ImageView
             android:id="@+id/imageView"
-            android:layout_width="@dimen/dimen_45dp"
+            android:layout_width="@dimen/dimen_160dp"
             android:layout_height="@dimen/dimen_45dp"
             android:scaleType="centerCrop"
             android:contentDescription="@string/app_logo"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent"
-            app:srcCompat="@drawable/ic_netpos_logo" />
+            app:srcCompat="@drawable/ic_app_logo" />
 
         <TextView
             android:id="@+id/title"

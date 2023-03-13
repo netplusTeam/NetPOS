@@ -42,8 +42,8 @@ android {
         applicationId "com.woleapp.netpos"
         minSdkVersion 23
         targetSdkVersion 30
-        versionCode 196
-        versionName "1.1.196"
+        versionCode 198
+        versionName "1.1.198"
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         def environmentPath
         if (appModeProd == "true")
@@ -131,6 +131,10 @@ android {
             dimension "whiteLabels"
             applicationIdSuffix ".tingopay"
         }
+        unitybank {
+            dimension "whiteLabels"
+            applicationIdSuffix ".unitybank"
+        }
     }
 
     variantFilter { variant ->
@@ -164,6 +168,9 @@ android {
             java.srcDirs('src/defaults/java')
         }
         tingopay {
+            java.srcDirs('src/defaults/java')
+        }
+        unitybank {
             java.srcDirs('src/defaults/java')
         }
     }
