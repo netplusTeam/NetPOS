@@ -36,6 +36,11 @@ android {
     }
 
     ndkVersion "21.3.6528147"
+    externalNativeBuild {
+        ndkBuild {
+            path file('src/main/jni/Android.mk')
+        }
+    }
 
     defaultConfig {
         vectorDrawables.useSupportLibrary = true

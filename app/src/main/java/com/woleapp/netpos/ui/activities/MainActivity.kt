@@ -131,7 +131,7 @@ class MainActivity : AppCompatActivity(), EasyPermissions.PermissionCallbacks {
             NetPosTerminalConfig.configurationStatus
         ) {
             -1 -> NetPosTerminalConfig.init(
-                applicationContext
+                applicationContext,
             )
             1 -> {
                 dismissProgressDialogIfShowing()
@@ -185,7 +185,7 @@ class MainActivity : AppCompatActivity(), EasyPermissions.PermissionCallbacks {
             this.setMessage(getString(R.string.please_wait))
             this.setButton(
                 DialogInterface.BUTTON_POSITIVE,
-                getString(R.string.cancel)
+                getString(R.string.cancel),
             ) { dialog, _ ->
                 compositeDisposable.clear()
                 dialog.cancel()
@@ -223,7 +223,7 @@ class MainActivity : AppCompatActivity(), EasyPermissions.PermissionCallbacks {
                 Manifest.permission.ACCESS_FINE_LOCATION,
                 Manifest.permission.ACCESS_COARSE_LOCATION,
                 Manifest.permission.WRITE_EXTERNAL_STORAGE,
-                Manifest.permission.READ_EXTERNAL_STORAGE
+                Manifest.permission.READ_EXTERNAL_STORAGE,
             )
         ) {
             EasyPermissions.requestPermissions(
@@ -233,7 +233,7 @@ class MainActivity : AppCompatActivity(), EasyPermissions.PermissionCallbacks {
                 Manifest.permission.ACCESS_COARSE_LOCATION,
                 Manifest.permission.ACCESS_FINE_LOCATION,
                 Manifest.permission.WRITE_EXTERNAL_STORAGE,
-                Manifest.permission.READ_EXTERNAL_STORAGE
+                Manifest.permission.READ_EXTERNAL_STORAGE,
             )
         }
         alertDialog = AlertDialog.Builder(this).run {
@@ -261,7 +261,7 @@ class MainActivity : AppCompatActivity(), EasyPermissions.PermissionCallbacks {
                 R.id.transaction -> {
                     showFragment(
                         TransactionsFragment(),
-                        TransactionsFragment::class.java.simpleName
+                        TransactionsFragment::class.java.simpleName,
                     )
                     return@setOnItemSelectedListener true
                 }
@@ -291,7 +291,7 @@ class MainActivity : AppCompatActivity(), EasyPermissions.PermissionCallbacks {
     override fun onRequestPermissionsResult(
         requestCode: Int,
         permissions: Array<out String>,
-        grantResults: IntArray
+        grantResults: IntArray,
     ) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults)
         EasyPermissions.onRequestPermissionsResult(requestCode, permissions, grantResults, this)
@@ -332,7 +332,7 @@ class MainActivity : AppCompatActivity(), EasyPermissions.PermissionCallbacks {
             LocationManager.GPS_PROVIDER,
             0L,
             0f,
-            locationListener
+            locationListener,
         )
         // locationManager.getLastKnownLocation(LocationManager.NETWORK_PROVIDER)
         locationManager.getLastKnownLocation(LocationManager.GPS_PROVIDER)
@@ -363,7 +363,7 @@ class MainActivity : AppCompatActivity(), EasyPermissions.PermissionCallbacks {
 
     private fun getFireBaseToken(
         firebaseMessagingInstance: FirebaseMessaging,
-        actionToPerformWithTheReceivedToken: (received: String) -> Unit
+        actionToPerformWithTheReceivedToken: (received: String) -> Unit,
     ) {
         firebaseMessagingInstance.token.addOnCompleteListener(
             OnCompleteListener { task ->
@@ -376,13 +376,13 @@ class MainActivity : AppCompatActivity(), EasyPermissions.PermissionCallbacks {
                 val token = task.result
                 Prefs.putString(PREF_FIREBASE_APP_TOKEN, token)
                 actionToPerformWithTheReceivedToken(token)
-            }
+            },
         )
     }
 
     private fun subscribeToFireBaseMessagingTopic(
         firebaseMessagingInstance: FirebaseMessaging,
-        fireBaseTopic: String
+        fireBaseTopic: String,
     ) {
         firebaseMessagingInstance.subscribeToTopic(fireBaseTopic)
     }
@@ -392,7 +392,7 @@ class MainActivity : AppCompatActivity(), EasyPermissions.PermissionCallbacks {
             this,
             this,
             0,
-            0L
+            0L,
         ).observe(this) { event ->
             event.getContentIfNotHandled()?.let {
                 it.error?.let { error ->
@@ -409,13 +409,13 @@ class MainActivity : AppCompatActivity(), EasyPermissions.PermissionCallbacks {
 
     private fun checkBalance(
         cardData: CardData,
-        accountType: IsoAccountType = IsoAccountType.DEFAULT_UNSPECIFIED
+        accountType: IsoAccountType = IsoAccountType.DEFAULT_UNSPECIFIED,
     ) {
         if (NetPosTerminalConfig.getKeyHolder() == null) {
             Toast.makeText(
                 this,
                 getString(R.string.terminal_not_configured),
-                Toast.LENGTH_LONG
+                Toast.LENGTH_LONG,
             ).show()
             return
         }
@@ -424,7 +424,7 @@ class MainActivity : AppCompatActivity(), EasyPermissions.PermissionCallbacks {
             NetPosTerminalConfig.getTerminalId(),
             NetPosTerminalConfig.connectionData,
             NetPosTerminalConfig.getKeyHolder()!!,
-            NetPosTerminalConfig.getConfigData()!!
+            NetPosTerminalConfig.getConfigData()!!,
         )
         val requestData =
             TransactionRequestData(TransactionType.BALANCE, 0L, accountType = accountType)
@@ -444,7 +444,7 @@ class MainActivity : AppCompatActivity(), EasyPermissions.PermissionCallbacks {
                     Toast.makeText(
                         this,
                         "Error ${it.localizedMessage}",
-                        Toast.LENGTH_SHORT
+                        Toast.LENGTH_SHORT,
                     ).show()
                 }
 
@@ -454,14 +454,14 @@ class MainActivity : AppCompatActivity(), EasyPermissions.PermissionCallbacks {
                         Prefs.remove(PREF_KEYHOLDER)
                         NetPosTerminalConfig.init(
                             this.applicationContext,
-                            configureSilently = true
+                            configureSilently = true,
                         )
                     }
 
                     val messageString = if (it.isApproved) {
                         "${getString(R.string.acc_bal)}\n " + it.accountBalances.joinToString("\n") { accountBalance ->
                             "${accountBalance.accountType}, ${
-                            accountBalance.amount.div(100).formatCurrencyAmount()
+                                accountBalance.amount.div(100).formatCurrencyAmount()
                             }"
                         }
                     } else {
@@ -470,7 +470,7 @@ class MainActivity : AppCompatActivity(), EasyPermissions.PermissionCallbacks {
 
                     showMessage(
                         if (it.isApproved) getString(R.string.approved) else getString(R.string.declined),
-                        messageString
+                        messageString,
                     )
                 }
             }.disposeWith(compositeDisposable)
@@ -499,7 +499,7 @@ class MainActivity : AppCompatActivity(), EasyPermissions.PermissionCallbacks {
             totalTransactionsAmount.text =
                 getString(
                     R.string.total_transaction_amount,
-                    approvedList.sumOf { it.amount }.div(100).formatCurrencyAmount()
+                    approvedList.sumOf { it.amount }.div(100).formatCurrencyAmount(),
                 )
             totalTransactions.text =
                 getString(R.string.total_transaction_count, transactions.size.toString())
@@ -508,7 +508,7 @@ class MainActivity : AppCompatActivity(), EasyPermissions.PermissionCallbacks {
                     Toast.makeText(
                         this@MainActivity,
                         getString(R.string.noTransactionsToPrint),
-                        Toast.LENGTH_LONG
+                        Toast.LENGTH_LONG,
                     ).show()
                 } else {
                     when (chipGroup.checkedChipId) {
@@ -520,7 +520,7 @@ class MainActivity : AppCompatActivity(), EasyPermissions.PermissionCallbacks {
                             Toast.makeText(
                                 this@MainActivity,
                                 getString(R.string.noTransactionsToPrint),
-                                Toast.LENGTH_SHORT
+                                Toast.LENGTH_SHORT,
                             ).show()
                             return@setOnClickListener
                         }
@@ -533,7 +533,7 @@ class MainActivity : AppCompatActivity(), EasyPermissions.PermissionCallbacks {
                             Toast.makeText(
                                 this@MainActivity,
                                 err.localizedMessage,
-                                Toast.LENGTH_LONG
+                                Toast.LENGTH_LONG,
                             )
                                 .show()
                             // Timber.e(err.localizedMessage)
@@ -553,14 +553,14 @@ class MainActivity : AppCompatActivity(), EasyPermissions.PermissionCallbacks {
                 transactionViewModel.setEndOfDayList(
                     transactions.map { trns ->
                         trns.copy(
-                            localDate_13 = trns.localDate_13 + PDF_REPRINT_IDENTIFIER
+                            localDate_13 = trns.localDate_13 + PDF_REPRINT_IDENTIFIER,
                         )
-                    }
+                    },
                 )
                 bottomSheet.dismiss()
                 showFragment(
                     TransactionHistoryFragment.newInstance(HISTORY_ACTION_EOD),
-                    TransactionHistoryFragment::class.java.simpleName
+                    TransactionHistoryFragment::class.java.simpleName,
                 )
             } else {
                 Toast.makeText(this, getString(R.string.noTransactionsToView), Toast.LENGTH_LONG)
@@ -585,8 +585,8 @@ class MainActivity : AppCompatActivity(), EasyPermissions.PermissionCallbacks {
                         ModelMapper.mapTransFromGateWayToEntity(transactionList),
                         transactionList.size,
                         1,
-                        1000
-                    )
+                        1000,
+                    ),
                 )
             }
 
@@ -596,12 +596,12 @@ class MainActivity : AppCompatActivity(), EasyPermissions.PermissionCallbacks {
             this@MainActivity,
             { _, i, i2, i3 ->
                 getEndOfDayTransactions(
-                    Calendar.getInstance().apply { set(i, i2, i3) }.timeInMillis
+                    Calendar.getInstance().apply { set(i, i2, i3) }.timeInMillis,
                 )
             },
             calendar.get(Calendar.YEAR),
             calendar.get(Calendar.MONTH),
-            calendar.get(Calendar.DAY_OF_MONTH)
+            calendar.get(Calendar.DAY_OF_MONTH),
         ).show()
     }
 
@@ -623,12 +623,12 @@ class MainActivity : AppCompatActivity(), EasyPermissions.PermissionCallbacks {
             RandomNumUtil.getDateInTheFormatExpectedByTheNewService(df.format(be)),
             RandomNumUtil.getDateInTheFormatExpectedByTheNewServiceForEnd(df.format(be)),
             1,
-            1000
+            1000,
         )
 
         getEndOfDayLocal(
             RandomNumUtil.getDateInMilliSecsForLocal(df.format(be)),
-            RandomNumUtil.getDateInMilliSecsForLocalForEndOfDay(df.format(be))
+            RandomNumUtil.getDateInMilliSecsForLocalForEndOfDay(df.format(be)),
         )
             .flatMap { gateWayResp ->
                 if (gateWayResp.result.isEmpty()) {
@@ -637,13 +637,13 @@ class MainActivity : AppCompatActivity(), EasyPermissions.PermissionCallbacks {
                         parameters.from,
                         parameters.to,
                         parameters.page,
-                        parameters.pageSize
+                        parameters.pageSize,
                     ).map {
                         val dataWithModifiedAmount = it.data.rows.map { it1 ->
                             it1.copy(amount = (it1.amount as Int * 100))
                         }
                         val modifiedData = it.data.copy(
-                            rows = dataWithModifiedAmount
+                            rows = dataWithModifiedAmount,
                         )
                         Single.just(it.copy(data = modifiedData))
                     }
@@ -657,13 +657,13 @@ class MainActivity : AppCompatActivity(), EasyPermissions.PermissionCallbacks {
                     parameters.from,
                     parameters.to,
                     parameters.page,
-                    parameters.pageSize
+                    parameters.pageSize,
                 ).map {
                     val dataWithModifiedAmount = it.data.rows.map { it1 ->
                         it1.copy(amount = (it1.amount as Double * 100))
                     }
                     val modifiedData = it.data.copy(
-                        rows = dataWithModifiedAmount
+                        rows = dataWithModifiedAmount,
                     )
                     Single.just(it.copy(data = modifiedData))
                 }
@@ -686,8 +686,8 @@ class MainActivity : AppCompatActivity(), EasyPermissions.PermissionCallbacks {
                             is GateWayTransactionResponse -> {
                                 showEndOfDayBottomSheetDialog(
                                     ModelMapper.mapEntityToTransFromGateWay(
-                                        it.result
-                                    )
+                                        it.result,
+                                    ),
                                 )
                             }
                             is NewEodModel -> {
@@ -704,7 +704,7 @@ class MainActivity : AppCompatActivity(), EasyPermissions.PermissionCallbacks {
                     Toast.makeText(
                         this@MainActivity,
                         getString(R.string.error_occured),
-                        Toast.LENGTH_LONG
+                        Toast.LENGTH_LONG,
                     ).show()
                 }
             }.disposeWith(compositeDisposable)
@@ -725,7 +725,7 @@ class MainActivity : AppCompatActivity(), EasyPermissions.PermissionCallbacks {
         Timber.d("CALLED")
         val req = TokenPassportRequest(
             context.getString(R.string.userMD),
-            Singletons.getCurrentlyLoggedInUser()!!.terminal_id!!
+            Singletons.getCurrentlyLoggedInUser()!!.terminal_id!!,
         )
         try {
             val disposable = CompositeDisposable()
@@ -743,7 +743,7 @@ class MainActivity : AppCompatActivity(), EasyPermissions.PermissionCallbacks {
                         }
                         t2?.let {
                         }
-                    }
+                    },
             )
             disposable.clear()
         } catch (e: Exception) {

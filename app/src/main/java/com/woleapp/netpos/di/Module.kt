@@ -6,9 +6,11 @@ import com.pixplicity.easyprefs.library.Prefs
 import com.woleapp.netpos.BuildConfig
 import com.woleapp.netpos.database.AppDatabase
 import com.woleapp.netpos.database.dao.ZenithPayByTransferUserTransactionsDao
+import com.woleapp.netpos.network.RrnApiService
 import com.woleapp.netpos.network.StormApiService
 import com.woleapp.netpos.network.ZenithPayByTransferService
 import com.woleapp.netpos.util.PREF_USER_TOKEN
+import com.woleapp.netpos.util.UtilityParams.RRN_BASE_URL
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -60,7 +62,7 @@ object Module {
     @Provides
     @Named("defaultOkHttpClient")
     fun providesDefaultOkHttpClient(
-        @Named("loginInterceptor") loggingInterceptor: Interceptor
+        @Named("loginInterceptor") loggingInterceptor: Interceptor,
     ): OkHttpClient =
         OkHttpClient().newBuilder()
             .connectTimeout(120, TimeUnit.SECONDS)
@@ -76,7 +78,7 @@ object Module {
     fun providesZenithOkHttpClient(
         @ApplicationContext context: Context,
         @Named("loginInterceptor") loggingInterceptor: Interceptor,
-        @Named("zenithPayByTransferHeaderInterceptor") zenithPayByTransferHeaderInterceptor: Interceptor
+        @Named("zenithPayByTransferHeaderInterceptor") zenithPayByTransferHeaderInterceptor: Interceptor,
     ): OkHttpClient =
         OkHttpClient().newBuilder()
             .connectTimeout(120, TimeUnit.SECONDS)
@@ -92,7 +94,7 @@ object Module {
     @Named("defaultRetrofit")
     fun providesDefaultRetrofit(
         @Named("defaultOkHttpClient") okhttp: OkHttpClient,
-        @Named("defaultBaseUrl") baseUrl: String
+        @Named("defaultBaseUrl") baseUrl: String,
     ): Retrofit =
         Retrofit.Builder()
             .addConverterFactory(GsonConverterFactory.create())
@@ -103,10 +105,23 @@ object Module {
 
     @Provides
     @Singleton
+    @Named("rrnRetrofit")
+    fun providesRrnRetrofit(
+        @Named("defaultOkHttpClient") okhttp: OkHttpClient,
+    ): Retrofit =
+        Retrofit.Builder()
+            .addConverterFactory(GsonConverterFactory.create())
+            .addCallAdapterFactory(RxJava2CallAdapterFactory.create())
+            .baseUrl(RRN_BASE_URL)
+            .client(okhttp)
+            .build()
+
+    @Provides
+    @Singleton
     @Named("zenithPayByTransferRetrofit")
     fun providesPayByTransferRetrofit(
         @Named("zenithPayByTransferOkHttp") okhttp: OkHttpClient,
-        @Named("payByTransferBaseUrl") baseUrl: String
+        @Named("payByTransferBaseUrl") baseUrl: String,
     ): Retrofit =
         Retrofit.Builder()
             .addConverterFactory(GsonConverterFactory.create())
@@ -118,35 +133,41 @@ object Module {
     @Singleton
     @Provides
     fun providesStormApiService(
-        @Named("defaultRetrofit") retrofit: Retrofit
+        @Named("defaultRetrofit") retrofit: Retrofit,
     ): StormApiService =
         retrofit.create(StormApiService::class.java)
 
     @Singleton
     @Provides
     fun providesZenithPayByTransferService(
-        @Named("zenithPayByTransferRetrofit") retrofit: Retrofit
+        @Named("zenithPayByTransferRetrofit") retrofit: Retrofit,
     ): ZenithPayByTransferService =
         retrofit.create(ZenithPayByTransferService::class.java)
+
+    @Singleton
+    @Provides
+    fun providesRrnApiService(
+        @Named("rrnRetrofit") rrnRetrofit: Retrofit,
+    ): RrnApiService = rrnRetrofit.create(RrnApiService::class.java)
 
     @Provides
     @Singleton
     fun providesLocalDataBase(
-        @ApplicationContext context: Context
+        @ApplicationContext context: Context,
     ): AppDatabase =
         AppDatabase.getDatabaseInstance(context)
 
     @Singleton
     @Provides
     fun providesTransactionResponseDao(
-        appDatabase: AppDatabase
+        appDatabase: AppDatabase,
     ) =
         appDatabase.transactionResponseDao()
 
     @Singleton
     @Provides
     fun providesZenithPayByTransferLocalDao(
-        appDatabase: AppDatabase
+        appDatabase: AppDatabase,
     ): ZenithPayByTransferUserTransactionsDao =
         appDatabase.getZenithPayByTransferDao()
 

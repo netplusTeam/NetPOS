@@ -14,7 +14,7 @@ data class MakePaymentParams(
     var transactionType: TransactionType = TransactionType.PURCHASE,
     var accountType: IsoAccountType = IsoAccountType.DEFAULT_UNSPECIFIED,
     var cardData: CardData,
-    var remark: String? = null
+    var remark: String? = null,
 ) {
     var fundWallet: Boolean = true
 
@@ -24,14 +24,14 @@ data class MakePaymentParams(
         otherAmount: Long,
         cardData: CardData,
         transactionType: TransactionType,
-        isoAccountType: IsoAccountType
+        isoAccountType: IsoAccountType,
     ) : this(
         terminalId = terminalId,
         amount = amount,
         otherAmount = otherAmount,
         cardData = cardData,
         accountType = isoAccountType,
-        transactionType = transactionType
+        transactionType = transactionType,
     )
 
     constructor(
@@ -39,7 +39,7 @@ data class MakePaymentParams(
         otherAmount: Long,
         cardData: CardData,
         transactionType: TransactionType,
-        isoAccountType: IsoAccountType
+        isoAccountType: IsoAccountType,
     ) : this(
         amount = amount,
         otherAmount = otherAmount,

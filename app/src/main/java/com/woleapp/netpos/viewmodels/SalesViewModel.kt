@@ -2,7 +2,6 @@ package com.woleapp.netpos.viewmodels
 
 import android.content.Context
 import android.os.Build
-import android.util.Log
 import android.widget.Toast
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
@@ -46,11 +45,12 @@ import io.reactivex.Single
 import io.reactivex.android.schedulers.AndroidSchedulers
 import io.reactivex.disposables.CompositeDisposable
 import io.reactivex.schedulers.Schedulers
+import retrofit2.Response
 import timber.log.Timber
 
 class SalesViewModelProvider(
     private val transactionResponseDao: TransactionResponseDao,
-    private val trackingTableDao: TransactionTrackingTableDao
+    private val trackingTableDao: TransactionTrackingTableDao,
 ) :
     ViewModelProvider.Factory {
     @Suppress("UNCHECKED_CAST")
@@ -64,7 +64,7 @@ class SalesViewModelProvider(
 
 class SalesViewModel(
     private val transactionResponseDao: TransactionResponseDao,
-    private val transactionTrackingTableDao: TransactionTrackingTableDao
+    private val transactionTrackingTableDao: TransactionTrackingTableDao,
 ) : ViewModel() {
     private lateinit var lastTransaction: TransactionResponse
     private val _partnerThreshold: MutableLiveData<GetPartnerInterSwitchThresholdResponse> =
@@ -82,6 +82,7 @@ class SalesViewModel(
     private var isVend: Boolean = false
     var cardData: CardData? = null
     private var netPOSCashService: NetPOSCashService = StormApiClient.getCashInstance()
+    private var rrnApiService: RrnApiService = StormApiClient.getRrnApiServiceInstance()
     private val compositeDisposable: CompositeDisposable by lazy { CompositeDisposable() }
     val transactionState = MutableLiveData(STATE_PAYMENT_STAND_BY)
     private val lastTransactionResponse = MutableLiveData<TransactionResponse>()
@@ -169,18 +170,44 @@ class SalesViewModel(
         _getCardData.value = Event(true)
     }
 
-    private fun logTransactionBeforeConnectingToNibss(dataToLog: TransactionToLogBeforeConnectingToNibbs) {
-        stormApiService!!.logTransactionBeforeConnectingToNibss(dataToLog)
-            .subscribeOn(Schedulers.io())
-            .observeOn(AndroidSchedulers.mainThread())
+    private fun logTransactionBeforeConnectingToNibss(
+        cardData: CardData?,
+        stan: String,
+        transTime: String,
+        requestData: TransactionRequestData,
+        transDateTime: String,
+        rrn: String,
+    ) {
+        logTransactionFirstImpl(
+            cardData,
+            stan,
+            rrn,
+            transTime,
+            requestData,
+            transDateTime,
+        ).observeOn(AndroidSchedulers.mainThread())
             .subscribe { t1, t2 ->
                 t1?.let {
-                    Log.d("SUCCESS_SV1", "SUCCESS SAVING 1")
+                    Timber.d(it.message)
                 }
                 t2?.let {
-                    Log.d("ERROR_SV1", "ERROR SAVING 1")
+                    Timber.d(it.localizedMessage)
                 }
             }
+    }
+
+    private fun logTransactionFirstImpl(
+        cardData: CardData?,
+        rrn: String,
+        stan: String,
+        transTime: String,
+        requestData: TransactionRequestData,
+        transDateTime: String,
+    ): Single<ResponseBodyAfterLoginToBackend> {
+        val data = createTransToLog(cardData, rrn, stan, transTime, requestData, transDateTime)
+
+        return stormApiService!!.logTransactionBeforeConnectingToNibss(data!!)
+            .subscribeOn(Schedulers.io())
     }
 
     fun setIsTransactionFromPurchaseFragment(value: Boolean) {
@@ -190,7 +217,7 @@ class SalesViewModel(
     private fun logTransactionAfterConnectingToNibss(
         rrn: String,
         transactionResponse: TransactionResponseX,
-        status: String
+        status: String,
     ): Single<LogToBackendResponse> {
         val dataToLog = DataToLogAfterConnectingToNibss(status, transactionResponse, rrn)
         return stormApiService!!.updateLogAfterConnectingToNibss(rrn, dataToLog)
@@ -218,7 +245,7 @@ class SalesViewModel(
             NetPosTerminalConfig.getTerminalId(),
             NetPosTerminalConfig.connectionData,
             keyHolder,
-            configData
+            configData,
         )
 
         val customStan = generateRandomRrn(6)
@@ -233,59 +260,118 @@ class SalesViewModel(
                 transactionType,
                 amountLong,
                 0L,
-                accountType = isoAccountType!!
+                accountType = isoAccountType!!,
             )
-
-        val transactionToLog = cardData?.expiryDate?.let {
-            customerName.value?.let { it1 ->
-                Singletons.getConfigData()?.cardAcceptorIdCode?.let { it2 ->
-                    val newAmount = amountLong.toDouble()/*amount.value!!.toDoubleOrNull() */
-                    TransactionToLogBeforeConnectingToNibbs(
-                        status = "PENDING",
-                        TransactionResponseX(
-                            AID = "",
-                            rrn = customRrn,
-                            STAN = customStan,
-                            TSI = "",
-                            TVR = "",
-                            accountType = isoAccountType!!.name,
-                            acquiringInstCode = "",
-                            additionalAmount_54 = "",
-                            amount = newAmount.toInt() ?: amount.value!!.toInt(),
-                            appCryptogram = "",
-                            authCode = "",
-                            cardExpiry = it,
-                            cardHolder = it1,
-                            cardLabel = cardScheme.toString(),
-                            id = 0,
-                            localDate_13 = getDate(),
-                            localTime_12 = transTime,
-                            maskedPan = cardData!!.pan.maskPan(),
-                            merchantId = it2,
-                            originalForwardingInstCode = "",
-                            otherAmount = requestData.otherAmount.toInt(),
-                            otherId = "",
-                            responseCode = "99",
-                            responseDE55 = "",
-                            terminalId = user!!.terminal_id!!,
-                            transactionTimeInMillis = dateStr2Long(transDateTime),
-                            transactionType = requestData.transactionType.name,
-                            transmissionDateTime = transDateTime
-                        )
-                    )
-                }
-            }
-        }
-
-        // Send to backend first
-        logTransactionBeforeConnectingToNibss(transactionToLog!!)
         val processor = TransactionProcessor(hostConfig)
         transactionState.value = STATE_PAYMENT_STARTED
 
-        if (BuildConfig.FLAVOR == "wemacashout") {
-            makePaymentViaIswMethodImplementation(context, requestData, customRrn)
-        } else {
-            makePaymentViaNibss(processor, context, requestData, customRrn)
+        rrnApiService.getRrn().subscribeOn(Schedulers.io())
+            .onErrorResumeNext { Single.just(Response.success(customRrn)) }
+            .flatMap {
+                Timber.d("CALLLEDDDDDDD77777777777777777777777777777777")
+                if (it.isSuccessful) {
+                    it.body()?.let { rrn ->
+                        logTransactionBeforeConnectingToNibss(
+                            cardData,
+                            customStan,
+                            transTime,
+                            requestData,
+                            transDateTime,
+                            rrn,
+                        )
+                    }
+                } else {
+                    logTransactionBeforeConnectingToNibss(
+                        cardData,
+                        customStan,
+                        transTime,
+                        requestData,
+                        transDateTime,
+                        customRrn,
+                    )
+                }
+                Single.just(it)
+            }
+            .flatMap {
+                Timber.d("CALLLEDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDD")
+                if (it.isSuccessful) {
+                    it.body()?.let { rrn ->
+                        if (BuildConfig.FLAVOR == "wemacashout") {
+                            makePaymentViaIswMethodImplementation(
+                                context,
+                                requestData,
+                                rrn,
+                                customStan,
+                            )
+                        } else {
+                            makePaymentViaNibss(processor, context, requestData, rrn, customStan)
+                        }
+                    }
+                } else {
+                    if (BuildConfig.FLAVOR == "wemacashout") {
+                        makePaymentViaIswMethodImplementation(
+                            context,
+                            requestData,
+                            customRrn,
+                            customStan,
+                        )
+                    } else {
+                        makePaymentViaNibss(processor, context, requestData, customRrn, customStan)
+                    }
+                }
+                Single.just(it)
+            }.observeOn(AndroidSchedulers.mainThread())
+            .subscribe { data, error ->
+                data?.let { d -> d.body()?.let { Timber.d(it) } }
+                error?.let { Timber.d(it.localizedMessage) }
+            }
+    }
+
+    private fun createTransToLog(
+        cardData: CardData?,
+        customRrn: String,
+        customStan: String,
+        transTime: String,
+        requestData: TransactionRequestData,
+        transDateTime: String,
+    ): TransactionToLogBeforeConnectingToNibbs? = cardData?.expiryDate?.let {
+        customerName.value?.let { it1 ->
+            Singletons.getConfigData()?.cardAcceptorIdCode?.let { it2 ->
+                val newAmount = amountLong.toDouble()/*amount.value!!.toDoubleOrNull() */
+                TransactionToLogBeforeConnectingToNibbs(
+                    status = "PENDING",
+                    TransactionResponseX(
+                        AID = "",
+                        rrn = customRrn,
+                        STAN = customStan,
+                        TSI = "",
+                        TVR = "",
+                        accountType = isoAccountType!!.name,
+                        acquiringInstCode = "",
+                        additionalAmount_54 = "",
+                        amount = newAmount.toInt() ?: amount.value!!.toInt(),
+                        appCryptogram = "",
+                        authCode = "",
+                        cardExpiry = it,
+                        cardHolder = it1,
+                        cardLabel = cardScheme.toString(),
+                        id = 0,
+                        localDate_13 = getDate(),
+                        localTime_12 = transTime,
+                        maskedPan = cardData.pan.maskPan(),
+                        merchantId = it2,
+                        originalForwardingInstCode = "",
+                        otherAmount = requestData.otherAmount.toInt(),
+                        otherId = "",
+                        responseCode = "99",
+                        responseDE55 = "",
+                        terminalId = user!!.terminal_id!!,
+                        transactionTimeInMillis = dateStr2Long(transDateTime),
+                        transactionType = requestData.transactionType.name,
+                        transmissionDateTime = transDateTime,
+                    ),
+                )
+            }
         }
     }
 
@@ -302,13 +388,17 @@ class SalesViewModel(
             }
     }
 
-    private fun makePaymentViaIswMethodDeclaration(context: Context): Single<TransactionResponse?> {
+    private fun makePaymentViaIswMethodDeclaration(
+        context: Context,
+        rrn: String,
+        stan: String,
+    ): Single<TransactionResponse?> {
         val makePaymentParams = MakePaymentParams(
             action = "makePayment",
             terminalId = terminalId,
             amount = amountLong,
             otherAmount = 0,
-            cardData = cardData!!
+            cardData = cardData!!,
         )
 
         return processTransactionViaInterSwitchMakePayment(
@@ -317,7 +407,9 @@ class SalesViewModel(
             terminalId,
             Gson().toJson(makePaymentParams),
             cardScheme!!,
-            customerName.value!!
+            customerName.value!!,
+            rrn,
+            stan,
         ).flatMap {
             Single.just(mapToTransactionResponse(it))
         }
@@ -327,9 +419,14 @@ class SalesViewModel(
         processor: TransactionProcessor,
         context: Context,
         requestData: TransactionRequestData,
-        customRrn: String
+        rrn: String,
+        stan: String,
     ) {
-        processor.processTransaction(context, requestData, cardData!!)
+        val reqData = requestData.apply {
+            this.RRN = rrn
+            this.STAN = stan
+        }
+        processor.processTransaction(context, reqData, cardData!!)
             .flatMap labelCheckForReversal@{ transRes ->
                 Timber.d("ORIGINAL_TRANSACTION_RECEIVED=====>%s", gson.toJson(transRes))
                 return@labelCheckForReversal when {
@@ -372,7 +469,7 @@ class SalesViewModel(
 
                 lastTransactionResponse.postValue(transRespons)
                 lastTransaction = transRespons
-                temporalRrnForLastTransaction.postValue(customRrn)
+                temporalRrnForLastTransaction.postValue(rrn)
                 _message.postValue(Event(if (it.responseCode == "00" || it.responseCode == "16") "Transaction Approved" else "Transaction Not approved"))
                 Single.just(lastTransaction)
             }.flatMap {
@@ -389,13 +486,13 @@ class SalesViewModel(
                     lastTransactionResponse.value ?: gatewayErrorTransactionResponse(
                         amountLong,
                         TransactionType.PURCHASE,
-                        isoAccountType!!
+                        isoAccountType!!,
                     ).apply {
                         this.cardExpiry = ""
                         this.cardHolder = customerName.value ?: ""
                     }
                 showTransactionReceipt(
-                    transactionResponse.buildSMSText(remark.value ?: "").toString()
+                    transactionResponse.buildSMSText(remark.value ?: "").toString(),
                 )
 
                 val modifiedResponseCode =
@@ -409,7 +506,7 @@ class SalesViewModel(
                         t2.let { Timber.d(it.localizedMessage) }
                     }.disposeWith(compositeDisposable)
 
-                handleUpdateOfTransactionPayloadInBackend(lastTransaction, customRrn)
+                handleUpdateOfTransactionPayloadInBackend(lastTransaction, rrn)
                     .subscribeOn(Schedulers.io())
                     .observeOn(AndroidSchedulers.mainThread())
                     .subscribe { _, _ ->
@@ -429,9 +526,10 @@ class SalesViewModel(
     private fun makePaymentViaIswMethodImplementation(
         context: Context,
         requestData: TransactionRequestData,
-        customRrn: String
+        customRrn: String,
+        stan: String,
     ) {
-        val makePaymentTransResult = makePaymentViaIswMethodDeclaration(context)
+        val makePaymentTransResult = makePaymentViaIswMethodDeclaration(context, customRrn, stan)
         makePaymentTransResult
             .flatMap {
                 transResp = it
@@ -463,13 +561,13 @@ class SalesViewModel(
                     lastTransactionResponse.value ?: gatewayErrorTransactionResponse(
                         amountLong,
                         TransactionType.PURCHASE,
-                        isoAccountType!!
+                        isoAccountType!!,
                     ).apply {
                         this.cardExpiry = ""
                         this.cardHolder = customerName.value ?: ""
                     }
                 showTransactionReceipt(
-                    transactionResponse.buildSMSText(remark.value ?: "").toString()
+                    transactionResponse.buildSMSText(remark.value ?: "").toString(),
                 )
                 // SHOW TRANSACTION RECEIPT FIRST BEFORE PRINTING
                 // printReceipt(context)
@@ -515,20 +613,20 @@ class SalesViewModel(
     fun showReceiptDialog() {
         _showPrintDialog.value = Event(
             lastTransactionResponse.value!!.buildSMSText(remark.value ?: "")
-                .toString()
+                .toString(),
         )
     }
 
     private fun triggerReversal(
         processor: TransactionProcessor,
-        context: Context
+        context: Context,
     ): Single<TransactionResponse> =
         processor.rollback(context, MessageReasonCode.Timeout)
             .subscribeOn(Schedulers.io())
 
     private fun showTransactionReceipt(transactionResp: String) {
         _showTransactionResponseDialog.postValue(
-            Event(transactionResp)
+            Event(transactionResp),
         )
     }
 
@@ -540,7 +638,7 @@ class SalesViewModel(
         val transactionResponse = lastTransactionResponse.value ?: gatewayErrorTransactionResponse(
             amountLong,
             TransactionType.PURCHASE,
-            isoAccountType!!
+            isoAccountType!!,
         ).apply {
             this.cardExpiry = ""
             this.cardHolder = customerName.value ?: ""
@@ -551,22 +649,22 @@ class SalesViewModel(
                 PREF_VALUE_PRINT_CUSTOMER_COPY_ONLY -> printReceipt(context, isMerchantCopy = false)
                 PREF_VALUE_PRINT_CUSTOMER_AND_MERCHANT_COPY -> printReceipt(
                     context,
-                    printBoth = true
+                    printBoth = true,
                 )
                 PREF_VALUE_PRINT_SMS -> _showPrintDialog.postValue(
-                    Event(transactionResponse.buildSMSText(remark.value ?: "").toString())
+                    Event(transactionResponse.buildSMSText(remark.value ?: "").toString()),
                 )
                 PREF_VALUE_PRINT_ASK_BEFORE_PRINTING -> _showReceiptTypeMutableLiveData.postValue(
-                    Event(true)
+                    Event(true),
                 )
                 PREF_VALUE_PRINT_SHARE_RECEIPT -> _downloadOrShareReceiptAsPdfMutableLiveData.postValue(
-                    Event(PREF_VALUE_PRINT_SHARE_RECEIPT)
+                    Event(PREF_VALUE_PRINT_SHARE_RECEIPT),
                 )
                 PREF_VALUE_PRINT_DOWNLOAD_RECEIPT -> _downloadOrShareReceiptAsPdfMutableLiveData.postValue(
-                    Event(PREF_VALUE_PRINT_DOWNLOAD_RECEIPT)
+                    Event(PREF_VALUE_PRINT_DOWNLOAD_RECEIPT),
                 )
                 PREF_VALUE_PRINT_DOWNLOAD_AND_SHARE_RECEIPT -> _downloadOrShareReceiptAsPdfMutableLiveData.postValue(
-                    Event(PREF_VALUE_PRINT_DOWNLOAD_AND_SHARE_RECEIPT)
+                    Event(PREF_VALUE_PRINT_DOWNLOAD_AND_SHARE_RECEIPT),
                 )
                 else -> {
                     printReceipt(context, isMerchantCopy = false)
@@ -575,20 +673,20 @@ class SalesViewModel(
         } else {
             when (Prefs.getString(PREF_PRINTER_SETTINGS, "")) {
                 PREF_VALUE_PRINT_SHARE_RECEIPT -> _downloadOrShareReceiptAsPdfMutableLiveData.postValue(
-                    Event(PREF_VALUE_PRINT_SHARE_RECEIPT)
+                    Event(PREF_VALUE_PRINT_SHARE_RECEIPT),
                 )
                 PREF_VALUE_PRINT_DOWNLOAD_RECEIPT -> _downloadOrShareReceiptAsPdfMutableLiveData.postValue(
-                    Event(PREF_VALUE_PRINT_DOWNLOAD_RECEIPT)
+                    Event(PREF_VALUE_PRINT_DOWNLOAD_RECEIPT),
                 )
                 PREF_VALUE_PRINT_DOWNLOAD_AND_SHARE_RECEIPT -> _downloadOrShareReceiptAsPdfMutableLiveData.postValue(
-                    Event(PREF_VALUE_PRINT_DOWNLOAD_AND_SHARE_RECEIPT)
+                    Event(PREF_VALUE_PRINT_DOWNLOAD_AND_SHARE_RECEIPT),
                 )
                 PREF_VALUE_PRINT_SMS -> _showPrintDialog.postValue(
-                    Event(transactionResponse.buildSMSText().toString())
+                    Event(transactionResponse.buildSMSText().toString()),
                 )
                 else -> {
                     _downloadOrShareReceiptAsPdfMutableLiveData.postValue(
-                        Event(PREF_VALUE_PRINT_DOWNLOAD_AND_SHARE_RECEIPT)
+                        Event(PREF_VALUE_PRINT_DOWNLOAD_AND_SHARE_RECEIPT),
                     )
                 }
             }
@@ -599,12 +697,12 @@ class SalesViewModel(
         context: Context,
         isMerchantCopy: Boolean = false,
         printBoth: Boolean = false,
-        selected: Boolean = false
+        selected: Boolean = false,
     ) {
         lastTransactionResponse.value?.print(
             context,
             remark = remark.value ?: "",
-            isMerchantCopy = isMerchantCopy
+            isMerchantCopy = isMerchantCopy,
         )
             ?.subscribeOn(Schedulers.io())?.observeOn(AndroidSchedulers.mainThread())
             ?.subscribe { t1, t2 ->
@@ -640,7 +738,7 @@ class SalesViewModel(
             number,
             _smsSent,
             _message,
-            compositeDisposable
+            compositeDisposable,
         )
     }
 
@@ -698,7 +796,7 @@ class SalesViewModel(
                                 Toast.makeText(
                                     context,
                                     context.getString(R.string.terminal_val_failed),
-                                    Toast.LENGTH_LONG
+                                    Toast.LENGTH_LONG,
                                 ).show()
                                 return@subscribe
                             }
@@ -720,11 +818,11 @@ class SalesViewModel(
     private fun getThreshold() {
         val iswThreshold = Prefs.getString(
             partnerId + "iswThreshold",
-            ""
+            "",
         )
         if (iswThreshold.isEmpty()) {
             newStormService.getPartnerInterSwitchThreshold(
-                partnerId
+                partnerId,
             )
                 .subscribeOn(Schedulers.io())
                 .observeOn(AndroidSchedulers.mainThread())
@@ -734,13 +832,13 @@ class SalesViewModel(
                         val thresholdObjectInString = gson.toJson(data)
                         Prefs.putString(
                             partnerId + "iswThreshold",
-                            thresholdObjectInString
+                            thresholdObjectInString,
                         )
                         _partnerThreshold.postValue(data)
                     },
                     { throwable ->
                         Timber.e(throwable)
-                    }
+                    },
                 ).disposeWith(compositeDisposable)
         }
     }
@@ -751,9 +849,10 @@ class SalesViewModel(
         terminalId: String,
         makePaymentParams: String,
         cardScheme: String,
-        cardHolder: String
+        cardHolder: String,
+        rrn: String,
+        stan: String,
     ): Single<TransactionResponseX?> {
-        val customRrn = generateRandomRrn(12)
         val params = gson.fromJson(makePaymentParams, MakePaymentParams::class.java)
         val transactionType =
             inputTransactionType?.let { TransactionType.valueOf(it) } ?: TransactionType.PURCHASE
@@ -761,7 +860,7 @@ class SalesViewModel(
         val configData: ConfigData = Singletons.getConfigData() ?: kotlin.run {
             showToast(
                 "Terminal has not been configured, restart the application to configure",
-                context
+                context,
             )
             return Single.just(null)
         }
@@ -777,29 +876,35 @@ class SalesViewModel(
                 transactionType,
                 amountLong,
                 0L,
-                accountType = isoAccountType!!
+                accountType = isoAccountType!!,
+                RRN = rrn,
+                STAN = stan,
             )
 
         if (Prefs.getString(partnerId + "iswThreshold", "")
-            .isEmpty()
+                .isEmpty()
         ) {
             Toast.makeText(context, "Unable to identify partner", Toast.LENGTH_LONG).show()
         }
         val interSwitchObject =
             Prefs.getString(partnerId + "iswThreshold", "")
-        val destinationAcc = if (interSwitchObject.isNotEmpty()) gson.fromJson(
-            interSwitchObject,
-            GetPartnerInterSwitchThresholdResponse::class.java
-        ).bankAccountNumber else {
+        val destinationAcc = if (interSwitchObject.isNotEmpty()) {
+            gson.fromJson(
+                interSwitchObject,
+                GetPartnerInterSwitchThresholdResponse::class.java,
+            ).bankAccountNumber
+        } else {
             getIswToken(context)
             getThreshold()
             _partnerThreshold.value?.bankAccountNumber ?: ""
         }
 
-        val institutionCode = if (interSwitchObject.isNotEmpty()) gson.fromJson(
-            interSwitchObject,
-            GetPartnerInterSwitchThresholdResponse::class.java
-        ).institutionalCode else {
+        val institutionCode = if (interSwitchObject.isNotEmpty()) {
+            gson.fromJson(
+                interSwitchObject,
+                GetPartnerInterSwitchThresholdResponse::class.java,
+            ).institutionalCode
+        } else {
             getIswToken(context)
             getThreshold()
             _partnerThreshold.value?.institutionalCode ?: ""
@@ -817,7 +922,7 @@ class SalesViewModel(
             terminalId = terminalId,
             terminalSerial = serialNumber,
             receivingInstitutionId = institutionCode,
-            destinationAccountNumber = destinationAcc
+            destinationAccountNumber = destinationAcc,
         )
 
         requestData.iswParameters = iswParam
@@ -829,7 +934,7 @@ class SalesViewModel(
                 requestData.amount,
                 transactionRequestData = requestData,
                 keyHolder = keyHolder,
-                configData = configData
+                configData = configData,
             )
 
         val transactionToLog = params.getTransactionResponseToLog(
@@ -837,11 +942,11 @@ class SalesViewModel(
             requestData,
             cardHolder,
             terminalId,
-            partnerId
+            partnerId,
         )
 
         // Send to backend first
-        logTransactionBeforeConnectingToNibss(transactionToLog)
+//        logTransactionBeforeConnectingToNibss(transactionToLog)
         return cardData?.let { cardData ->
             iswPaymentProcessorObject.processIswTransaction(cardData)
                 .flatMap {
@@ -868,13 +973,13 @@ class SalesViewModel(
                         logTransactionAfterConnectingToNibss(
                             transactionToLog.transactionResponse.rrn,
                             mapDanbamitaleResponseToResponseX(resp),
-                            "APPROVED"
+                            "APPROVED",
                         )
                     } else {
                         logTransactionAfterConnectingToNibss(
                             transactionToLog.transactionResponse.rrn,
                             mapDanbamitaleResponseToResponseX(resp),
-                            resp.responseMessage
+                            resp.responseMessage,
                         )
                     }
 
@@ -892,8 +997,8 @@ class SalesViewModel(
                     cardScheme ?: "",
                     "REVERSAL",
                     System.currentTimeMillis(),
-                    null
-                )
+                    null,
+                ),
             ).subscribeOn(Schedulers.io())
                 .observeOn(AndroidSchedulers.mainThread())
                 .subscribe { t1, t2 ->
@@ -909,19 +1014,19 @@ class SalesViewModel(
 
     private fun handleUpdateOfTransactionPayloadInBackend(
         transactionResp: TransactionResponse,
-        rrn: String
+        rrn: String,
     ): Single<LogToBackendResponse> {
         return if (transactionResp.responseCode == "00") {
             logTransactionAfterConnectingToNibss(
                 rrn,
                 mapDanbamitaleResponseToResponseX(transactionResp),
-                "APPROVED"
+                "APPROVED",
             )
         } else {
             logTransactionAfterConnectingToNibss(
                 rrn = rrn,
                 transactionResponse = mapDanbamitaleResponseToResponseX(transactionResp),
-                status = transactionResp.responseMessage
+                status = transactionResp.responseMessage,
             )
         }
     }
