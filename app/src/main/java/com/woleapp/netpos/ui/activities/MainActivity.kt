@@ -3,58 +3,42 @@ package com.woleapp.netpos.ui.activities
 import android.Manifest
 import android.annotation.SuppressLint
 import android.app.AlertDialog
-import android.app.DatePickerDialog
 import android.app.ProgressDialog
-import android.content.*
+import android.content.BroadcastReceiver
+import android.content.Context
+import android.content.Intent
+import android.content.IntentFilter
 import android.location.Location
 import android.location.LocationListener
 import android.location.LocationManager
 import android.os.Bundle
 import android.util.Log
-import android.view.LayoutInflater
-import android.view.MenuItem
+import android.view.View
 import android.widget.Toast
 import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
 import androidx.databinding.DataBindingUtil
 import androidx.fragment.app.Fragment
-import androidx.fragment.app.activityViewModels
-import com.danbamitale.epmslib.entities.TransactionResponse
-import com.danbamitale.epmslib.extensions.formatCurrencyAmount
 import com.google.android.gms.tasks.OnCompleteListener
-import com.google.android.material.bottomsheet.BottomSheetDialog
-import com.google.android.material.navigation.NavigationBarView
 import com.google.firebase.messaging.FirebaseMessaging
 import com.pixplicity.easyprefs.library.Prefs
+import com.woleapp.netpos.BuildConfig
 import com.woleapp.netpos.R
-import com.woleapp.netpos.database.AppDatabase
 import com.woleapp.netpos.databinding.ActivityMainBinding
-import com.woleapp.netpos.databinding.LayoutPrintEndOfDayBinding
-import com.woleapp.netpos.model.*
 import com.woleapp.netpos.model.AppConstants.FIREBASE_TOPIC_UPDATE
+import com.woleapp.netpos.model.User
 import com.woleapp.netpos.mqtt.MqttHelper
-import com.woleapp.netpos.network.StormApiClient
 import com.woleapp.netpos.nibss.CONFIGURATION_STATUS
 import com.woleapp.netpos.nibss.NetPosTerminalConfig
 import com.woleapp.netpos.receivers.BatteryReceiver
-import com.woleapp.netpos.ui.fragments.*
+import com.woleapp.netpos.ui.fragments.DashboardFragment
+import com.woleapp.netpos.ui.fragments.TransactionsFragment
 import com.woleapp.netpos.util.*
-import com.woleapp.netpos.util.ModelMapper.mapRowToTransactionResponse
-import com.woleapp.netpos.util.Singletons.gson
-import com.woleapp.netpos.viewmodels.NetPosViewModelFactories
 import com.woleapp.netpos.viewmodels.PayByZenithViewModel
-import com.woleapp.netpos.viewmodels.TransactionsViewModel
 import dagger.hilt.android.AndroidEntryPoint
-import io.reactivex.Single
-import io.reactivex.android.schedulers.AndroidSchedulers
 import io.reactivex.disposables.CompositeDisposable
-import io.reactivex.schedulers.Schedulers
 import pub.devrel.easypermissions.EasyPermissions
 import timber.log.Timber
-import java.sql.Timestamp
-import java.text.SimpleDateFormat
-import java.time.Instant
-import java.util.*
 
 const val TAG = "FIRE_BASE_TOKEN"
 const val TAG1 = "FIRE_BASE_TOKEN_1"
@@ -65,11 +49,7 @@ class MainActivity : AppCompatActivity(), EasyPermissions.PermissionCallbacks {
 
     private lateinit var firebaseInstance: FirebaseMessaging
     private val payByTransferViewModel: PayByZenithViewModel by viewModels()
-    private lateinit var endOfDayProgressDialog: ProgressDialog
-    private val stormApiService = StormApiClient.getStormApiLoginInstance()
-    private val transactionViewModel by viewModels<TransactionsViewModel> {
-        NetPosViewModelFactories(AppDatabase.getDatabaseInstance(this))
-    }
+
     private var progressDialog: ProgressDialog? = null
     private lateinit var alertDialog: AlertDialog
     private lateinit var binding: ActivityMainBinding
@@ -170,18 +150,6 @@ class MainActivity : AppCompatActivity(), EasyPermissions.PermissionCallbacks {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         binding = DataBindingUtil.setContentView(this, R.layout.activity_main)
-        endOfDayProgressDialog = ProgressDialog(this).apply {
-            this.setCancelable(false)
-            this.setMessage(getString(R.string.please_wait))
-            this.setButton(
-                DialogInterface.BUTTON_POSITIVE,
-                getString(R.string.cancel)
-            ) { dialog, _ ->
-                compositeDisposable.clear()
-                dialog.cancel()
-            }
-        }
-
         val user = Singletons.gson.fromJson(Prefs.getString(PREF_USER, ""), User::class.java)
         if (Prefs.getString(PREF_USER, "").isEmpty()) {
             Toast.makeText(this, getString(R.string.please_login), Toast.LENGTH_LONG).show()
@@ -195,10 +163,7 @@ class MainActivity : AppCompatActivity(), EasyPermissions.PermissionCallbacks {
         subscribeToFireBaseMessagingTopic(firebaseInstance, FIREBASE_TOPIC_UPDATE)
 
         getFireBaseToken(firebaseInstance) {
-            val previousDeviceToken = Prefs.getString(PREF_FIREBASE_APP_TOKEN, "")
-            if (previousDeviceToken != it) {
-                sendTokenToBackend(it)
-            }
+            sendTokenToBackend(it)
         }
 
         // loadCerts()
@@ -238,32 +203,9 @@ class MainActivity : AppCompatActivity(), EasyPermissions.PermissionCallbacks {
             }
             create()
         }
-        binding.dashboardBottomNavigationView.setOnItemSelectedListener(object :
-            NavigationBarView.OnItemSelectedListener {
-            override fun onNavigationItemSelected(item: MenuItem): Boolean {
-                when (item.itemId) {
-                    R.id.homeFragment -> {
-                        showFragment(DashboardFragment(), "Dashboard")
-                    }
-                    R.id.transaction -> {
-                        showFragment(TransactionsFragment(), "Transactions")
-                    }
-//                    R.id.balanceEnquiry -> {
-//                        getBalance()
-//                    }
-                    R.id.scanQR -> {
-                        showFragment(QRFragment(), "Scan QR")
-                    }
-                    R.id.endOfDay -> {
-                        showCalendarDialog()
-                    }
-                    R.id.settings -> {
-                        showFragment(SettingsFragment(), "Settings")
-                    }
-                }
-                return true
-            }
-        })
+        if (BuildConfig.FLAVOR == "zenith" && Singletons.getCurrentlyLoggedInUser()?.terminal_id == "2C88DEBE-D6DA-4B80-A0D0-18ACDA8664F0"){
+            binding.dashboardHeader.logout.visibility = View.INVISIBLE
+        }
         binding.dashboardHeader.logout.setOnClickListener {
             logout()
         }
@@ -356,7 +298,6 @@ class MainActivity : AppCompatActivity(), EasyPermissions.PermissionCallbacks {
 
                 // Get new FCM registration token
                 val token = task.result
-                Prefs.putString(PREF_FIREBASE_APP_TOKEN, token)
                 actionToPerformWithTheReceivedToken(token)
             }
         )
@@ -368,235 +309,4 @@ class MainActivity : AppCompatActivity(), EasyPermissions.PermissionCallbacks {
     ) {
         firebaseMessagingInstance.subscribeToTopic(fireBaseTopic)
     }
-
-    private fun getEndOfDayLocal(be: Long, be1: Long) =
-        AppDatabase.getDatabaseInstance(this)
-            .transactionResponseDao()
-            .getEndOfDayTransactionSingle(be, be1, NetPosTerminalConfig.getTerminalId())
-            .doOnError {
-                Timber.d("ERROR_HAPPENING=========>%s", it.localizedMessage)
-            }
-            .flatMap { transactionList ->
-                Single.just(
-                    GateWayTransactionResponse(
-                        ModelMapper.mapTransFromGateWayToEntity(transactionList),
-                        transactionList.size,
-                        1,
-                        1000
-                    )
-                )
-            }
-
-    private fun showEndOfDayBottomSheetDialog(transactions: List<TransactionResponse>) {
-        val approvedList = transactions.filter { it.responseCode == "00" }
-        val declinedList = transactions.filter { it.responseCode != "00" }
-        val endOfDay =
-            LayoutPrintEndOfDayBinding.inflate(LayoutInflater.from(this), null, false)
-        endOfDay.apply {
-            approvedCount.text = approvedList.size.toString()
-            declinedCount.text = declinedList.size.toString()
-            totalTransactionsAmount.text =
-                getString(
-                    R.string.total_transaction_amount,
-                    approvedList.sumOf { it.amount }.div(100).formatCurrencyAmount()
-                )
-            totalTransactions.text =
-                getString(R.string.total_transaction_count, transactions.size.toString())
-            print.setOnClickListener {
-                if (transactions.isEmpty()) {
-                    Toast.makeText(
-                        this@MainActivity,
-                        getString(R.string.noTransactionsToPrint),
-                        Toast.LENGTH_LONG
-                    ).show()
-                } else {
-                    when (chipGroup.checkedChipId) {
-                        R.id.print_approved -> approvedList
-                        R.id.print_declined -> declinedList
-                        else -> transactions
-                    }.apply {
-                        if (isEmpty()) {
-                            Toast.makeText(
-                                this@MainActivity,
-                                getString(R.string.noTransactionsToPrint),
-                                Toast.LENGTH_SHORT
-                            ).show()
-                            return@setOnClickListener
-                        }
-                    }.printEndOfDay(this@MainActivity)
-                        .subscribeOn(Schedulers.io())
-                        .observeOn(AndroidSchedulers.mainThread())
-                        .subscribe({ printResp ->
-                            Timber.e(printResp.toString())
-                        }, { err ->
-                            Toast.makeText(
-                                this@MainActivity,
-                                err.localizedMessage,
-                                Toast.LENGTH_LONG
-                            )
-                                .show()
-                            // Timber.e(err.localizedMessage)
-                        }).disposeWith(CompositeDisposable())
-                }
-            }
-        }
-        val bottomSheet = BottomSheetDialog(this, R.style.SheetDialog)
-            .apply {
-                dismissWithAnimation = true
-                setCancelable(false)
-                setContentView(endOfDay.root)
-                show()
-            }
-        endOfDay.view.setOnClickListener {
-            if (transactions.isNotEmpty()) {
-                transactionViewModel.setEndOfDayList(
-                    transactions.map { trns ->
-                        trns.copy(
-                            localDate_13 = trns.localDate_13 + PDF_REPRINT_IDENTIFIER
-                        )
-                    }
-                )
-                bottomSheet.dismiss()
-                showFragment(TransactionHistoryFragment.newInstance(HISTORY_ACTION_EOD), "End of Day")
-            } else {
-                Toast.makeText(this, getString(R.string.noTransactionsToView), Toast.LENGTH_LONG)
-                    .show()
-            }
-        }
-        endOfDay.closeButton.setOnClickListener {
-            bottomSheet.dismiss()
-        }
-    }
-
-    private fun showCalendarDialog() {
-        val calendar = Calendar.getInstance()
-        DatePickerDialog(
-            this,
-            { _, i, i2, i3 ->
-                getEndOfDayTransactions(
-                    Calendar.getInstance().apply { set(i, i2, i3) }.timeInMillis
-                )
-            },
-            calendar.get(Calendar.YEAR),
-            calendar.get(Calendar.MONTH),
-            calendar.get(Calendar.DAY_OF_MONTH)
-        ).show()
-    }
-
-    private fun getEndOfDayTransactions(timestamp: Long? = null) {
-        endOfDayProgressDialog.show()
-        val be: Long = getBeginningOfDay(timestamp)
-        val be1: Long = Timestamp.from(Instant.ofEpochMilli(be).plusSeconds(86400)).time
-        val df = SimpleDateFormat("dd:MM:yyyy hh:mm:ss", Locale.getDefault())
-
-        val data = HashMap<String, String>().apply {
-            put("terminalId", NetPosTerminalConfig.getTerminalId())
-            put("count", "1000")
-            put("from", df.format(be))
-            put("to", df.format(be1))
-        }
-
-        val parameters = GetEodFromNewServiceModel(
-            NetPosTerminalConfig.getTerminalId().trim(),
-            RandomNumUtil.getDateInTheFormatExpectedByTheNewService(df.format(be)),
-            RandomNumUtil.getDateInTheFormatExpectedByTheNewServiceForEnd(df.format(be)),
-            1,
-            1000
-        )
-
-        getEndOfDayLocal(
-            RandomNumUtil.getDateInMilliSecsForLocal(df.format(be)),
-            RandomNumUtil.getDateInMilliSecsForLocalForEndOfDay(df.format(be))
-        )
-            .flatMap { gateWayResp ->
-                if (gateWayResp.result.isEmpty()) {
-                    return@flatMap stormApiService.getTransactionsFromNewService(
-                        parameters.terminalId,
-                        parameters.from,
-                        parameters.to,
-                        parameters.page,
-                        parameters.pageSize
-                    ).map {
-                        val dataWithModifiedAmount = it.data.rows.map { it1 ->
-                            it1.copy(amount = (it1.amount as Int * 100))
-                        }
-                        val modifiedData = it.data.copy(
-                            rows = dataWithModifiedAmount
-                        )
-                        Single.just(it.copy(data = modifiedData))
-                    }
-                } else {
-                    Single.just(gateWayResp)
-                }
-            }.retry(2)
-            .onErrorResumeNext {
-                stormApiService.getTransactionsFromNewService(
-                    parameters.terminalId,
-                    parameters.from,
-                    parameters.to,
-                    parameters.page,
-                    parameters.pageSize
-                ).map {
-                    val dataWithModifiedAmount = it.data.rows.map { it1 ->
-                        it1.copy(amount = (it1.amount as Double * 100))
-                    }
-                    val modifiedData = it.data.copy(
-                        rows = dataWithModifiedAmount
-                    )
-                    Single.just(it.copy(data = modifiedData))
-                }
-            }
-            .subscribeOn(Schedulers.io())
-            .observeOn(AndroidSchedulers.mainThread())
-            .doFinally {
-                endOfDayProgressDialog.dismiss()
-            }
-            .subscribe { t1, t2 ->
-                t1?.let {
-                    try {
-                        val response = gson.fromJson(gson.toJson(it), NewEodModel::class.java)
-                        showEndOfDayBottomSheetDialog(response.value.data.rows.mapRowToTransactionResponse())
-                    } catch (e: Exception) {
-                        when (it) {
-                            is GetEndOfDayModelFromNewServer -> {
-                                showEndOfDayBottomSheetDialog(it.data.rows.mapRowToTransactionResponse())
-                            }
-                            is GateWayTransactionResponse -> {
-                                showEndOfDayBottomSheetDialog(
-                                    ModelMapper.mapEntityToTransFromGateWay(
-                                        it.result
-                                    )
-                                )
-                            }
-                            is NewEodModel -> {
-                                showEndOfDayBottomSheetDialog(it.value.data.rows.mapRowToTransactionResponse())
-                            }
-                            else -> {
-                                showEndOfDayBottomSheetDialog(listOf())
-                            }
-                        }
-                    }
-                }
-                t2?.let {
-                    Timber.d(it)
-                    Toast.makeText(
-                        this,
-                        getString(R.string.error_occured),
-                        Toast.LENGTH_LONG
-                    ).show()
-                }
-            }.disposeWith(compositeDisposable)
-//        val livedata = AppDatabase.getDatabaseInstance(requireContext())
-//            .transactionResponseDao()
-//            .getEndOfDayTransaction(
-//                getBeginningOfDay(timestamp),
-//                getEndOfDayTimeStamp(timestamp),
-//                NetPosTerminalConfig.getTerminalId()
-//            )
-//        livedata.observe(viewLifecycleOwner) {
-//            showEndOfDayBottomSheetDialog(it)
-//            livedata.removeObservers(viewLifecycleOwner)
-//        }
-    }
-
 }

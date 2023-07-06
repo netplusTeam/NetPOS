@@ -1,5 +1,6 @@
 package com.woleapp.netpos.viewmodels
 
+import android.util.Log
 import android.util.Patterns
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
@@ -110,7 +111,7 @@ class AuthViewModel : ViewModel() {
                         ).asString() else " "
                     this.netplus_id =
                         if (userTokenDecoded.claims.containsKey("stormId")) userTokenDecoded.getClaim(
-                            "stormId"
+                            "stormId,[["
                         ).asString() else " "
                     this.mid =
                         if (userTokenDecoded.claims.containsKey("mid")) userTokenDecoded.getClaim("mid")
@@ -120,7 +121,8 @@ class AuthViewModel : ViewModel() {
                             "partnerId"
                         ).asString() else " "
                 }
-                Timber.e(user.terminal_id)
+                Timber.e(user.mid)
+                Log.d("MIIIM", user.mid.toString())
                 Single.just(user)
             }.subscribeOn(Schedulers.io())
             .doFinally { authInProgress.postValue(false) }
