@@ -44,14 +44,14 @@ class MyFirebaseMessagingService : FirebaseMessagingService() {
             val temporalTransaction: GetZenithPayByTransferUserTransactionsModel =
                 gson.fromJson(
                     transactionNotificationFromFirebase,
-                    GetZenithPayByTransferUserTransactionsModel::class.java
+                    GetZenithPayByTransferUserTransactionsModel::class.java,
                 )
 
             val newPaidAt = increaseHourInDate(temporalTransaction.paid_at)
             val modifiedTransaction: GetZenithPayByTransferUserTransactionsModel =
                 temporalTransaction.copy(
                     amount = temporalTransaction.amount.div(100),
-                    paid_at = newPaidAt
+                    paid_at = newPaidAt,
                 )
 
             val transaction = gson.toJson(modifiedTransaction)
@@ -75,12 +75,12 @@ class MyFirebaseMessagingService : FirebaseMessagingService() {
             Log.d("1234567890", it)
             sendNotification(
                 "${
-                transactionAmount.toInt().formatCurrencyAmountUsingCurrentModule()
+                    transactionAmount.toInt().formatCurrencyAmountUsingCurrentModule()
                 } Received \nFrom: ${transaction.payer_account_name}   (${
-                transaction.details.split(
-                    "/"
-                )[1]
-                })"
+                    transaction.details.split(
+                        "/",
+                    )[1]
+                })",
             )
         }
     }
@@ -94,7 +94,7 @@ class MyFirebaseMessagingService : FirebaseMessagingService() {
             this,
             INT_FIREBASE_PENDING_INTENT_REQUEST_CODE /* Request code */,
             intent,
-            PendingIntent.FLAG_IMMUTABLE
+            PendingIntent.FLAG_IMMUTABLE,
         )
 
         val channelId = "fcm_default_channel"
@@ -116,7 +116,7 @@ class MyFirebaseMessagingService : FirebaseMessagingService() {
             val channel = NotificationChannel(
                 channelId,
                 getString(R.string.transacion_received),
-                NotificationManager.IMPORTANCE_DEFAULT
+                NotificationManager.IMPORTANCE_DEFAULT,
             )
             notificationManager.createNotificationChannel(channel)
         }
