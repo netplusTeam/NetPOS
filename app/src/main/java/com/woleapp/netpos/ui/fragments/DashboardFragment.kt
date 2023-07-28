@@ -85,7 +85,7 @@ class DashboardFragment : BaseFragment() {
     private val viewModel by viewModels<SalesViewModel> {
         SalesViewModelProvider(
             AppDatabase.getDatabaseInstance(requireContext()).transactionResponseDao(),
-            AppDatabase.getDatabaseInstance(requireContext()).transactionTrackingTableDao()
+            AppDatabase.getDatabaseInstance(requireContext()).transactionTrackingTableDao(),
         )
     }
     private lateinit var receiptPdf: File
@@ -109,7 +109,7 @@ class DashboardFragment : BaseFragment() {
     override fun onCreateView(
         inflater: LayoutInflater,
         container: ViewGroup?,
-        savedInstanceState: Bundle?
+        savedInstanceState: Bundle?,
     ): View {
         binding = FragmentDashboardBinding.inflate(inflater, container, false).apply {
             viewmodel = viewModel
@@ -122,7 +122,7 @@ class DashboardFragment : BaseFragment() {
             this.setMessage(getString(R.string.please_wait))
             this.setButton(
                 DialogInterface.BUTTON_POSITIVE,
-                getString(R.string.cancel)
+                getString(R.string.cancel),
             ) { dialog, _ ->
                 compositeDisposable.clear()
                 dialog.cancel()
@@ -155,7 +155,7 @@ class DashboardFragment : BaseFragment() {
                         viewModel.printReceipt(
                             requireContext(),
                             isMerchantCopy = false,
-                            selected = true
+                            selected = true,
                         )
                     }
                     merchant.setOnClickListener {
@@ -163,7 +163,7 @@ class DashboardFragment : BaseFragment() {
                         viewModel.printReceipt(
                             requireContext(),
                             isMerchantCopy = true,
-                            selected = true
+                            selected = true,
                         )
                     }
                     download.setOnClickListener {
@@ -243,7 +243,7 @@ class DashboardFragment : BaseFragment() {
             Service(1, getString(R.string.balance_enquiry), R.drawable.ic_write),
             Service(2, getString(R.string.bank_transfer), R.drawable.ic_lending),
             // add(Service(3, "Pay Bills", R.drawable.ic_bill))
-            Service(4, getString(R.string.veiw_eod), R.drawable.ic_print)
+            Service(4, getString(R.string.veiw_eod), R.drawable.ic_print),
         )
         adapter.submitList(listOfServices)
     }
@@ -267,7 +267,7 @@ class DashboardFragment : BaseFragment() {
             Service(1, getString(R.string.balance_enquiry), R.drawable.ic_write),
             Service(2, getString(R.string.bank_transfer), R.drawable.ic_lending),
             // add(Service(3, "Pay Bills", R.drawable.ic_bill))
-            Service(4, getString(R.string.veiw_eod), R.drawable.ic_print)
+            Service(4, getString(R.string.veiw_eod), R.drawable.ic_print),
         )
         adapter.submitList(listOfServices)
     }
@@ -306,11 +306,15 @@ class DashboardFragment : BaseFragment() {
                     add(
                         Service(
                             2,
-                            if (BuildConfig.FLAVOR == "zenith") getString(R.string.pay_by_transfer) else getString(
-                                R.string.bank_transfer
-                            ),
-                            R.drawable.ic_lending
-                        )
+                            if (BuildConfig.FLAVOR == "zenith") {
+                                getString(R.string.pay_by_transfer)
+                            } else {
+                                getString(
+                                    R.string.bank_transfer,
+                                )
+                            },
+                            R.drawable.ic_lending,
+                        ),
                     )
                 }
 //                add(Service(3, "Pay Bills", R.drawable.ic_bill))
@@ -324,7 +328,7 @@ class DashboardFragment : BaseFragment() {
         Timber.d("CALLED")
         val req = TokenPassportRequest(
             context.getString(R.string.userMD),
-            Singletons.getCurrentlyLoggedInUser()!!.terminal_id!!
+            Singletons.getCurrentlyLoggedInUser()!!.terminal_id!!,
         )
         try {
             val disposable = CompositeDisposable()
@@ -342,7 +346,7 @@ class DashboardFragment : BaseFragment() {
                         }
                         t2?.let {
                         }
-                    }
+                    },
             )
             disposable.clear()
         } catch (e: Exception) {
@@ -392,11 +396,15 @@ class DashboardFragment : BaseFragment() {
                     add(
                         Service(
                             2,
-                            if (BuildConfig.FLAVOR == "zenith") getString(R.string.pay_by_transfer) else getString(
-                                R.string.bank_transfer
-                            ),
-                            R.drawable.ic_lending
-                        )
+                            if (BuildConfig.FLAVOR == "zenith") {
+                                getString(R.string.pay_by_transfer)
+                            } else {
+                                getString(
+                                    R.string.bank_transfer,
+                                )
+                            },
+                            R.drawable.ic_lending,
+                        ),
                     )
                 }
                 add(Service(3, getString(R.string.pay_bills), R.drawable.ic_bill))
@@ -424,19 +432,23 @@ class DashboardFragment : BaseFragment() {
             getDateInTheFormatExpectedByTheNewService(df.format(be)),
             getDateInTheFormatExpectedByTheNewServiceForEnd(df.format(be)),
             1,
-            1000
+            1000,
         )
         stormApiService.getTransactionsFromNewService(
             parameters.terminalId,
             parameters.from,
             parameters.to,
             parameters.page,
-            parameters.pageSize
+            parameters.pageSize,
         ).flatMap {
             it.data.rows = it.data.rows.map { transaction ->
                 transaction.amount =
-                    if (transaction.amount is Int) (transaction.amount as Int).times(100) else (transaction.amount as Double)
-                        .times(100)
+                    if (transaction.amount is Int) {
+                        (transaction.amount as Int).times(100)
+                    } else {
+                        (transaction.amount as Double)
+                            .times(100)
+                    }
                 transaction
             }
             Single.just(it)
@@ -444,7 +456,7 @@ class DashboardFragment : BaseFragment() {
             if (it.data.rows.isEmpty()) {
                 return@flatMap getEndOfDayLocal(
                     getDateInMilliSecsForLocal(df.format(be)),
-                    getDateInMilliSecsForLocalForEndOfDay(df.format(be))
+                    getDateInMilliSecsForLocalForEndOfDay(df.format(be)),
                 )
             }
             Single.just(it)
@@ -452,7 +464,7 @@ class DashboardFragment : BaseFragment() {
             .onErrorResumeNext {
                 getEndOfDayLocal(
                     getDateInMilliSecsForLocal(df.format(be)),
-                    getDateInMilliSecsForLocalForEndOfDay(df.format(be))
+                    getDateInMilliSecsForLocalForEndOfDay(df.format(be)),
                 )
             }
             .subscribeOn(Schedulers.io())
@@ -479,7 +491,7 @@ class DashboardFragment : BaseFragment() {
                     Toast.makeText(
                         requireContext(),
                         "An error occurred while fetching end of day, try again",
-                        Toast.LENGTH_LONG
+                        Toast.LENGTH_LONG,
                     ).show()
                 }
             }.disposeWith(compositeDisposable)
@@ -535,8 +547,8 @@ class DashboardFragment : BaseFragment() {
             .setConstraints(
                 Constraints.Builder()
                     .setRequiredNetworkType(
-                        NetworkType.CONNECTED
-                    ).build()
+                        NetworkType.CONNECTED,
+                    ).build(),
             ).build()
         workManager.enqueue(workRequest)
     }
@@ -565,7 +577,7 @@ class DashboardFragment : BaseFragment() {
             totalTransactionsAmount.text =
                 getString(
                     R.string.total_transaction_amount,
-                    approvedList.sumOf { it.amount }.div(100).formatCurrencyAmount()
+                    approvedList.sumOf { it.amount }.div(100).formatCurrencyAmount(),
                 )
             totalTransactions.text =
                 getString(R.string.total_transaction_count, transactions.size.toString())
@@ -574,7 +586,7 @@ class DashboardFragment : BaseFragment() {
                     Toast.makeText(
                         context,
                         getString(R.string.noTransactionsToPrint),
-                        Toast.LENGTH_LONG
+                        Toast.LENGTH_LONG,
                     ).show()
                 } else {
                     when (chipGroup.checkedChipId) {
@@ -586,7 +598,7 @@ class DashboardFragment : BaseFragment() {
                             Toast.makeText(
                                 requireContext(),
                                 getString(R.string.noTransactionsToPrint),
-                                Toast.LENGTH_SHORT
+                                Toast.LENGTH_SHORT,
                             ).show()
                             return@setOnClickListener
                         }
@@ -599,7 +611,7 @@ class DashboardFragment : BaseFragment() {
                             Toast.makeText(
                                 requireContext(),
                                 err.localizedMessage,
-                                Toast.LENGTH_LONG
+                                Toast.LENGTH_LONG,
                             )
                                 .show()
                             // Timber.e(err.localizedMessage)
@@ -619,9 +631,9 @@ class DashboardFragment : BaseFragment() {
                 transactionViewModel.setEndOfDayList(
                     transactions.map { trns ->
                         trns.copy(
-                            localDate_13 = trns.localDate_13 + PDF_REPRINT_IDENTIFIER
+                            localDate_13 = trns.localDate_13 + PDF_REPRINT_IDENTIFIER,
                         )
-                    }
+                    },
                 )
                 bottomSheet.dismiss()
                 addFragmentWithoutRemove(TransactionHistoryFragment.newInstance(HISTORY_ACTION_EOD))
@@ -649,8 +661,8 @@ class DashboardFragment : BaseFragment() {
                         mapTransFromGateWayToEntity(transactionList),
                         transactionList.size,
                         1,
-                        1000
-                    )
+                        1000,
+                    ),
                 )
             }
 
@@ -660,12 +672,12 @@ class DashboardFragment : BaseFragment() {
             requireContext(),
             { _, i, i2, i3 ->
                 getEndOfDayTransactions(
-                    Calendar.getInstance().apply { set(i, i2, i3) }.timeInMillis
+                    Calendar.getInstance().apply { set(i, i2, i3) }.timeInMillis,
                 )
             },
             calendar.get(Calendar.YEAR),
             calendar.get(Calendar.MONTH),
-            calendar.get(Calendar.DAY_OF_MONTH)
+            calendar.get(Calendar.DAY_OF_MONTH),
         ).show()
     }
 
@@ -687,12 +699,12 @@ class DashboardFragment : BaseFragment() {
             getDateInTheFormatExpectedByTheNewService(df.format(be)),
             getDateInTheFormatExpectedByTheNewServiceForEnd(df.format(be)),
             1,
-            1000
+            1000,
         )
 
         getEndOfDayLocal(
             getDateInMilliSecsForLocal(df.format(be)),
-            getDateInMilliSecsForLocalForEndOfDay(df.format(be))
+            getDateInMilliSecsForLocalForEndOfDay(df.format(be)),
         )
             .flatMap { gateWayResp ->
                 if (gateWayResp.result.isEmpty()) {
@@ -701,13 +713,13 @@ class DashboardFragment : BaseFragment() {
                         parameters.from,
                         parameters.to,
                         parameters.page,
-                        parameters.pageSize
+                        parameters.pageSize,
                     ).map {
                         val dataWithModifiedAmount = it.data.rows.map { it1 ->
                             it1.copy(amount = (it1.amount as Int * 100))
                         }
                         val modifiedData = it.data.copy(
-                            rows = dataWithModifiedAmount
+                            rows = dataWithModifiedAmount,
                         )
                         Single.just(it.copy(data = modifiedData))
                     }
@@ -721,13 +733,13 @@ class DashboardFragment : BaseFragment() {
                     parameters.from,
                     parameters.to,
                     parameters.page,
-                    parameters.pageSize
+                    parameters.pageSize,
                 ).map {
                     val dataWithModifiedAmount = it.data.rows.map { it1 ->
                         it1.copy(amount = (it1.amount as Double * 100))
                     }
                     val modifiedData = it.data.copy(
-                        rows = dataWithModifiedAmount
+                        rows = dataWithModifiedAmount,
                     )
                     Single.just(it.copy(data = modifiedData))
                 }
@@ -765,7 +777,7 @@ class DashboardFragment : BaseFragment() {
                     Toast.makeText(
                         requireContext(),
                         getString(R.string.error_occured),
-                        Toast.LENGTH_LONG
+                        Toast.LENGTH_LONG,
                     ).show()
                 }
             }.disposeWith(compositeDisposable)
@@ -777,7 +789,7 @@ class DashboardFragment : BaseFragment() {
             requireContext(),
             Manifest.permission.WRITE_EXTERNAL_STORAGE,
             WRITE_PERMISSION_REQUEST_CODE,
-            getString(R.string.storage_permission_rationale_for_download)
+            getString(R.string.storage_permission_rationale_for_download),
         ) {
             receiptPdf = createPdf(view, this)
         }
@@ -787,7 +799,7 @@ class DashboardFragment : BaseFragment() {
         viewModel.currentLastTransactionResponse.value?.let { transResponse ->
             initViewsForPdfLayout(
                 pdfView,
-                transResponse
+                transResponse,
             )
             getPermissionAndCreatePdf(pdfView)
         }
@@ -802,21 +814,21 @@ class DashboardFragment : BaseFragment() {
                         sharePdf(receiptPdf, this)
                         showSnackBar(
                             getString(R.string.fileDownloaded),
-                            binding.root
+                            binding.root,
                         )
                     }
                     PREF_VALUE_PRINT_DOWNLOAD_RECEIPT -> {
                         downloadPdfImpl()
                         showSnackBar(
                             getString(R.string.fileDownloaded),
-                            binding.root
+                            binding.root,
                         )
                     }
                     PREF_VALUE_PRINT_DOWNLOAD_AND_SHARE_RECEIPT -> {
                         downloadPdfImpl()
                         showSnackBar(
                             getString(R.string.fileDownloaded),
-                            binding.root
+                            binding.root,
                         )
                         sharePdf(receiptPdf, this)
                     }
@@ -837,10 +849,10 @@ class DashboardFragment : BaseFragment() {
 
         Snackbar.make(
             requireActivity().findViewById(
-                R.id.container_main
+                R.id.container_main,
             ),
             message,
-            Snackbar.LENGTH_LONG
+            Snackbar.LENGTH_LONG,
         ).show()
     }
 
@@ -871,7 +883,7 @@ class DashboardFragment : BaseFragment() {
                         viewLifecycleOwner,
                         viewModel.amountLong / 100,
                         0L,
-                        compositeDisposable
+                        compositeDisposable,
                     ).observe(viewLifecycleOwner) { event ->
                         event.getContentIfNotHandled()?.let {
                             it.error?.let { error ->
@@ -879,7 +891,7 @@ class DashboardFragment : BaseFragment() {
                                 Toast.makeText(
                                     requireContext(),
                                     error.message,
-                                    Toast.LENGTH_LONG
+                                    Toast.LENGTH_LONG,
                                 )
                                     .show()
                             }
@@ -941,12 +953,12 @@ class DashboardFragment : BaseFragment() {
                         Toast.makeText(
                             requireContext(),
                             "Please enter a valid phone number",
-                            Toast.LENGTH_LONG
+                            Toast.LENGTH_LONG,
                         ).show()
                         return@setOnClickListener
                     }
                     viewModel.sendSmS(
-                        receiptDialogBinding.telephone.text.toString()
+                        receiptDialogBinding.telephone.text.toString(),
                     )
                     progress.visibility = View.VISIBLE
                     sendButton.isEnabled = false
@@ -977,7 +989,7 @@ class DashboardFragment : BaseFragment() {
                 if (it) {
                     NetPosTerminalConfig.init(
                         requireContext().applicationContext,
-                        configureSilently = true
+                        configureSilently = true,
                     )
                 }
             }

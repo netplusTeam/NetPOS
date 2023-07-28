@@ -135,12 +135,6 @@ class MainActivity : AppCompatActivity(), EasyPermissions.PermissionCallbacks {
             )
             1 -> {
                 dismissProgressDialogIfShowing()
-//                NetPosTerminalConfig.getKeyHolder()?.let {
-//                    NetPosSdk.writeTpkKey(
-//                        DeviceConfig.TPKIndex,
-//                        it.clearPinKey
-//                    )
-//                }
             }
         }
 //        checkTokenExpiry()

@@ -15,7 +15,7 @@ import timber.log.Timber
 
 class RepushFailedTransactionToBackendWorker(
     context: Context,
-    workParams: WorkerParameters
+    workParams: WorkerParameters,
 ) : Worker(context, workParams) {
     private val compositeDisposable = CompositeDisposable()
     private val stormApiService = StormApiClient.getStormApiLoginInstance()
@@ -33,35 +33,37 @@ class RepushFailedTransactionToBackendWorker(
         }
 
         return if (transactionTrackingTableDao.getAllYetToBeUpdatedTransactions()
-            .isEmpty() && counter == 0
+                .isEmpty() && counter == 0
         ) {
             Result.success()
-        } else Result.retry()
+        } else {
+            Result.retry()
+        }
     }
 
     private fun repushTransactionTransaction(
         transactionToRepush: TransactionResponseXForTracking,
-        decrementCounter: () -> Unit
+        decrementCounter: () -> Unit,
     ) {
         val transactionResponse = DataToLogAfterConnectingToNibss(
             transactionToRepush.status,
             transactionToRepush.transRespX,
-            transactionToRepush.temporalRRN
+            transactionToRepush.temporalRRN,
         )
         stormApiService.updateLogAfterConnectingToNibss(
             transactionToRepush.temporalRRN,
-            transactionResponse
+            transactionResponse,
         ).subscribeOn(Schedulers.io())
             .observeOn(AndroidSchedulers.mainThread())
             .subscribe { t1, t2 ->
                 t1?.let {
                     Timber.d("GOT_HERE_A")
                     if (it.code() in 200..299 || it.code() == 409 || it.message()
-                        .contains("There is an error") || it.code() == 404 || it.code() == 500
+                            .contains("There is an error") || it.code() == 404 || it.code() == 500
                     ) {
                         Timber.d("CONDITION_FULFILLED")
                         transactionTrackingTableDao.deleteTransactionAfterSuccessfulUpdateAtBackend(
-                            transactionToRepush
+                            transactionToRepush,
                         ).subscribeOn(Schedulers.io())
                             .observeOn(AndroidSchedulers.mainThread())
                             .subscribe { numberOfAffectedRows, error ->
