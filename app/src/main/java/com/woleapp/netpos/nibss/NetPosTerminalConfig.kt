@@ -36,7 +36,7 @@ class NetPosTerminalConfig {
         var connectionData: ConnectionData = ConnectionData(
             ipAddress = configurationData.ip,
             ipPort = configurationData.port.toInt(),
-            isSSL = true
+            isSSL = true,
         )
         private var terminalId: String? = null
         var isConfigurationInProcess = false
@@ -64,11 +64,11 @@ class NetPosTerminalConfig {
 
         fun init(
             context: Context,
-            configureSilently: Boolean = false
+            configureSilently: Boolean = false,
         ) {
             KeyHolder.setHostKeyComponents(
                 configurationData.key1,
-                configurationData.key2
+                configurationData.key2,
             ) // default to test  //Set your base keys here
 
             setTerminalId()
@@ -148,12 +148,14 @@ class NetPosTerminalConfig {
                 context,
                 getTerminalId(),
                 keyHolder?.clearSessionKey ?: "",
-                NetPosSdk.getDeviceSerial()
+                NetPosSdk.getDeviceSerial(),
             ).flatMap {
                 Timber.e("call home result $it")
                 if (it == "00") {
                     return@flatMap Single.just(Pair(null, null))
-                } else Single.error(Exception("call home failed"))
+                } else {
+                    Single.error(Exception("call home failed"))
+                }
             }
         }
 
@@ -165,7 +167,7 @@ class NetPosTerminalConfig {
                         context,
                         getTerminalId(),
                         nibssKeyHolder.clearSessionKey,
-                        NetPosSdk.getDeviceSerial()
+                        NetPosSdk.getDeviceSerial(),
                     ).map { nibssConfigData ->
                         configData = nibssConfigData
                         return@map Pair(nibssKeyHolder, nibssConfigData)
