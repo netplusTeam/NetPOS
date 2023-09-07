@@ -42,7 +42,7 @@ class TransactionsFragment : BaseFragment() {
     override fun onCreateView(
         inflater: LayoutInflater,
         container: ViewGroup?,
-        savedInstanceState: Bundle?
+        savedInstanceState: Bundle?,
     ): View {
         binding = FragmentTransactionsBinding.inflate(inflater, container, false)
         passwordDialogBinding =
@@ -57,7 +57,7 @@ class TransactionsFragment : BaseFragment() {
         passwordDialogBinding.proceed.setOnClickListener {
             if (passwordDialogBinding.passwordEdittext.text.toString() == Prefs.getString(
                     PREF_REPRINT_PASSWORD,
-                    ""
+                    "",
                 )
             ) {
                 inputPasswordDialog.cancel()
@@ -104,8 +104,8 @@ class TransactionsFragment : BaseFragment() {
                         dialog.dismiss()
                         addFragmentWithoutRemove(
                             TransactionHistoryFragment.newInstance(
-                                HISTORY_ACTION_PREAUTH
-                            )
+                                HISTORY_ACTION_PREAUTH,
+                            ),
                         )
                     }
                     cancelButton.setOnClickListener {
@@ -166,7 +166,7 @@ class TransactionsFragment : BaseFragment() {
                 }
                 5 -> {
                     if ((BuildConfig.FLAVOR == "wema" || BuildConfig.FLAVOR == "zenith") && Prefs.contains(
-                            PREF_REPRINT_PASSWORD
+                            PREF_REPRINT_PASSWORD,
                         )
                     ) {
                         inputPasswordDialog.show()
@@ -189,7 +189,7 @@ class TransactionsFragment : BaseFragment() {
                 Service(2, "PRE AUTHORIZATION", R.drawable.ic_pre_auth),
                 Service(4, "QR", R.drawable.ic_qr_code),
                 Service(5, "Reprint", R.drawable.ic_print),
-                Service(6, "VEND", R.drawable.ic_vend)
+                Service(6, "VEND", R.drawable.ic_vend),
             )
         } else {
             val serviceArr = arrayListOf(
@@ -198,15 +198,17 @@ class TransactionsFragment : BaseFragment() {
                 Service(2, "PRE AUTHORIZATION", R.drawable.ic_pre_auth),
                 Service(3, "Cash Advance", R.drawable.ic_pay_cash_icon),
                 Service(4, "QR", R.drawable.ic_qr_code),
-                Service(5, "Reprint", R.drawable.ic_print)
+                Service(5, "Reprint", R.drawable.ic_print),
             )
-            if (BuildConfig.FLAVOR.equals("zenith", true)) serviceArr.add(
-                Service(
-                    6,
-                    getString(R.string.pay_by_transfer),
-                    R.drawable.ic_lending
+            if (BuildConfig.FLAVOR.equals("zenith", true)) {
+                serviceArr.add(
+                    Service(
+                        6,
+                        getString(R.string.pay_by_transfer),
+                        R.drawable.ic_lending,
+                    ),
                 )
-            )
+            }
             serviceArr
         }
 
@@ -248,7 +250,7 @@ class TransactionsFragment : BaseFragment() {
 //                Service(2, "PRE AUTHORIZATION", R.drawable.ic_pre_auth),
 //                Service(3, "Cash Advance", R.drawable.ic_pay_cash_icon),
 //                Service(4, "QR", R.drawable.ic_qr_code),
-                Service(5, "Reprint", R.drawable.ic_print)
+                Service(5, "Reprint", R.drawable.ic_print),
 //                Service(6, "VEND", R.drawable.ic_vend)
             )
 
@@ -260,8 +262,8 @@ class TransactionsFragment : BaseFragment() {
             .setConstraints(
                 Constraints.Builder()
                     .setRequiredNetworkType(
-                        NetworkType.CONNECTED
-                    ).build()
+                        NetworkType.CONNECTED,
+                    ).build(),
             ).build()
         workManager.enqueue(workRequest)
     }

@@ -15,7 +15,8 @@ import com.woleapp.netpos.nibss.Keys
 fun useStormTerminalId() = Prefs.getBoolean(PREF_USE_STORM_TERMINAL_ID, true)
 fun TransactionResponse.toNibssResponse(remark: String? = null): NibssResponse =
     Singletons.gson.fromJson(
-        Singletons.gson.toJson(this), NibssResponse::class.java
+        Singletons.gson.toJson(this),
+        NibssResponse::class.java,
     ).also {
         it.responseMessage = try {
             this.responseMessage
@@ -42,10 +43,10 @@ object Singletons {
     fun getSavedConfigurationData(): ConfigurationData {
         return ConfigurationData(
             "196.6.103.18",
-            "5016",
+            "4016",
             DEFAULT_TERMINAL_ID,
             Keys.posvasLiveKey1,
-            Keys.posvasLiveKey2
+            Keys.posvasLiveKey2,
         )
 //        configurationData?.let {
 //            return it

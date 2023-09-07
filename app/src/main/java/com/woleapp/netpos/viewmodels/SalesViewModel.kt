@@ -180,8 +180,8 @@ class SalesViewModel(
     ) {
         logTransactionFirstImpl(
             cardData,
-            stan,
             rrn,
+            stan,
             transTime,
             requestData,
             transDateTime,
@@ -222,12 +222,13 @@ class SalesViewModel(
         val dataToLog = DataToLogAfterConnectingToNibss(status, transactionResponse, rrn)
         return stormApiService!!.updateLogAfterConnectingToNibss(rrn, dataToLog)
             .doOnError {
-                Timber.d("SAVE_TRANSACTION_FOR_LATER_TRACKING=====>%s", "YES_SAVED_TO_DB")
                 val data = TransactionResponseXForTracking(rrn, transactionResponse, status)
                 saveTransactionForTracking(data)
             }.flatMap {
-                // 785431481148
-                Timber.d("SAVE_TRANSACTION_FOR_LATER_TRACKING=====>%s", "NO_NOT_SAVED_TO_DB")
+                if (!(it.code() in 200..299 || it.code() in 400..499)) {
+                    val data = TransactionResponseXForTracking(rrn, transactionResponse, status)
+                    saveTransactionForTracking(data)
+                }
                 Single.just(it.body())
             }
     }
@@ -268,7 +269,6 @@ class SalesViewModel(
         rrnApiService.getRrn().subscribeOn(Schedulers.io())
             .onErrorResumeNext { Single.just(Response.success(customRrn)) }
             .flatMap {
-                Timber.d("CALLLEDDDDDDD77777777777777777777777777777777")
                 if (it.isSuccessful) {
                     it.body()?.let { rrn ->
                         logTransactionBeforeConnectingToNibss(
@@ -293,7 +293,6 @@ class SalesViewModel(
                 Single.just(it)
             }
             .flatMap {
-                Timber.d("CALLLEDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDD")
                 if (it.isSuccessful) {
                     it.body()?.let { rrn ->
                         if (BuildConfig.FLAVOR == "wemacashout") {

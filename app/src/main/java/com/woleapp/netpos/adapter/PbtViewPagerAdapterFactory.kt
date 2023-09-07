@@ -8,6 +8,6 @@ import dagger.assisted.AssistedFactory
 interface PbtViewPagerAdapterFactory {
     fun createViewPagerAdapter(
         fm: FragmentManager,
-        lifecycle: Lifecycle
+        lifecycle: Lifecycle,
     ): PbtViewPagerAdapter
 }
