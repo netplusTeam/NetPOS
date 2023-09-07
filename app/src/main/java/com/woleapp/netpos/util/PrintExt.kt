@@ -98,7 +98,6 @@ fun previousEndOfDayPrintImplementation(
 fun List<TransactionResponse>.printEndOfDay(
     context: Context
 ): Single<PrinterResponse> {
-    Timber.d("DATA_TRANSACTION_TIME=======>%s", this.first().transactionTimeInMillis)
     if (Build.MODEL.equals("mini", true) || Build.MODEL.equals("p5", true)) {
         return Single.error(Throwable("Device cannot print"))
     }
@@ -153,32 +152,6 @@ fun List<TransactionResponse>.printEndOfDay(
         content = "MID: ${this@printEndOfDay.first().merchantId}"
     }
     printerManager.appendTextEntity(textPrintLine)
-// Old Implementation starts here
-//    forEach {
-//        if (it.responseCode == "00") {
-//            amountApproved = amountApproved.plus(it.amount)
-//        } else
-//            amountDeclined = amountDeclined.plus(it.amount)
-//
-//        textPrintLine.apply {
-//            isBold = true
-//            content = if (it.responseCode == "00") "Approved" else "Declined"
-//        }
-//        printerManager.appendTextEntity(textPrintLine)
-//        textPrintLine.apply {
-//            isBold = false
-//            content = "Amount: ${it.amount.div(100).formatCurrencyAmount("\u20A6")}"
-//        }
-//        printerManager.appendTextEntity(textPrintLine)
-//        textPrintLine.apply {
-//            content = "RRN: ${it.RRN}"
-//        }
-//        printerManager.appendTextEntity(textPrintLine)
-//        textPrintLine.apply {
-//            content = "Date: ${it.transactionTimeInMillis.formatDate()}"
-//        }
-//    }
-//    Old implementation ends here
 
     // New EOD implementation starts here
     drawStraightLine(printerManager, textPrintLine)
@@ -346,7 +319,10 @@ fun TransactionResponse.builder() = StringBuilder().apply {
 
 fun TransactionResponse.buildSMSText(s: String? = null): StringBuilder = StringBuilder().apply {
     append("POS $transactionType ${if (responseCode == "00") "Approved" else "Declined"}\n\n")
-    if (!Singletons.getCurrentlyLoggedInUser()?.business_phone_number.isNullOrEmpty()){
+    if (!Singletons.getCurrentlyLoggedInUser()?.business_address.isNullOrEmpty()) {
+        append("Merchant Address: ${Singletons.getCurrentlyLoggedInUser()?.business_address}\n")
+    }
+    if (!Singletons.getCurrentlyLoggedInUser()?.business_phone_number.isNullOrEmpty()) {
         append("Merchant Phone Number: ${Singletons.getCurrentlyLoggedInUser()?.business_phone_number}\n")
     }
     append("Response Code: $responseCode\n")
@@ -394,9 +370,9 @@ fun TransactionResponse.buildReceipt(
         )
         if (AID.isNotEmpty()) builder.appendAID(AID)
 
-        //Timber.d("DATA_ADDRESS_IN_PRINT_1=====>${Singletons.getCurrentlyLoggedInUser()?.business_address ?: "IRO NI O"}")
+        Timber.d("DATA_ADDRESS_IN_PRINT_1=====>${Singletons.getCurrentlyLoggedInUser()?.business_address ?: "IRO NI O"}")
         Singletons.getCurrentlyLoggedInUser()?.business_address?.let {
-            //Timber.d("DATA_ADDRESS_IN_PRINT=====>$it")
+            Timber.d("DATA_ADDRESS_IN_PRINT=====>$it")
             builder.appendMerchantAddress(it)
         }
         builder.appendMerchantName(Singletons.getCurrentlyLoggedInUser()!!.business_name)
@@ -427,7 +403,7 @@ fun TransactionResponse.buildReceipt(
             }
             }"
         )
-        if (!Singletons.getCurrentlyLoggedInUser()?.business_address.isNullOrEmpty()){
+        if (!Singletons.getCurrentlyLoggedInUser()?.business_address.isNullOrEmpty()) {
             builder.appendMerchantAddress("Merchant Address: ${Singletons.getCurrentlyLoggedInUser()?.business_address}")
         }
         builder.isReprint = isReprint

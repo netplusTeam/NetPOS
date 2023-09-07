@@ -74,6 +74,7 @@ class TransactionsFragment : BaseFragment() {
         }
         return binding.root
     }
+
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         when (BuildConfig.FLAVOR) {
@@ -164,14 +165,18 @@ class TransactionsFragment : BaseFragment() {
                     QRFragment()
                 }
                 5 -> {
-                    if ((BuildConfig.FLAVOR == "wema" || BuildConfig.FLAVOR == "zenith") && Prefs.contains(PREF_REPRINT_PASSWORD)) {
+                    if ((BuildConfig.FLAVOR == "wema" || BuildConfig.FLAVOR == "zenith") && Prefs.contains(
+                            PREF_REPRINT_PASSWORD
+                        )
+                    ) {
                         inputPasswordDialog.show()
                         return@ServiceAdapter
                     }
                     ReprintFragment()
 //                    TransactionHistoryFragment.newInstance(action = HISTORY_ACTION_REPRINT)
                 }
-                6 -> SalesFragment.newInstance(isVend = true)
+//                6 -> SalesFragment.newInstance(isVend = true)
+                6 -> ZenithPayByTransferFragment()
                 else -> SalesFragment.newInstance(TransactionType.CASH_ADVANCE)
             }
             nextFrag?.let { fragment ->
@@ -187,15 +192,22 @@ class TransactionsFragment : BaseFragment() {
                 Service(6, "VEND", R.drawable.ic_vend)
             )
         } else {
-            arrayListOf(
+            val serviceArr = arrayListOf(
                 Service(0, "Purchase", R.drawable.ic_purchase),
                 Service(1, "Cash", R.drawable.ic_baseline_money_24),
                 Service(2, "PRE AUTHORIZATION", R.drawable.ic_pre_auth),
                 Service(3, "Cash Advance", R.drawable.ic_pay_cash_icon),
                 Service(4, "QR", R.drawable.ic_qr_code),
-                Service(5, "Reprint", R.drawable.ic_print),
-                Service(6, "VEND", R.drawable.ic_vend)
+                Service(5, "Reprint", R.drawable.ic_print)
             )
+            if (BuildConfig.FLAVOR.equals("zenith", true)) serviceArr.add(
+                Service(
+                    6,
+                    getString(R.string.pay_by_transfer),
+                    R.drawable.ic_lending
+                )
+            )
+            serviceArr
         }
 
         adapter.submitList(listOfService)

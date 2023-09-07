@@ -10,7 +10,6 @@ import com.woleapp.netpos.model.Row
 import com.woleapp.netpos.model.TransactionResponseModelFromGateWay
 import com.woleapp.netpos.util.RandomNumUtil.formattedTime
 import com.woleapp.netpos.util.RandomNumUtil.getDateInMillis
-import com.woleapp.netpos.util.RandomNumUtil.getDateInMillis2
 import pub.devrel.easypermissions.EasyPermissions
 
 object ModelMapper {
@@ -29,7 +28,7 @@ object ModelMapper {
                 cardLabel = it.cardLabel,
                 maskedPan = it.maskedPan,
                 merchantId = it.merchantId,
-                merchantName = "",
+                merchantName = it.transactionTimeInMillis.toString(),
                 originalForwardingInstCode = it.originalForwardingInstCode,
                 remark = "",
                 responseCode = it.responseCode,
@@ -60,11 +59,7 @@ object ModelMapper {
                 originalForwardingInstCode = it.originalForwardingInstCode
                 responseCode = it.responseCode
                 terminalId = it.terminalId
-                transactionTimeInMillis =
-                    if (it.transactionTime.contains("T")) getDateInMillis(it.transactionTime) else if (!it.transactionTime.contains(
-                            "T"
-                        ) && it.transactionTime.contains("-")
-                    ) getDateInMillis2(it.transactionTime) else it.transactionTime.toLong()
+                transactionTimeInMillis = it.merchantName.toLong()
                 transactionType = TransactionType.valueOf(it.transactionType)
                 transmissionDateTime = it.transactionTime
             }

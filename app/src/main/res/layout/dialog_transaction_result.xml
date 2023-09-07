@@ -22,7 +22,7 @@
                 android:background="?selectableItemBackground"
                 android:contentDescription="@string/close_dialog"
                 android:padding="16dp"
-                android:src="@drawable/ic_cal_clear"
+                android:src="@drawable/ic_close"
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintTop_toTopOf="parent" />
 
@@ -32,7 +32,7 @@
                 android:layout_height="50dp"
                 android:layout_marginTop="16dp"
                 android:contentDescription="@string/netpos_logo"
-                android:src="@drawable/ic_netpos_new"
+                android:src="@drawable/ic_app_logo"
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintTop_toTopOf="parent" />

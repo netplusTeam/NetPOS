@@ -109,9 +109,7 @@ class NetPosTerminalConfig {
                 }
                 .doFinally { isConfigurationInProcess = false }
                 .subscribe { pair, error ->
-                    Timber.d("TEST_CONFIGURATION%s", "REQUEST_MADE")
                     error?.let {
-                        Timber.d("TEST_CONFIGURATION_ERROR%s", "${it.localizedMessage}")
                         // TerminalManager.getInstance().beep(context, TerminalManager.BEEP_MODE_FAILURE)
                         configurationStatus = -1
                         if (configureSilently.not()) {
@@ -123,12 +121,11 @@ class NetPosTerminalConfig {
                         Timber.e(it)
                     }
                     pair?.let {
-                        Timber.d("TEST_CONFIGURATION_SUCCESS%s", "CALLED_CALLED")
                         pair.first?.let {
                             Prefs.putLong(LAST_POS_CONFIGURATION_TIME, System.currentTimeMillis())
                             Prefs.putString(PREF_CONFIG_DATA, gson.toJson(pair.second))
                             Prefs.putString(PREF_KEYHOLDER, gson.toJson(pair.first))
-                            writeTpkKey(DeviceConfig.TPKIndex, pair.first!!.clearPinKey)
+                            writeTpkKey(DeviceConfig.TPKIndex, pair.first!!.clearPinKey, context)
                             this.configData = pair.second
                         }
                         configurationStatus = 1
@@ -163,7 +160,6 @@ class NetPosTerminalConfig {
         private fun configureTerminal(context: Context): Single<Pair<KeyHolder?, ConfigData?>> =
             terminalConfigurator.downloadNibssKeys(context, getTerminalId())
                 .flatMap { nibssKeyHolder ->
-                    Timber.d("TEST_CONFIGURATION_CONFIG%s", "CALLED_CALLED")
                     keyHolder = nibssKeyHolder
                     terminalConfigurator.downloadTerminalParameters(
                         context,

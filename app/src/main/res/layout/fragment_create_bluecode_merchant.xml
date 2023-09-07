@@ -20,7 +20,6 @@
         <androidx.constraintlayout.widget.ConstraintLayout
             android:layout_width="match_parent"
             android:layout_height="match_parent"
-
             android:padding="@dimen/dimen_16dp">
 
             <ImageView
@@ -113,7 +112,7 @@
                 android:layout_marginStart="@dimen/dimen_8dp"
                 android:onClick="@{() -> viewmodel.fetchStates()}"
                 android:text="@string/error_loading_states_tap_to_try_again"
-                android:textColor="@color/colorError"
+                android:textColor="@color/design_default_color_error"
                 app:layout_constraintStart_toEndOf="@id/select_state_text"
                 app:layout_constraintTop_toTopOf="@id/select_state_text"
                 app:widgetVisibility="@{viewmodel.fetchStatesFailed}" />

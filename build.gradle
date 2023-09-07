@@ -10,6 +10,10 @@ buildscript {
     }
     repositories {
         maven { url 'https://maven.google.com' }
+        maven {
+            url "https://jitpack.io"
+            credentials { username "jp_iu426m6k793tts6nisfjg8at42" }
+        }
         mavenLocal()
         google()
         jcenter()

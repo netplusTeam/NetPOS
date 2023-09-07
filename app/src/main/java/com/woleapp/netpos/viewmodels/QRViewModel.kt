@@ -156,10 +156,10 @@ open class QRViewModel(
         val range2 = (start..end).random()
         lastNibssOrderNumber.value =
             "${
-            SimpleDateFormat(
-                "yMM",
-                Locale.getDefault()
-            ).format(Date(System.currentTimeMillis()))
+                SimpleDateFormat(
+                    "yMM",
+                    Locale.getDefault()
+                ).format(Date(System.currentTimeMillis()))
             }$range1$range2"
         val jsonObject = JsonObject()
         jsonObject.addProperty("amount", amount.toString())

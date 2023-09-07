@@ -5,8 +5,10 @@
     <color name="colorPrimaryLight">#9BC870</color>
     <color name="colorAccent">#795548</color>
     <color name="pinTextColor">#000</color>
+    <color name="gray">#a4a4a4</color>
     <color name="colorPrimaryTint">#b1c481</color>
     <color name="grid_item_bg">#f3f4f8</color>
     <color name="white">#FFFFFF</color>
+    <color name="off_white">#E6DEDE</color>
     <color name="transparent_black">#73000000</color>
 </resources>

@@ -37,13 +37,6 @@ class NetPosApp : Application() {
         RxJavaPlugins.setErrorHandler {
             Timber.e("Error: ${it.localizedMessage}")
         }
-        /*Thread.setDefaultUncaughtExceptionHandler { _, e ->
-            Timber.e("LMAOOOOO, e wan crash")
-            Timber.e(e)
-            throw e
-        }*/
-//        ProcessLifecycleOwner.get().lifecycle
-//            .addObserver(AppLifeCycleObserver())
 
         NetPosSdk.init()
         if (Prefs.contains("load_provided").not()) {
@@ -52,7 +45,7 @@ class NetPosApp : Application() {
                 TerminalParameters()
                     .apply {
                         // online E068C8
-                        terminalCapability = "E0F8C8"
+                        terminalCapability = "E068C8"
                     }
             )
             Prefs.putBoolean("load_provided", true)

@@ -44,7 +44,7 @@ class TransactionHistoryFragment : BaseFragment() {
     override fun onCreateView(
         inflater: LayoutInflater,
         container: ViewGroup?,
-        savedInstanceState: Bundle?
+        savedInstanceState: Bundle?,
     ): View {
         binding = FragmentTransactionHistoryBinding.inflate(inflater, container, false)
         return binding.root
@@ -94,8 +94,8 @@ class TransactionHistoryFragment : BaseFragment() {
         binding.rvTransactionsHistory.addItemDecoration(
             DividerItemDecoration(
                 requireContext(),
-                DividerItemDecoration.VERTICAL
-            )
+                DividerItemDecoration.VERTICAL,
+            ),
         )
 
         if (action != HISTORY_ACTION_EOD) {
@@ -122,14 +122,14 @@ class TransactionHistoryFragment : BaseFragment() {
             binding.historyButton.setBackgroundColor(
                 ContextCompat.getColor(
                     requireContext(),
-                    R.color.colorPrimary
-                )
+                    R.color.colorPrimary,
+                ),
             )
             binding.searchButton.setBackgroundColor(
                 ContextCompat.getColor(
                     requireContext(),
-                    android.R.color.darker_gray
-                )
+                    android.R.color.darker_gray,
+                ),
             )
             binding.historyButton.isEnabled = false
             binding.searchButton.isEnabled = true
@@ -141,14 +141,14 @@ class TransactionHistoryFragment : BaseFragment() {
             binding.historyButton.setBackgroundColor(
                 ContextCompat.getColor(
                     requireContext(),
-                    android.R.color.darker_gray
-                )
+                    android.R.color.darker_gray,
+                ),
             )
             binding.searchButton.setBackgroundColor(
                 ContextCompat.getColor(
                     requireContext(),
-                    R.color.colorPrimary
-                )
+                    R.color.colorPrimary,
+                ),
             )
             binding.searchLayout.visibility = View.VISIBLE
             binding.rvTransactionsHistory.visibility = View.GONE

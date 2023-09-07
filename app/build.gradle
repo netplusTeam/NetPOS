@@ -4,7 +4,8 @@ apply plugin: 'kotlin-android-extensions'
 apply plugin: 'kotlin-kapt'
 apply plugin: 'com.github.sgtsilvio.gradle.android-retrofix'
 apply plugin: 'kotlin-kapt'
-apply plugin:  'dagger.hilt.android.plugin'
+apply plugin: 'dagger.hilt.android.plugin'
+//apply plugin: 'kotlin-parcelize'
 // Apply the Crashlytics Gradle plugin
 apply plugin: 'com.google.firebase.crashlytics'
 
@@ -29,15 +30,25 @@ android {
     compileSdkVersion 31
 //    buildToolsVersion "29.0.3"
     buildFeatures.dataBinding = true
+
+    buildFeatures {
+        viewBinding true
+    }
+
     ndkVersion "21.3.6528147"
+    externalNativeBuild {
+        ndkBuild {
+            path file('src/main/jni/Android.mk')
+        }
+    }
 
     defaultConfig {
         vectorDrawables.useSupportLibrary = true
         applicationId "com.woleapp.netpos"
-        minSdkVersion 21
+        minSdkVersion 23
         targetSdkVersion 30
-        versionCode 149
-        versionName "1.1.149"
+        versionCode 199
+        versionName "1.1.199"
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         def environmentPath
         if (appModeProd == "true")
@@ -117,17 +128,17 @@ android {
             dimension "whiteLabels"
             applicationIdSuffix ".heritage"
         }
-        aellacredit{
+        aellacredit {
             dimension "whiteLabels"
             applicationIdSuffix ".aellacredit"
         }
-        tingopay{
+        tingopay {
             dimension "whiteLabels"
             applicationIdSuffix ".tingopay"
         }
-        covenant{
+        unitybank {
             dimension "whiteLabels"
-            applicationIdSuffix ".covenant"
+            applicationIdSuffix ".unitybank"
         }
     }
 
@@ -152,7 +163,7 @@ android {
         providus {
             java.srcDirs('src/defaults/java')
         }
-        wemacashout{
+        wemacashout {
             java.srcDirs('src/defaults/java')
         }
         heritage {
@@ -164,7 +175,7 @@ android {
         tingopay {
             java.srcDirs('src/defaults/java')
         }
-        covenant {
+        unitybank {
             java.srcDirs('src/defaults/java')
         }
     }
@@ -194,12 +205,8 @@ dependencies {
     implementation project(path: ':epmslib-release')
     implementation 'net.sf.j8583:j8583:1.12.0'
 
-    // Nibss Direct
-//    implementation project (path: ':nibssDirect')
-
     //netpos sdk
-    implementation "com.netpluspay.netpossdk:netpossdk:1.0.24"
-    //implementation project(path: ':netpossdk')
+    implementation "'com.github.netplusTeam:NetposContactSdk:1.0.30"
 
     //Timber
     implementation 'com.jakewharton.timber:timber:4.7.1'
@@ -268,10 +275,6 @@ dependencies {
     def work_version = "2.5.0"
     implementation "androidx.work:work-runtime-ktx:$work_version"
 
-//    //firebase
-//    implementation platform('com.google.firebase:firebase-bom:29.1.0')
-//    implementation 'com.google.firebase:firebase-messaging'
-//    implementation 'com.google.firebase:firebase-messaging-ktx'
     // Firebase
     implementation platform('com.google.firebase:firebase-bom:30.4.1')
     implementation 'com.google.firebase:firebase-analytics-ktx'
@@ -290,5 +293,6 @@ dependencies {
 
     implementation "com.google.dagger:hilt-android:2.38.1"
     kapt "com.google.dagger:hilt-compiler:2.38.1"
+
 }
 apply plugin: 'com.google.gms.google-services'

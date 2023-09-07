@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <item
+        android:id="@+id/fast_pay"
+        android:enabled="true"
+        android:icon="@drawable/fast_pay"
+        android:title="@string/purchase" />
+
+    <item
+        android:id="@+id/transaction"
+        android:enabled="true"
+        android:icon="@drawable/ic_trans"
+        android:title="@string/menu_item_transactions" />
+
+    <item
+        android:id="@+id/endOfDay"
+        android:enabled="true"
+        android:icon="@drawable/ic_end_of_day"
+        android:title="@string/menu_item_end_of_day" />
+
+    <item
+        android:id="@+id/settings"
+        android:enabled="true"
+        android:icon="@drawable/ic_baseline_settings"
+        android:title="@string/menu_item_settings" />
+
+    <item
+        android:id="@+id/balance"
+        android:enabled="true"
+        android:icon="@drawable/ic_write"
+        android:title="@string/check_bal" />
+
+</menu>

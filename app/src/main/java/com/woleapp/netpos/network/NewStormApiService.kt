@@ -9,6 +9,6 @@ interface NewStormApiService {
 
     @GET("/partners/{partnerId}/isw_threshold")
     fun getPartnerInterSwitchThreshold(
-        @Path("partnerId") partnerId: String
+        @Path("partnerId") partnerId: String,
     ): Single<GetPartnerInterSwitchThresholdResponse?>
 }

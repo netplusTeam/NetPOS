@@ -2,7 +2,6 @@ package com.woleapp.netpos.viewmodels
 
 import android.content.Context
 import android.os.Build
-import android.util.Log
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
@@ -95,7 +94,7 @@ class TransactionsViewModel(private val appDatabase: AppDatabase) : ViewModel() 
                 from = "",
                 to = "",
                 page = 1,
-                pageSize = 20
+                pageSize = 20,
             )
         user = Singletons.getCurrentlyLoggedInUser()
         val config = PagedList.Config.Builder()
@@ -108,7 +107,7 @@ class TransactionsViewModel(private val appDatabase: AppDatabase) : ViewModel() 
             },
             initialParams,
             StormApiClient.getStormApiLoginInstance(),
-            appDatabase.transactionResponseDao()
+            appDatabase.transactionResponseDao(),
         )
 
         pagedTransaction = LivePagedListBuilder(
@@ -116,11 +115,11 @@ class TransactionsViewModel(private val appDatabase: AppDatabase) : ViewModel() 
                 .getTransactions(NetPosTerminalConfig.getTerminalId()).map {
                     it.copy(
                         localDate_13 = it.localDate_13.plus(
-                            PDF_REPRINT_IDENTIFIER
-                        )
+                            PDF_REPRINT_IDENTIFIER,
+                        ),
                     )
                 },
-            config
+            config,
         ).setBoundaryCallback(transactionBoundaryCallBack)
             .build()
     }
@@ -141,7 +140,7 @@ class TransactionsViewModel(private val appDatabase: AppDatabase) : ViewModel() 
                     t2?.let {
                         Timber.d(it.localizedMessage)
                     }
-                }
+                },
         )
     }
 
@@ -183,20 +182,20 @@ class TransactionsViewModel(private val appDatabase: AppDatabase) : ViewModel() 
             NetPosTerminalConfig.getTerminalId(),
             NetPosTerminalConfig.connectionData,
             NetPosTerminalConfig.getKeyHolder()!!,
-            NetPosTerminalConfig.getConfigData()!!
+            NetPosTerminalConfig.getConfigData()!!,
         )
 
         val requestData = TransactionRequestData(
             transactionType = TransactionType.REVERSAL,
             amount = originalDataElements.originalAmount,
             originalDataElements = originalDataElements,
-            accountType = accountType
+            accountType = accountType,
         )
         inProgress.value = true
         TransactionProcessor(hostConfig).processTransaction(
             context,
             requestData,
-            cardData!!
+            cardData!!,
         ).flatMap {
             if (it.responseCode == "A3") {
                 _shouldRefreshNibssKeys.postValue(Event(true))
@@ -224,16 +223,17 @@ class TransactionsViewModel(private val appDatabase: AppDatabase) : ViewModel() 
     }
 
     private fun printReceipt2(
-        context: Context
+        context: Context,
     ): Single<PrinterResponse> {
-        return if (Build.MODEL == "P3" && lastTransactionResponse.value != null) lastTransactionResponse.value!!.print(
-            context
-        )
-        else {
+        return if (Build.MODEL == "P3" && lastTransactionResponse.value != null) {
+            lastTransactionResponse.value!!.print(
+                context,
+            )
+        } else {
             _showPrintDialog.postValue(
                 Event(
-                    lastTransactionResponse.value?.buildSMSText().toString()
-                )
+                    lastTransactionResponse.value?.buildSMSText().toString(),
+                ),
             )
             Single.just(PrinterResponse())
         }
@@ -255,71 +255,52 @@ class TransactionsViewModel(private val appDatabase: AppDatabase) : ViewModel() 
             when (Prefs.getString(PREF_PRINTER_SETTINGS, PREF_VALUE_PRINT_CUSTOMER_COPY_ONLY)) {
                 PREF_VALUE_PRINT_CUSTOMER_COPY_ONLY -> startPrintingReceipt(
                     context,
-                    isMerchantCopy = false
+                    isMerchantCopy = false,
                 )
                 PREF_VALUE_PRINT_CUSTOMER_AND_MERCHANT_COPY -> startPrintingReceipt(
                     context,
-                    printBoth = true
+                    printBoth = true,
                 )
                 PREF_VALUE_PRINT_SMS -> _showPrintDialog.postValue(
-                    Event(transactionResponse.buildSMSText().toString())
+                    Event(transactionResponse.buildSMSText().toString()),
                 )
                 PREF_VALUE_PRINT_ASK_BEFORE_PRINTING -> _showReceiptTypeMutableLiveData.postValue(
-                    Event(true)
+                    Event(true),
                 )
                 PREF_VALUE_PRINT_SHARE_RECEIPT -> _downloadOrShareReceiptAsPdfMutableLiveData.postValue(
-                    Event(PREF_VALUE_PRINT_SHARE_RECEIPT)
+                    Event(PREF_VALUE_PRINT_SHARE_RECEIPT),
                 )
                 PREF_VALUE_PRINT_DOWNLOAD_RECEIPT -> _downloadOrShareReceiptAsPdfMutableLiveData.postValue(
-                    Event(PREF_VALUE_PRINT_DOWNLOAD_RECEIPT)
+                    Event(PREF_VALUE_PRINT_DOWNLOAD_RECEIPT),
                 )
                 PREF_VALUE_PRINT_DOWNLOAD_AND_SHARE_RECEIPT -> _downloadOrShareReceiptAsPdfMutableLiveData.postValue(
-                    Event(PREF_VALUE_PRINT_DOWNLOAD_AND_SHARE_RECEIPT)
+                    Event(PREF_VALUE_PRINT_DOWNLOAD_AND_SHARE_RECEIPT),
                 )
             }
         } else {
             when (Prefs.getString(PREF_PRINTER_SETTINGS, "")) {
                 PREF_VALUE_PRINT_SHARE_RECEIPT -> _downloadOrShareReceiptAsPdfMutableLiveData.postValue(
-                    Event(PREF_VALUE_PRINT_SHARE_RECEIPT)
+                    Event(PREF_VALUE_PRINT_SHARE_RECEIPT),
                 )
                 PREF_VALUE_PRINT_DOWNLOAD_RECEIPT -> _downloadOrShareReceiptAsPdfMutableLiveData.postValue(
-                    Event(PREF_VALUE_PRINT_DOWNLOAD_RECEIPT)
+                    Event(PREF_VALUE_PRINT_DOWNLOAD_RECEIPT),
                 )
                 PREF_VALUE_PRINT_DOWNLOAD_AND_SHARE_RECEIPT -> _downloadOrShareReceiptAsPdfMutableLiveData.postValue(
-                    Event(PREF_VALUE_PRINT_DOWNLOAD_AND_SHARE_RECEIPT)
+                    Event(PREF_VALUE_PRINT_DOWNLOAD_AND_SHARE_RECEIPT),
                 )
                 else -> {
                     _showPrintDialog.postValue(
-                        Event(transactionResponse.buildSMSText().toString())
+                        Event(transactionResponse.buildSMSText().toString()),
                     )
                 }
             }
         }
-
-//        if (Build.MODEL.equals("Pro", true) || Build.MODEL.equals(
-//                "P3",
-//                true
-//            )
-//        ) transactionResponse.print(context, remark.value ?: "")
-//            .subscribeOn(Schedulers.io()) else {
-//            _showPrintDialog.postValue(
-//                Event(
-//                    transactionResponse.buildSMSText(remark.value ?: "").toString()
-//                )
-//            )
-//            Single.just(PrinterResponse(0, "SMS"))
-//        }.subscribeOn(Schedulers.io())
-//            .observeOn(AndroidSchedulers.mainThread())
-//            .subscribe { t1, t2 ->
-//
-//            }
-//            .disposeWith(compositeDisposable)
     }
 
     fun startPrintingReceipt(
         context: Context,
         isMerchantCopy: Boolean = false,
-        printBoth: Boolean = false
+        printBoth: Boolean = false,
     ) {
         inProgress.value = true
         val modifiedTransaction = lastTransactionResponse.value
@@ -352,49 +333,13 @@ class TransactionsViewModel(private val appDatabase: AppDatabase) : ViewModel() 
                     Timber.e(it)
                     _message.value = Event(it.localizedMessage ?: "Error")
                 }
-                // MqttHelper.sendPayload(MqttTopics.PRINTING_RECEIPT, printerEvent)
             }?.disposeWith(compositeDisposable)
     }
-
-//    fun startPrintingReceipt2(
-//        context: Context
-//    ) {
-//        inProgress.value = true
-//        printReceipt(context)
-//            .subscribeOn(Schedulers.io())
-//            .observeOn(AndroidSchedulers.mainThread())
-//            .subscribe { t1, t2 ->
-//                t1?.let {
-//                    event.apply {
-//                        this.event = MqttEvents.PRINTING_RECEIPT.event
-//                        this.code = it.code.toString()
-//                        this.timestamp = System.currentTimeMillis()
-//                        this.data =
-//                            lastTransactionResponse.value?.let { it1 ->
-//                                PrinterEventData(
-//                                    it1.RRN,
-//                                    it.message
-//                                )
-//                            }
-//                        this.status = it.message
-//                    }
-//                    MqttHelper.sendPayload(MqttTopics.PRINTING_RECEIPT, event)
-//                }
-//                _done.value = true
-//                inProgress.value = false
-//
-//                t2?.let {
-//                    _showPrinterError.value = Event(it.localizedMessage ?: "")
-//                    Timber.e(it)
-//                    _message.value = Event(it.localizedMessage ?: "")
-//                }
-//            }?.disposeWith(compositeDisposable)
-//    }
 
     fun showReceiptDialog() {
         _showPrintDialog.value = Event(
             lastTransactionResponse.value!!.buildSMSText()
-                .toString()
+                .toString(),
         )
     }
 
@@ -417,20 +362,20 @@ class TransactionsViewModel(private val appDatabase: AppDatabase) : ViewModel() 
             NetPosTerminalConfig.getTerminalId(),
             NetPosTerminalConfig.connectionData,
             NetPosTerminalConfig.getKeyHolder()!!,
-            NetPosTerminalConfig.getConfigData()!!
+            NetPosTerminalConfig.getConfigData()!!,
         )
 
         val requestData = TransactionRequestData(
             transactionType = TransactionType.PRE_AUTHORIZATION_COMPLETION,
             amount = originalDataElements.originalAmount,
-            originalDataElements = originalDataElements
+            originalDataElements = originalDataElements,
         )
 
         _showProgressDialog.value = Event(true)
         TransactionProcessor(hostConfig).processTransaction(
             context,
             requestData,
-            cardData!!
+            cardData!!,
         ).flatMap {
             if (it.responseCode == "A3") {
                 _shouldRefreshNibssKeys.postValue(Event(true))
@@ -465,13 +410,13 @@ class TransactionsViewModel(private val appDatabase: AppDatabase) : ViewModel() 
             NetPosTerminalConfig.getTerminalId(),
             NetPosTerminalConfig.connectionData,
             NetPosTerminalConfig.getKeyHolder()!!,
-            NetPosTerminalConfig.getConfigData()!!
+            NetPosTerminalConfig.getConfigData()!!,
         )
 
         val requestData = TransactionRequestData(
             transactionType = TransactionType.REFUND,
             amount = originalDataElements.originalAmount,
-            originalDataElements = originalDataElements
+            originalDataElements = originalDataElements,
         )
         _showProgressDialog.value = Event(true)
         TransactionProcessor(hostConfig).processTransaction(context, requestData, cardData!!)
@@ -507,20 +452,12 @@ class TransactionsViewModel(private val appDatabase: AppDatabase) : ViewModel() 
             number,
             _smsSent,
             _message,
-            compositeDisposable
+            compositeDisposable,
         )
     }
 
     fun setEndOfDayList(eodList: List<TransactionResponse>) {
         this.endOfDayList = eodList
-        Log.d("SIZESIZE", eodList.size.toString())
-        eodList.forEach {
-            println("ANOTHER_V" + it.localDate_13)
-            println("ANOTHER_V" + it.transmissionDateTime)
-            println("ANOTHER_V" + it.transactionTimeInMillis.toString())
-            println("ANOTHER_V" + it.localTime_12)
-            print("============================================\n")
-        }
     }
 
     fun getEodList() = endOfDayList

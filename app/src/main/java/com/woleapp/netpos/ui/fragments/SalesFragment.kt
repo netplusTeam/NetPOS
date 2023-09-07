@@ -20,13 +20,10 @@ import com.google.gson.JsonObject
 import com.netpluspay.netpossdk.NetPosSdk
 import com.woleapp.netpos.R
 import com.woleapp.netpos.database.AppDatabase
-import com.woleapp.netpos.databinding.DialogPrintTypeBinding
-import com.woleapp.netpos.databinding.DialogTransactionResultBinding
-import com.woleapp.netpos.databinding.FragmentSalesBinding
-import com.woleapp.netpos.databinding.LayoutPosReceiptPdfBinding
+import com.woleapp.netpos.databinding.* // ktlint-disable no-wildcard-imports
 import com.woleapp.netpos.model.Vend
 import com.woleapp.netpos.nibss.NetPosTerminalConfig
-import com.woleapp.netpos.util.*
+import com.woleapp.netpos.util.* // ktlint-disable no-wildcard-imports
 import com.woleapp.netpos.util.pdfUtils.createPdf
 import com.woleapp.netpos.util.pdfUtils.initViewsForPdfLayout
 import com.woleapp.netpos.util.pdfUtils.sharePdf
@@ -36,7 +33,6 @@ import io.reactivex.Observable
 import io.reactivex.android.schedulers.AndroidSchedulers
 import io.reactivex.disposables.CompositeDisposable
 import io.reactivex.schedulers.Schedulers
-import kotlinx.android.synthetic.main.dialog_print_type.*
 import timber.log.Timber
 import java.io.BufferedReader
 import java.io.File
@@ -72,6 +68,8 @@ class SalesFragment : BaseFragment() {
     private lateinit var alertDialog: AlertDialog
     private lateinit var receiptDialogBinding: DialogTransactionResultBinding
     private lateinit var dialogPrintTypeBinding: DialogPrintTypeBinding
+    private lateinit var transactionResultDialogBinding: DialogTransactionResultShowResultBinding
+    private lateinit var transactionResultDialog: AlertDialog
     private lateinit var printTypeDialog: AlertDialog
     private lateinit var printerErrorDialog: AlertDialog
     private val compositeDisposable = CompositeDisposable()
@@ -90,6 +88,13 @@ class SalesFragment : BaseFragment() {
                 TransactionType.PURCHASE.name
             ) ?: TransactionType.PURCHASE.name
         )
+
+        transactionResultDialogBinding =
+            DialogTransactionResultShowResultBinding.inflate(inflater, null, false)
+                .apply { executePendingBindings() }
+
+        transactionResultDialog = createTransactionResultDialog()
+
         if (transactionType == TransactionType.DEPOSIT) {
             binding.enterName.visibility = View.GONE
         }
@@ -162,18 +167,14 @@ class SalesFragment : BaseFragment() {
                 showSnackBar(s)
             }
         }
-        /*viewModel.getCardData.observe(viewLifecycleOwner){event ->
-            event.getContentIfNotHandled()?.let {
-                quickPay()
-            }
-        }*/
+
         viewModel.getCardData.observe(viewLifecycleOwner) { event ->
             event.getContentIfNotHandled()?.let { shouldGetCardData ->
                 if (shouldGetCardData) {
                     showCardDialog(
                         requireActivity(),
                         viewLifecycleOwner,
-                        viewModel.amountLong,
+                        viewModel.amountLong / 100,
                         0L,
                         compositeDisposable
                     ).observe(viewLifecycleOwner) { event ->
@@ -297,6 +298,7 @@ class SalesFragment : BaseFragment() {
             if (transactionType == TransactionType.DEPOSIT) {
                 viewModel.beginCashPayment()
             } else {
+                viewModel.setIsTransactionFromPurchaseFragment(true)
                 viewModel.validateField()
             }
         }
@@ -320,6 +322,17 @@ class SalesFragment : BaseFragment() {
         }
         return binding.root
     }
+
+    private fun createTransactionResultDialog(): AlertDialog =
+        AlertDialog.Builder(requireContext()).setCancelable(false).apply {
+            setView(transactionResultDialogBinding.root)
+            transactionResultDialogBinding.apply {
+                sendButton.setOnClickListener {
+                    transactionResultDialog.dismiss()
+                    viewModel.printReceiptAfterShowTransactionReceipt(requireContext())
+                }
+            }
+        }.create()
 
     private fun getPermissionAndCreatePdf(view: ViewDataBinding) {
         ModelMapper.genericPermissionHandler(
@@ -403,6 +416,15 @@ class SalesFragment : BaseFragment() {
     override fun onResume() {
         super.onResume()
         handlePdfReceiptPrinting()
+        viewModel.showTransactionResponseDialog.observe(viewLifecycleOwner) { event ->
+            event.getContentIfNotHandled()?.let {
+                transactionResultDialogBinding.transactionContent.text = it
+                transactionResultDialog.apply {
+                    setCancelable(false)
+                    show()
+                }
+            }
+        }
     }
 
     private fun vend() {

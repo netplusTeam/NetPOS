@@ -20,7 +20,7 @@
             android:background="?attr/selectableItemBackground"
             android:contentDescription="@string/close_dialog"
             android:padding="8dp"
-            android:src="@drawable/ic_cal_clear"
+            android:src="@drawable/ic_close"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintTop_toTopOf="parent" />
 
