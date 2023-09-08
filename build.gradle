@@ -9,11 +9,15 @@ buildscript {
         room_version = "2.4.2"
     }
     repositories {
+        mavenCentral()
         google()
         jcenter()
         maven {
-            url    'https://jitpack.io'
-            credentials { username "jp_iu426m6k793tts6nisfjg8at42" }
+            url    'https://jitpack.io/com/github/netplusTeam/NetposContactSdk/netpossdk/1.0.30/netpossdk-1.0.30.aar'
+            credentials {
+                username "token"
+                password "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"
+            }
         }
         mavenLocal()
         jcenter()
@@ -39,6 +43,13 @@ allprojects {
         google()
         jcenter()
         maven { url 'https://jitpack.io' }
+        maven {
+            url    'https://jitpack.io'
+            credentials {
+                username "token"
+                password "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"
+            }
+        }
 //        maven {
 //            url "https://repo.eclipse.org/content/repositories/paho-snapshots/"
 //        }

@@ -1,0 +1,20 @@
+{
+  "version": 3,
+  "artifactType": {
+    "type": "APK",
+    "kind": "Directory"
+  },
+  "applicationId": "com.woleapp.netpos.easypay",
+  "variantName": "easypayRelease",
+  "elements": [
+    {
+      "type": "SINGLE",
+      "filters": [],
+      "attributes": [],
+      "versionCode": 209,
+      "versionName": "1.1.209",
+      "outputFile": "app-easypay-release.apk"
+    }
+  ],
+  "elementType": "File"
+}

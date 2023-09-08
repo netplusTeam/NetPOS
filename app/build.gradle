@@ -140,6 +140,10 @@ android {
             dimension "whiteLabels"
             applicationIdSuffix ".unitybank"
         }
+        easypay {
+            dimension "whiteLabels"
+            applicationIdSuffix ".easypay"
+        }
     }
 
     variantFilter { variant ->
@@ -176,6 +180,9 @@ android {
             java.srcDirs('src/defaults/java')
         }
         unitybank {
+            java.srcDirs('src/defaults/java')
+        }
+        easypay {
             java.srcDirs('src/defaults/java')
         }
     }
