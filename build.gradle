@@ -9,13 +9,13 @@ buildscript {
         room_version = "2.4.2"
     }
     repositories {
-        maven { url 'https://maven.google.com' }
+        google()
+        jcenter()
         maven {
-            url "https://jitpack.io"
+            url    'https://jitpack.io'
             credentials { username "jp_iu426m6k793tts6nisfjg8at42" }
         }
         mavenLocal()
-        google()
         jcenter()
         gradlePluginPortal()
 
@@ -36,10 +36,9 @@ buildscript {
 
 allprojects {
     repositories {
-        maven { url 'https://maven.google.com' }
-        mavenLocal()
         google()
         jcenter()
+        maven { url 'https://jitpack.io' }
 //        maven {
 //            url "https://repo.eclipse.org/content/repositories/paho-snapshots/"
 //        }

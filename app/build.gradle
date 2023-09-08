@@ -206,10 +206,13 @@ dependencies {
     implementation 'net.sf.j8583:j8583:1.12.0'
 
     //netpos sdk
-    implementation "'com.github.netplusTeam:NetposContactSdk:1.0.30"
+    implementation 'com.github.netplusTeam.NetposContactSdk:netpossdk:1.0.30'
 
     //Timber
     implementation 'com.jakewharton.timber:timber:4.7.1'
+
+    //semver4j
+    implementation 'com.github.gundy:semver4j:0.16.4'
 
     //android lifecycle components
     implementation "androidx.lifecycle:lifecycle-viewmodel-ktx:$lifecycle_version"
