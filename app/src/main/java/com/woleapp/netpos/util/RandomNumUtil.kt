@@ -1,7 +1,10 @@
 package com.woleapp.netpos.util
 
 import android.annotation.SuppressLint
+import android.content.Context
 import android.os.Build
+import android.provider.Settings
+import android.telephony.TelephonyManager
 import android.text.Html
 import android.text.Spanned
 import com.danbamitale.epmslib.entities.TransactionRequestData
@@ -282,4 +285,22 @@ object RandomNumUtil {
 
         return "127.22:216MPOS_DEVICE_TYPE111217AdditionalEmvTags${lengthOfLength}${additionalTagManipulation.length}$additionalTagManipulation"
     }
+
+    fun getDeviceId(context: Context): String {
+        val deviceId: String = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+            Settings.Secure.getString(context.contentResolver, Settings.Secure.ANDROID_ID)
+        } else {
+            val mTelephony = context.getSystemService(Context.TELEPHONY_SERVICE) as TelephonyManager
+            if (mTelephony.deviceId != null) {
+                mTelephony.deviceId
+            } else {
+                Settings.Secure.getString(
+                    context.contentResolver,
+                    Settings.Secure.ANDROID_ID,
+                )
+            }
+        }
+        return deviceId
+    }
+
 }
