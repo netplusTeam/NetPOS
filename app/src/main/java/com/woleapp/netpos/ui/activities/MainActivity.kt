@@ -139,6 +139,14 @@ class MainActivity : AppCompatActivity(), EasyPermissions.PermissionCallbacks {
         }
 //        checkTokenExpiry()
     }
+    private fun logoutConfirmation() {
+        AlertDialog.Builder(this)
+            .setMessage("Do you want to logout?") // Specifying a listener allows you to take an action before dismissing the dialog.
+            .setPositiveButton(android.R.string.yes) { _: DialogInterface, _: Int ->
+                logout()
+            } // A null listener allows the button to dismiss the dialog and take no further action.
+            .setNegativeButton(android.R.string.no, null).show()
+    }
 
     private fun logout() {
         NetPosTerminalConfig.disposeDisposables()
@@ -245,7 +253,7 @@ class MainActivity : AppCompatActivity(), EasyPermissions.PermissionCallbacks {
             create()
         }
         binding.dashboardHeader.logout.setOnClickListener {
-            logout()
+            logoutConfirmation()
         }
         showFragment(DashboardFragment(), DashboardFragment::class.java.simpleName)
 

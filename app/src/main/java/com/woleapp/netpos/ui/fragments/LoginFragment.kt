@@ -1,15 +1,14 @@
 package com.woleapp.netpos.ui.fragments
 
 import android.content.Intent
-import android.os.Build
 import android.os.Bundle
-import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
 import androidx.fragment.app.viewModels
+import com.auth0.android.jwt.BuildConfig
 import com.google.gson.JsonObject
 import com.woleapp.netpos.R
 import com.woleapp.netpos.databinding.DialogPasswordResetBinding
@@ -20,6 +19,7 @@ import com.woleapp.netpos.model.MqttEvents
 import com.woleapp.netpos.network.StormApiClient
 import com.woleapp.netpos.nibss.NetPosTerminalConfig
 import com.woleapp.netpos.ui.activities.MainActivity
+import com.woleapp.netpos.util.RandomNumUtil.getDeviceId
 import com.woleapp.netpos.viewmodels.AuthViewModel
 
 class LoginFragment : BaseFragment() {
@@ -28,6 +28,7 @@ class LoginFragment : BaseFragment() {
     private lateinit var binding: FragmentLoginBinding
     private lateinit var resetPasswordBinding: DialogPasswordResetBinding
     private lateinit var passwordResetDialog: AlertDialog
+    private lateinit var deviceId: String
     override fun onCreateView(
         inflater: LayoutInflater,
         container: ViewGroup?,
@@ -52,6 +53,8 @@ class LoginFragment : BaseFragment() {
         resetPasswordBinding.closeDialog.setOnClickListener {
             passwordResetDialog.cancel()
         }
+        deviceId = getDeviceId(requireContext())
+
         val credentials = JsonObject()
         credentials.addProperty("appname", getString(R.string._app_name))
         credentials.addProperty("password", getString(R.string._password))
@@ -60,7 +63,11 @@ class LoginFragment : BaseFragment() {
             appCredentials = credentials
         }
         binding.btnLogin.setOnClickListener {
-            viewModel.login()
+            if (com.woleapp.netpos.BuildConfig.FLAVOR == "easypay") {
+                viewModel.login(deviceId)
+            } else {
+                viewModel.login()
+            }
         }
         return binding.root
     }

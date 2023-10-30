@@ -16,6 +16,11 @@ interface StormApiService {
     ): Single<AppLoginResponse>
 
     @POST("api/auth")
+    fun easyPOSUserToken(
+        @Body credentials: JsonObject?
+    ): Single<AppLoginResponse>
+
+    @POST("api/auth")
     fun userToken(
         @Header("Authorization") appToken: String?,
         @Body credentials: JsonObject?
