@@ -74,6 +74,10 @@ const val PIN_BLOCK_RK = "PIN_BLOCK_RK"
 const val PIN_BLOCK_BK = "PIN_BLOCK_BK"
 
 const val INT_FIREBASE_PENDING_INTENT_REQUEST_CODE = 772
+const val CONTACTLESS_TRANSACTION_DEFAULT_EMAIL = "contactless@gmail.com"
+const val PAYMENT_KEY = "payment_key"
+const val CONTACT = "contact"
+const val CUSTOMER = "customer"
 
 val testPbtTransactions = arrayListOf(
     GetZenithPayByTransferUserTransactionsModel(
@@ -136,4 +140,6 @@ val testPbtTransactions = arrayListOf(
         details = "NIP/GTB/AJALA DOYINSOLA OLUWATOSIN/REF421459419000000050002205191246",
         terminalId = "0987654321"
     )
+
+
 )

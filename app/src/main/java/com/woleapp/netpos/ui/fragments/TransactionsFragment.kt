@@ -162,7 +162,8 @@ class TransactionsFragment : BaseFragment() {
                 }
                 4 -> {
 //                    showQRBottomSheetDialog()
-                    QRFragment()
+                    //QRFragment()
+                    PurchaseFragment()
                 }
                 5 -> {
                     if ((BuildConfig.FLAVOR == "wema" || BuildConfig.FLAVOR == "zenith") && Prefs.contains(
