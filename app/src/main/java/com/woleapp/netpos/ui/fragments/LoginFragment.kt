@@ -63,7 +63,7 @@ class LoginFragment : BaseFragment() {
             appCredentials = credentials
         }
         binding.btnLogin.setOnClickListener {
-            if (BuildConfig.FLAVOR.contains("easypay")) {
+            if (com.woleapp.netpos.BuildConfig.FLAVOR == "easypay") {
                 viewModel.login(deviceId)
             } else {
                 viewModel.login()

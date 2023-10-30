@@ -212,6 +212,9 @@
     <string name="process_transaction">Process Transaction</string>
     <string name="enter_remark">Enter Remark</string>
     <string name="download_or_share">Share / Download</string>
+    <string name="logout_confirmation_dialog_message">Do you want to logout?</string>
+    <string name="pay_now">PAY NOW</string>
+    <string name="all_please_enter_amount">Please Enter Amount</string>
 
     <string-array name="viewPagerDestinationsTabLayoutTexts">
         <item>Last Transaction</item>

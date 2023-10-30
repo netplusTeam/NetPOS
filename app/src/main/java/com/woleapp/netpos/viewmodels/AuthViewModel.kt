@@ -170,6 +170,7 @@ class AuthViewModel : ViewModel() {
                 res?.let {
                     Timber.d("NEWADDRESS--->${it.business_address}")
                     Timber.d("NEWPHONADDRESS--->${it.business_phone_number}")
+                    Timber.d("NEWPHONADDRESS--->${it.business_phone_number}")
                     Prefs.putString(PREF_USER, gson.toJson(it))
                     Prefs.putBoolean(PREF_AUTHENTICATED, true)
                     _authDone.value = Event(true)
