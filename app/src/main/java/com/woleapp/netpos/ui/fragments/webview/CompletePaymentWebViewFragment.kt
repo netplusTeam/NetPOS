@@ -73,7 +73,7 @@ class CompletePaymentWebViewFragment : Fragment() {
         }
         webView.apply {
             webChromeClient = WebChromeClient()
-            loadUrl("https://qrpay.paysaddle.com/payment/#!/card?NPmerchantId=${MID635ff140365c5}&terminalId=${userTID}&netposId=${2222SPTCM001048}&amount=${amount}&name=${CUSTOMER}&email=${CONTACTLESS_TRANSACTION_DEFAULT_EMAIL}&bank=${providus}&app=${CONTACT}")
+          //  loadUrl("https://qrpay.paysaddle.com/payment/#!/card?NPmerchantId=${MID635ff140365c5}&terminalId=${userTID}&netposId=${2222SPTCM001048}&amount=${amount}&name=${CUSTOMER}&email=${CONTACTLESS_TRANSACTION_DEFAULT_EMAIL}&bank=${providus}&app=${CONTACT}")
         }
     }
 }
