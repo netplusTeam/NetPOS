@@ -44,7 +44,9 @@ data class User(
     @SerializedName("phoneNumber")
     var business_phone_number: String? = null,
     var mid: String? = null,
-    var partnerId: String? = null
+    var partnerId: String? = null,
+    var merchantId: String? = null,
+    var netplusPayMid: String? = null
 )
 
 data class TokenResp(val success: Boolean, val token: String)

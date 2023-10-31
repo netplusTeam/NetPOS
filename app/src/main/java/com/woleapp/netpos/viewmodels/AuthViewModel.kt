@@ -160,8 +160,24 @@ class AuthViewModel : ViewModel() {
                         } else {
                             " "
                         }
+                    this.netplusPayMid =
+                        if (userTokenDecoded.claims.containsKey("netplusPayMid")) {
+                            userTokenDecoded.getClaim(
+                                "netplusPayMid",
+                            ).asString()
+                        } else {
+                            " "
+                        }
+                    this.merchantId =
+                        if (userTokenDecoded.claims.containsKey("merchantId")) {
+                            userTokenDecoded.getClaim(
+                                "merchantId",
+                            ).asString()
+                        } else {
+                            " "
+                        }
                 }
-                Timber.e("DATA_OOOO=====>${user.terminal_id}")
+                Timber.e("DATA_OOOO=====>${user}")
                 Single.just(user)
             }.subscribeOn(Schedulers.io())
             .doFinally { authInProgress.postValue(false) }
