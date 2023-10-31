@@ -1,15 +1,14 @@
 package com.woleapp.netpos.ui.fragments.webview
 
 import android.annotation.SuppressLint
+import android.net.http.SslError
 import android.os.Bundle
 import android.util.Log
 import androidx.fragment.app.Fragment
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.webkit.WebChromeClient
-import android.webkit.WebSettings
-import android.webkit.WebView
+import android.webkit.*
 import androidx.activity.OnBackPressedCallback
 import com.pixplicity.easyprefs.library.Prefs
 import com.woleapp.netpos.R
@@ -73,7 +72,7 @@ class CompletePaymentWebViewFragment : Fragment() {
         merchantID = user.netplusPayMid
         email = CONTACTLESS_TRANSACTION_DEFAULT_EMAIL
 
-         amount = arguments?.getString(PAYMENT_KEY)
+        amount = arguments?.getString(PAYMENT_KEY)
         Log.d("AMOUTNNT", amount.toString())
         setUpWebView(webView)
     }
@@ -84,12 +83,24 @@ class CompletePaymentWebViewFragment : Fragment() {
             javaScriptEnabled = true
             loadWithOverviewMode = true
             useWideViewPort = true
+            domStorageEnabled = true
         }
+
         webView.apply {
-            webViewClient = webViewClient
+            webViewClient = object : WebViewClient() {
+                override fun onReceivedSslError(view: WebView?, handler: SslErrorHandler?, error: SslError?) {
+                    // Handle SSL errors here, e.g., proceed or cancel the request.
+                    handler?.proceed()
+                    Log.d("DONEECKSSL", handler.toString())
+                }
+                override fun onReceivedError(view: WebView?, request: WebResourceRequest?, error: WebResourceError?) {
+                    // Handle web page loading errors here.
+                    Log.d("CHECKSSL", error.toString())
+                }
+            }
             webChromeClient = WebChromeClient()
          //   loadUrl("https://oap.providusbank.com/accountopening/#/")
-            Log.d("PAYMENTURL", "https://qrpay.paysaddle.com/payment/#!/card?NPmerchantId=${merchantID}&terminalId=${userTID}&netposId=${netplusPayMid}&amount=${amount}&name=${CUSTOMER}&email=${CONTACTLESS_TRANSACTION_DEFAULT_EMAIL}&bank=${bank}&app=${CONTACT}&currency=NGN")
+        //    Log.d("PAYMENTURL", "https://qrpay.paysaddle.com/payment/#!/card?NPmerchantId=${merchantID}&terminalId=${userTID}&netposId=${netplusPayMid}&amount=${amount}&name=${CUSTOMER}&email=${CONTACTLESS_TRANSACTION_DEFAULT_EMAIL}&bank=${bank}&app=${CONTACT}&currency=NGN")
             loadUrl("https://qrpay.paysaddle.com/payment/#!/card?NPmerchantId=${merchantID}&terminalId=${userTID}&netposId=${netplusPayMid}&amount=${amount}&name=${CUSTOMER}&email=${CONTACTLESS_TRANSACTION_DEFAULT_EMAIL}&bank=${bank}&app=${CONTACT}&currency=NGN")
         }
     }

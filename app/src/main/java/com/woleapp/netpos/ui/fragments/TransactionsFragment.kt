@@ -200,7 +200,7 @@ class TransactionsFragment : BaseFragment() {
                 Service(3, "Cash Advance", R.drawable.ic_pay_cash_icon),
                 Service(4, "QR", R.drawable.ic_qr_code),
                 Service(5, "Reprint", R.drawable.ic_print),
-                Service(7, "Purchase", R.drawable.ic_purchase),
+                Service(7, "Web Purchase", R.drawable.ic_purchase),
             )
             if (BuildConfig.FLAVOR.equals("zenith", true)) {
                 serviceArr.add(
