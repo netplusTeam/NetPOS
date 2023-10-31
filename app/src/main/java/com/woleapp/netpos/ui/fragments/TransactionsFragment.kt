@@ -162,8 +162,7 @@ class TransactionsFragment : BaseFragment() {
                 }
                 4 -> {
 //                    showQRBottomSheetDialog()
-                    //QRFragment()
-                    PurchaseFragment()
+                    QRFragment()
                 }
                 5 -> {
                     if ((BuildConfig.FLAVOR == "wema" || BuildConfig.FLAVOR == "zenith") && Prefs.contains(
@@ -178,6 +177,7 @@ class TransactionsFragment : BaseFragment() {
                 }
 //                6 -> SalesFragment.newInstance(isVend = true)
                 6 -> ZenithPayByTransferFragment()
+                7 -> PurchaseFragment()
                 else -> SalesFragment.newInstance(TransactionType.CASH_ADVANCE)
             }
             nextFrag?.let { fragment ->
@@ -200,6 +200,7 @@ class TransactionsFragment : BaseFragment() {
                 Service(3, "Cash Advance", R.drawable.ic_pay_cash_icon),
                 Service(4, "QR", R.drawable.ic_qr_code),
                 Service(5, "Reprint", R.drawable.ic_print),
+                Service(7, "Purchase", R.drawable.ic_purchase),
             )
             if (BuildConfig.FLAVOR.equals("zenith", true)) {
                 serviceArr.add(
