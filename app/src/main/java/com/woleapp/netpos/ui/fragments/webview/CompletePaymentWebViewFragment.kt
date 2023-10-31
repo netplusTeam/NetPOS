@@ -1,5 +1,6 @@
 package com.woleapp.netpos.ui.fragments.webview
 
+import android.annotation.SuppressLint
 import android.os.Bundle
 import android.util.Log
 import androidx.fragment.app.Fragment
@@ -17,6 +18,7 @@ import com.woleapp.netpos.model.User
 import com.woleapp.netpos.util.*
 import com.woleapp.netpos.util.RandomNumUtil.getBankName
 import dagger.hilt.android.AndroidEntryPoint
+import javax.inject.Inject
 
 @AndroidEntryPoint
 class CompletePaymentWebViewFragment : Fragment() {
@@ -33,6 +35,11 @@ class CompletePaymentWebViewFragment : Fragment() {
     private var netplusPayMid: String? = null
     private var merchantID: String? = null
 
+
+    @Inject
+    lateinit var customWebViewClient: WebViewCallBack
+
+    @SuppressLint("SetJavaScriptEnabled")
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
@@ -79,7 +86,9 @@ class CompletePaymentWebViewFragment : Fragment() {
             useWideViewPort = true
         }
         webView.apply {
+            webViewClient = webViewClient
             webChromeClient = WebChromeClient()
+         //   loadUrl("https://oap.providusbank.com/accountopening/#/")
             Log.d("PAYMENTURL", "https://qrpay.paysaddle.com/payment/#!/card?NPmerchantId=${merchantID}&terminalId=${userTID}&netposId=${netplusPayMid}&amount=${amount}&name=${CUSTOMER}&email=${CONTACTLESS_TRANSACTION_DEFAULT_EMAIL}&bank=${bank}&app=${CONTACT}&currency=NGN")
             loadUrl("https://qrpay.paysaddle.com/payment/#!/card?NPmerchantId=${merchantID}&terminalId=${userTID}&netposId=${netplusPayMid}&amount=${amount}&name=${CUSTOMER}&email=${CONTACTLESS_TRANSACTION_DEFAULT_EMAIL}&bank=${bank}&app=${CONTACT}&currency=NGN")
         }
