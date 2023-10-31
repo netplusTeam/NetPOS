@@ -10,6 +10,7 @@ import android.text.Spanned
 import com.danbamitale.epmslib.entities.TransactionRequestData
 import com.danbamitale.epmslib.entities.TransactionResponse
 import com.danbamitale.epmslib.utils.IsoTimeManager
+import com.woleapp.netpos.BuildConfig
 import com.woleapp.netpos.model.MakePaymentParams
 import com.woleapp.netpos.model.TransactionResponseX
 import com.woleapp.netpos.model.TransactionToLogBeforeConnectingToNibbs
@@ -302,5 +303,21 @@ object RandomNumUtil {
         }
         return deviceId
     }
+
+    private val bankList = mapOf(
+        "konga" to "konga",
+        "easypay" to "fcmb",
+        "wemacashout" to "wemacashout",
+        "tingopay" to "tingopay",
+        "providus" to "providus",
+        "heritage" to "heritage",
+        "wema" to "wemabank",
+        "zenith" to "zenith",
+        "unitybank" to "unitybank",
+        "aellacredit" to "aellacredit",
+        "netpos" to "netpos",
+    )
+
+    fun getBankName(): String? = bankList[BuildConfig.FLAVOR]
 
 }

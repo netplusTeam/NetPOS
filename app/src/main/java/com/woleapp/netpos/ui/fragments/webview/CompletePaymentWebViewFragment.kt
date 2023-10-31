@@ -15,8 +15,10 @@ import com.woleapp.netpos.R
 import com.woleapp.netpos.databinding.FragmentCompletePaymentWebViewBinding
 import com.woleapp.netpos.model.User
 import com.woleapp.netpos.util.*
+import com.woleapp.netpos.util.RandomNumUtil.getBankName
+import dagger.hilt.android.AndroidEntryPoint
 
-
+@AndroidEntryPoint
 class CompletePaymentWebViewFragment : Fragment() {
 
     private lateinit var binding: FragmentCompletePaymentWebViewBinding
@@ -27,6 +29,9 @@ class CompletePaymentWebViewFragment : Fragment() {
     private var email: String? = null
     private var name: String? = null
     private var amount: String? = null
+    private var bank: String? = null
+    private var netplusPayMid: String? = null
+    private var merchantID: String? = null
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
@@ -53,10 +58,12 @@ class CompletePaymentWebViewFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         webView = binding.loadWebView
+        bank = getBankName() ?: ""
         val user = Singletons.gson.fromJson(Prefs.getString(PREF_USER, ""), User::class.java)
         netposID = user.netplus_id
         userTID = user.terminal_id
-        name = user.business_name
+        netplusPayMid = user.merchantId
+        merchantID = user.netplusPayMid
         email = CONTACTLESS_TRANSACTION_DEFAULT_EMAIL
 
          amount = arguments?.getString(PAYMENT_KEY)
@@ -73,7 +80,8 @@ class CompletePaymentWebViewFragment : Fragment() {
         }
         webView.apply {
             webChromeClient = WebChromeClient()
-          //  loadUrl("https://qrpay.paysaddle.com/payment/#!/card?NPmerchantId=${MID635ff140365c5}&terminalId=${userTID}&netposId=${2222SPTCM001048}&amount=${amount}&name=${CUSTOMER}&email=${CONTACTLESS_TRANSACTION_DEFAULT_EMAIL}&bank=${providus}&app=${CONTACT}")
+            Log.d("PAYMENTURL", "https://qrpay.paysaddle.com/payment/#!/card?NPmerchantId=${merchantID}&terminalId=${userTID}&netposId=${netplusPayMid}&amount=${amount}&name=${CUSTOMER}&email=${CONTACTLESS_TRANSACTION_DEFAULT_EMAIL}&bank=${bank}&app=${CONTACT}&currency=NGN")
+            loadUrl("https://qrpay.paysaddle.com/payment/#!/card?NPmerchantId=${merchantID}&terminalId=${userTID}&netposId=${netplusPayMid}&amount=${amount}&name=${CUSTOMER}&email=${CONTACTLESS_TRANSACTION_DEFAULT_EMAIL}&bank=${bank}&app=${CONTACT}&currency=NGN")
         }
     }
 }
