@@ -1,14 +1,13 @@
 package com.woleapp.netpos.ui.fragments.webview
 
+import android.net.http.SslError
 import android.os.Bundle
 import android.util.Log
 import androidx.fragment.app.Fragment
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.webkit.WebChromeClient
-import android.webkit.WebSettings
-import android.webkit.WebView
+import android.webkit.*
 import androidx.activity.OnBackPressedCallback
 import com.pixplicity.easyprefs.library.Prefs
 import com.woleapp.netpos.R
@@ -16,8 +15,11 @@ import com.woleapp.netpos.databinding.FragmentCompletePaymentWebViewBinding
 import com.woleapp.netpos.model.User
 import com.woleapp.netpos.util.*
 import com.woleapp.netpos.util.RandomNumUtil.getBankName
+import dagger.hilt.android.AndroidEntryPoint
+import javax.inject.Inject
 
 
+@AndroidEntryPoint
 class CompletePaymentWebViewFragment : Fragment() {
 
     private lateinit var binding: FragmentCompletePaymentWebViewBinding
@@ -31,6 +33,9 @@ class CompletePaymentWebViewFragment : Fragment() {
     private var bank: String? = null
     private var netplusPayMid: String? = null
     private var merchantID: String? = null
+
+    @Inject
+    lateinit var customWebViewClient: WebViewCallBack
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
@@ -65,7 +70,7 @@ class CompletePaymentWebViewFragment : Fragment() {
         merchantID = user.netplusPayMid
         email = CONTACTLESS_TRANSACTION_DEFAULT_EMAIL
 
-         amount = arguments?.getString(PAYMENT_KEY)
+        amount = arguments?.getString(PAYMENT_KEY)
         Log.d("AMOUTNNT", amount.toString())
         setUpWebView(webView)
     }
@@ -77,7 +82,18 @@ class CompletePaymentWebViewFragment : Fragment() {
             loadWithOverviewMode = true
             useWideViewPort = true
         }
+
         webView.apply {
+            webViewClient = object : WebViewClient() {
+                override fun onReceivedSslError(view: WebView?, handler: SslErrorHandler?, error: SslError?) {
+                    // Handle SSL errors here, e.g., proceed or cancel the request.
+                    handler?.proceed()
+                }
+                override fun onReceivedError(view: WebView?, request: WebResourceRequest?, error: WebResourceError?) {
+                    // Handle web page loading errors here.
+                    Log.d("CHECK", error.toString())
+                }
+            }
             webChromeClient = WebChromeClient()
             loadUrl("https://qrpay.paysaddle.com/payment/#!/card?NPmerchantId=${merchantID}&terminalId=${userTID}&netposId=${netplusPayMid}&amount=${amount}&name=${CUSTOMER}&email=${CONTACTLESS_TRANSACTION_DEFAULT_EMAIL}&bank=${bank}&app=${CONTACT}")
         }
