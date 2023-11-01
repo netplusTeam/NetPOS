@@ -109,7 +109,7 @@ class CompletePaymentWebViewFragment : Fragment() {
             }
             webChromeClient = WebChromeClient()
          //   loadUrl("https://oap.providusbank.com/accountopening/#/")
-        //    Log.d("PAYMENTURL", "https://qrpay.paysaddle.com/payment/#!/card?NPmerchantId=${merchantID}&terminalId=${userTID}&netposId=${netplusPayMid}&amount=${amount}&name=${CUSTOMER}&email=${CONTACTLESS_TRANSACTION_DEFAULT_EMAIL}&bank=${bank}&app=${CONTACT}&currency=NGN")
+            //Log.d("PAYMENTURL", "https://qrpay.paysaddle.com/payment/#!/card?NPmerchantId=${merchantID}&terminalId=${userTID}&netposId=${netplusPayMid}&amount=${amount}&name=${CUSTOMER}&email=${CONTACTLESS_TRANSACTION_DEFAULT_EMAIL}&bank=${bank}&app=${CONTACT}&currency=$currency")
             loadUrl("https://qrpay.paysaddle.com/payment/#!/card?NPmerchantId=$merchantID&terminalId=$userTID&netposId=$netplusPayMid&amount=$amount&name=$CUSTOMER&email=$CONTACTLESS_TRANSACTION_DEFAULT_EMAIL&bank=$bank&app=$CONTACT&currency=$currency")
         }
     }

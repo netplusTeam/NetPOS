@@ -324,7 +324,7 @@ object RandomNumUtil {
     fun displayCurrency(): ArrayList<String> {
         return arrayListOf(
             "EUR", "USD", "NGN",
-            "RUB", "QAR", "ZAR"
+            "RUB", "QAR", "ZAR",
             "AED", "AUD", "CAD",
             "CDF", "CHF", "CNY",
             "MAD", "GBP", "GHS",

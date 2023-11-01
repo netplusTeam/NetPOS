@@ -48,10 +48,21 @@ class PurchaseFragment : BaseFragment() {
         super.onViewCreated(view, savedInstanceState)
         initViews()
 
+        listOfCurrency()
 
-        getCurrency = binding.currency
+        binding.process.setOnClickListener {
+            processPayment()
+        }
 
 
+    }
+
+    override fun onResume() {
+        super.onResume()
+        listOfCurrency()
+    }
+
+    private fun listOfCurrency() {
         val currencyAdapter = CurrencyAdapter(
             displayCurrency(), requireContext(),
             android.R.layout.simple_expandable_list_item_1
@@ -65,12 +76,6 @@ class PurchaseFragment : BaseFragment() {
                 getCurrency.setText(selectedCurrency)
             }
         }
-
-        binding.process.setOnClickListener {
-            processPayment()
-        }
-
-
     }
 
 
