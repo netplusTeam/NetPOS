@@ -173,12 +173,12 @@ object RandomNumUtil {
 
     fun mapTransactionResponse(transResp: TransactionResponse) =
         "CardHolder: ${transResp.cardHolder} " +
-            "\nCardType: ${transResp.cardLabel}" +
-            "\nAmount: ${transResp.amount} " +
-            "\nRRN: ${transResp.RRN} \n" +
-            "ResponseCode: ${transResp.responseCode} \n" +
-            "TransmissionDateTime: ${transResp.transmissionDateTime} \n" +
-            "Time in Millis: ${transResp.transactionTimeInMillis}"
+                "\nCardType: ${transResp.cardLabel}" +
+                "\nAmount: ${transResp.amount} " +
+                "\nRRN: ${transResp.RRN} \n" +
+                "ResponseCode: ${transResp.responseCode} \n" +
+                "TransmissionDateTime: ${transResp.transmissionDateTime} \n" +
+                "Time in Millis: ${transResp.transactionTimeInMillis}"
 
     @SuppressLint("SimpleDateFormat")
     fun getDate(milliSeconds: Long): String {
@@ -319,5 +319,17 @@ object RandomNumUtil {
     )
 
     fun getBankName(): String? = bankList[BuildConfig.FLAVOR]
+
+
+    fun displayCurrency(): ArrayList<String> {
+        return arrayListOf(
+            "EUR", "USD", "NGN",
+            "RUB", "QAR", "ZAR"
+            "AED", "AUD", "CAD",
+            "CDF", "CHF", "CNY",
+            "MAD", "GBP", "GHS",
+            "GMD", "HKD", "JPY"
+        )
+    }
 
 }

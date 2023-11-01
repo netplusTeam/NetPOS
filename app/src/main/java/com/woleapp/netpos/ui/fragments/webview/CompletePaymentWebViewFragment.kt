@@ -28,7 +28,7 @@ class CompletePaymentWebViewFragment : Fragment() {
     private var netposID: String? = null
     private var userTID: String? = null
     private var email: String? = null
-    private var name: String? = null
+    private var currency: String? = null
     private var amount: String? = null
     private var bank: String? = null
     private var netplusPayMid: String? = null
@@ -73,6 +73,7 @@ class CompletePaymentWebViewFragment : Fragment() {
         email = CONTACTLESS_TRANSACTION_DEFAULT_EMAIL
 
         amount = arguments?.getString(PAYMENT_KEY)
+        currency = arguments?.getString(CURRENCY_KEY)
         Log.d("AMOUTNNT", amount.toString())
         setUpWebView(webView)
     }
@@ -84,6 +85,14 @@ class CompletePaymentWebViewFragment : Fragment() {
             loadWithOverviewMode = true
             useWideViewPort = true
             domStorageEnabled = true
+            // Enable Application Cache
+            setAppCacheEnabled(true)
+            // Enable Database Storage
+            databaseEnabled = true
+            setDatabasePath(requireActivity().applicationContext.getDir("database", 0).path)
+            // Enable Geolocation
+            setGeolocationEnabled(true)
+
         }
 
         webView.apply {
@@ -101,7 +110,7 @@ class CompletePaymentWebViewFragment : Fragment() {
             webChromeClient = WebChromeClient()
          //   loadUrl("https://oap.providusbank.com/accountopening/#/")
         //    Log.d("PAYMENTURL", "https://qrpay.paysaddle.com/payment/#!/card?NPmerchantId=${merchantID}&terminalId=${userTID}&netposId=${netplusPayMid}&amount=${amount}&name=${CUSTOMER}&email=${CONTACTLESS_TRANSACTION_DEFAULT_EMAIL}&bank=${bank}&app=${CONTACT}&currency=NGN")
-            loadUrl("https://qrpay.paysaddle.com/payment/#!/card?NPmerchantId=${merchantID}&terminalId=${userTID}&netposId=${netplusPayMid}&amount=${amount}&name=${CUSTOMER}&email=${CONTACTLESS_TRANSACTION_DEFAULT_EMAIL}&bank=${bank}&app=${CONTACT}&currency=NGN")
+            loadUrl("https://qrpay.paysaddle.com/payment/#!/card?NPmerchantId=$merchantID&terminalId=$userTID&netposId=$netplusPayMid&amount=$amount&name=$CUSTOMER&email=$CONTACTLESS_TRANSACTION_DEFAULT_EMAIL&bank=$bank&app=$CONTACT&currency=$currency")
         }
     }
 }

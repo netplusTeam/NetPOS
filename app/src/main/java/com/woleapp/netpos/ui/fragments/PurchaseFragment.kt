@@ -6,26 +6,33 @@ import androidx.fragment.app.Fragment
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.AdapterView
+import android.widget.AutoCompleteTextView
 import androidx.core.widget.doOnTextChanged
 import com.google.android.material.textfield.TextInputEditText
 import com.pixplicity.easyprefs.library.Prefs
 import com.woleapp.netpos.R
+import com.woleapp.netpos.adapter.CurrencyAdapter
 import com.woleapp.netpos.databinding.FragmentPurchaseBinding
 import com.woleapp.netpos.model.Alerter.showToast
 import com.woleapp.netpos.model.User
 import com.woleapp.netpos.ui.fragments.webview.CompletePaymentWebViewFragment
 import com.woleapp.netpos.util.CONTACTLESS_TRANSACTION_DEFAULT_EMAIL
+import com.woleapp.netpos.util.CURRENCY_KEY
 import com.woleapp.netpos.util.PAYMENT_KEY
 import com.woleapp.netpos.util.PREF_USER
+import com.woleapp.netpos.util.RandomNumUtil.displayCurrency
 import com.woleapp.netpos.util.Singletons.gson
 import dagger.hilt.android.AndroidEntryPoint
+import kotlinx.android.synthetic.main.fragment_purchase.*
 
 @AndroidEntryPoint
 class PurchaseFragment : BaseFragment() {
 
     private lateinit var binding: FragmentPurchaseBinding
     private lateinit var amount: TextInputEditText
-
+    private lateinit var getCurrency: AutoCompleteTextView
+    private lateinit var listOfQuestions: String
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
@@ -41,15 +48,36 @@ class PurchaseFragment : BaseFragment() {
         super.onViewCreated(view, savedInstanceState)
         initViews()
 
+
+        getCurrency = binding.currency
+
+
+        val currencyAdapter = CurrencyAdapter(
+            displayCurrency(), requireContext(),
+            android.R.layout.simple_expandable_list_item_1
+        )
+        getCurrency.setAdapter(currencyAdapter)
+
+        getCurrency.onItemClickListener = object : AdapterView.OnItemClickListener {
+            override fun onItemClick(adapterView: AdapterView<*>?, p1: View?, p2: Int, p3: Long) {
+                val selectedCurrency =
+                    adapterView?.getItemAtPosition(p2) as String
+                getCurrency.setText(selectedCurrency)
+            }
+        }
+
         binding.process.setOnClickListener {
             processPayment()
         }
+
+
     }
 
 
     private fun initViews() {
         with(binding) {
             amount = priceTextBox
+            getCurrency = currency
         }
     }
 
@@ -58,10 +86,14 @@ class PurchaseFragment : BaseFragment() {
             amount.text.toString().isEmpty() -> {
                 showToast(getString(R.string.all_please_enter_amount))
             }
+            getCurrency.text.toString().isEmpty() -> {
+                showToast(getString(R.string.all_select_currency))
+            }
             else -> {
                 if (validateSignUpFieldsOnTextChange()) {
                     val bundle = Bundle()
                     bundle.putString(PAYMENT_KEY, amount.text.toString())
+                    bundle.putString(CURRENCY_KEY, getCurrency.text.toString())
                     val fragment = CompletePaymentWebViewFragment()
                     fragment.arguments = bundle
                     requireActivity().supportFragmentManager.beginTransaction()

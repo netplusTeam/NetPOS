@@ -215,6 +215,7 @@
     <string name="logout_confirmation_dialog_message">Do you want to logout?</string>
     <string name="pay_now">PAY NOW</string>
     <string name="all_please_enter_amount">Please Enter Amount</string>
+    <string name="all_select_currency">Select Currency</string>
 
     <string-array name="viewPagerDestinationsTabLayoutTexts">
         <item>Last Transaction</item>
