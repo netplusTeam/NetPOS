@@ -1,7 +1,9 @@
 package com.woleapp.netpos.ui.fragments.webview
 
 import android.annotation.SuppressLint
+import android.content.Context
 import android.net.http.SslError
+import android.os.Build
 import android.os.Bundle
 import android.util.Log
 import androidx.fragment.app.Fragment
@@ -74,7 +76,6 @@ class CompletePaymentWebViewFragment : Fragment() {
 
         amount = arguments?.getString(PAYMENT_KEY)
         currency = arguments?.getString(CURRENCY_KEY)
-        Log.d("AMOUTNNT", amount.toString())
         setUpWebView(webView)
     }
 
@@ -87,12 +88,20 @@ class CompletePaymentWebViewFragment : Fragment() {
             domStorageEnabled = true
             // Enable Application Cache
             setAppCacheEnabled(true)
+            setAppCachePath(requireActivity().applicationContext.cacheDir.path)
             // Enable Database Storage
             databaseEnabled = true
             setDatabasePath(requireActivity().applicationContext.getDir("database", 0).path)
+            databasePath = requireActivity().applicationContext.getDir("database", Context.MODE_PRIVATE).path
+
             // Enable Geolocation
             setGeolocationEnabled(true)
-
+            defaultTextEncodingName = "utf-8"
+            mixedContentMode = WebSettings.MIXED_CONTENT_ALWAYS_ALLOW
+            // Enable Safe Browsing (optional)
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O_MR1) {
+                webSettings.safeBrowsingEnabled = true
+            }
         }
 
         webView.apply {
