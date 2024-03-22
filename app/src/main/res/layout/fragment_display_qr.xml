@@ -1,8 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <layout xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
-    tools:context=".ui.fragments.PurchaseFragment">
+    xmlns:app="http://schemas.android.com/apk/res-auto">
 
     <data>
 
@@ -13,7 +12,9 @@
         android:layout_height="match_parent"
         android:background="@android:color/white"
         android:clickable="true"
-        android:focusable="true">
+        android:focusable="true"
+        tools:context=".ui.fragments.DisplayQrFragment"
+        >
 
 
         <androidx.constraintlayout.widget.ConstraintLayout
@@ -53,32 +54,6 @@
                         android:textStyle="italic" />
                 </com.google.android.material.textfield.TextInputLayout>
 
-                <com.google.android.material.textfield.TextInputLayout
-                    android:id="@+id/fragment_currency"
-                    style="@style/Widget.MaterialComponents.TextInputLayout.FilledBox.ExposedDropdownMenu"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:visibility="visible"
-                    app:hintEnabled="true"
-                    android:layout_marginTop="5dp"
-                    android:hint="Select currency (NGN)"
-                    app:boxStrokeWidth="0dp"
-                    app:boxStrokeColor="@color/white"
-                    app:endIconDrawable="@drawable/ic_arrow_down_24"
-                    app:layout_constraintEnd_toEndOf="parent"
-                    app:layout_constraintStart_toStartOf="parent"
-                    app:layout_constraintTop_toBottomOf="@+id/price_input_layout">
-
-                    <AutoCompleteTextView
-                        android:id="@+id/currency"
-                        android:layout_width="match_parent"
-                        android:layout_height="match_parent"
-                        android:gravity="center_vertical"
-                        android:inputType="none"
-                        android:focusable="false"
-                        app:backgroundTint="@color/white" />
-                </com.google.android.material.textfield.TextInputLayout>
-
 
                 <Button
                     android:id="@+id/process"
@@ -88,9 +63,9 @@
                     android:text="@string/pay_now"
                     android:textAllCaps="true"
                     android:textColor="@android:color/white"
-                    app:layout_constraintEnd_toEndOf="@+id/fragment_currency"
-                    app:layout_constraintStart_toStartOf="@+id/fragment_currency"
-                    app:layout_constraintTop_toBottomOf="@+id/fragment_currency" />
+                    app:layout_constraintEnd_toEndOf="@+id/price_input_layout"
+                    app:layout_constraintStart_toStartOf="@+id/price_input_layout"
+                    app:layout_constraintTop_toBottomOf="@+id/price_input_layout" />
 
                 <ProgressBar
                     android:layout_width="wrap_content"

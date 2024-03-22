@@ -1,6 +1,7 @@
 package com.woleapp.netpos
 
 
+import com.danbamitale.epmslib.entities.TransactionType
 import com.google.gson.Gson
 import com.netpluspay.nibssclient.models.AccountBalance
 import com.netpluspay.nibssclient.models.CardData

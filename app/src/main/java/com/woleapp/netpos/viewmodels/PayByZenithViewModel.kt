@@ -6,24 +6,30 @@ import androidx.lifecycle.ViewModel
 import com.google.gson.Gson
 import com.pixplicity.easyprefs.library.Prefs
 import com.woleapp.netpos.model.GetZenithPayByTransferUserTransactionsModel
+import com.woleapp.netpos.model.MerchantDetailsResponse
+import com.woleapp.netpos.network.PayByTransferRepository
 import com.woleapp.netpos.network.ZenithPayByTransferRepository
 import com.woleapp.netpos.network.ZenithPayByTransferRepositoryLocal
 import com.woleapp.netpos.util.PREF_ZENITH_PBT_USER_ACCOUNT
 import com.woleapp.netpos.util.RxUtils.getSingleTransformer
 import com.woleapp.netpos.util.Singletons
+import com.woleapp.netpos.util.UtilityParams.PAY_BY_TRANSFER_BEARER_TOKEN
 import com.woleapp.netpos.util.disposeWith
 import com.woleapp.netpos.util.resourceWrapper.Resource
 import dagger.hilt.android.lifecycle.HiltViewModel
+import io.reactivex.Single
 import io.reactivex.android.schedulers.AndroidSchedulers
 import io.reactivex.disposables.CompositeDisposable
 import io.reactivex.schedulers.Schedulers
 import timber.log.Timber
+import java.net.SocketTimeoutException
 import javax.inject.Inject
 
 @HiltViewModel
 class PayByZenithViewModel @Inject constructor(
     private val zenithPbtRepository: ZenithPayByTransferRepository,
-    private val zenithPbtRepositoryLocal: ZenithPayByTransferRepositoryLocal
+    private val zenithPbtRepositoryLocal: ZenithPayByTransferRepositoryLocal,
+    private val zenithPayByTransferRepository: PayByTransferRepository
 ) : ViewModel() {
     private val compositeDisposable = CompositeDisposable()
     private val _clickedTransaction: MutableLiveData<GetZenithPayByTransferUserTransactionsModel> =
@@ -41,6 +47,11 @@ class PayByZenithViewModel @Inject constructor(
     private val _eodTransactions: MutableLiveData<Resource<List<GetZenithPayByTransferUserTransactionsModel>>> =
         MutableLiveData(Resource.initialDefault())
     val eodTransactions: LiveData<Resource<List<GetZenithPayByTransferUserTransactionsModel>>> get() = _eodTransactions
+
+    private val _payByTransfer: MutableLiveData<Resource<MerchantDetailsResponse>> =
+        MutableLiveData()
+    val payByTransfer: LiveData<Resource<MerchantDetailsResponse>> get() = _payByTransfer
+
 
     @Inject
     lateinit var gson: Gson
@@ -90,6 +101,87 @@ class PayByZenithViewModel @Inject constructor(
             zenithPbtRepository.registerDeviceToken(token)
                 .compose(getSingleTransformer())
                 .subscribe()
+        )
+    }
+
+    fun getMerchantDetails(netPlusPayMid: String) {
+        compositeDisposable.add(
+            zenithPayByTransferRepository.getMerchantDetails(PAY_BY_TRANSFER_BEARER_TOKEN, netPlusPayMid)
+                .subscribeOn(Schedulers.io())
+                .observeOn(AndroidSchedulers.mainThread())
+                .flatMap { response ->
+                    Single.just(response.body())
+                }
+                .subscribe { data, error ->
+                    data?.let {
+                        _payByTransfer.value = Resource.success(it)
+                    }
+                    error?.let { throwable ->
+                        Timber.d("PAY_BY_TRANSFER_ERROR_VP%s", throwable.localizedMessage)
+                        _payByTransfer.value =
+                            if (throwable is SocketTimeoutException) {
+                                Resource.timeOut()
+                            } else {
+                                Resource.error(
+                                    null,
+                                )
+                            }
+                    }
+                },
+        )
+    }
+
+    fun getProvidusMerchantDetails(netPlusPayMid: String) {
+        compositeDisposable.add(
+            zenithPayByTransferRepository.getProvidusMerchantDetails(PAY_BY_TRANSFER_BEARER_TOKEN, netPlusPayMid)
+                .subscribeOn(Schedulers.io())
+                .observeOn(AndroidSchedulers.mainThread())
+                .flatMap { response ->
+                    Single.just(response.body())
+                }
+                .subscribe { data, error ->
+                    data?.let {
+                        _payByTransfer.value = Resource.success(it)
+                    }
+                    error?.let { throwable ->
+                        Timber.d("PAY_BY_TRANSFER_ERROR_VP%s", throwable.localizedMessage)
+                        _payByTransfer.value =
+                            if (throwable is SocketTimeoutException) {
+                                Resource.timeOut()
+                            } else {
+                                Resource.error(
+                                    null,
+                                )
+                            }
+                    }
+                },
+        )
+    }
+
+    fun getFcmbMerchantDetails(netPlusPayMid: String) {
+        compositeDisposable.add(
+            zenithPayByTransferRepository.getFcmbMerchantDetails(PAY_BY_TRANSFER_BEARER_TOKEN, netPlusPayMid)
+                .subscribeOn(Schedulers.io())
+                .observeOn(AndroidSchedulers.mainThread())
+                .flatMap { response ->
+                    Single.just(response.body())
+                }
+                .subscribe { data, error ->
+                    data?.let {
+                        _payByTransfer.value = Resource.success(it)
+                    }
+                    error?.let { throwable ->
+                        Timber.d("PAY_BY_TRANSFER_ERROR_VP%s", throwable.localizedMessage)
+                        _payByTransfer.value =
+                            if (throwable is SocketTimeoutException) {
+                                Resource.timeOut()
+                            } else {
+                                Resource.error(
+                                    null,
+                                )
+                            }
+                    }
+                },
         )
     }
 

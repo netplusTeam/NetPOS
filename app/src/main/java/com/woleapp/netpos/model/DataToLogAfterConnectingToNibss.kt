@@ -50,7 +50,8 @@ data class TransactionResponseX(
     val terminalId: String,
     val transactionTimeInMillis: Long,
     val transactionType: String,
-    val transmissionDateTime: String
+    val transmissionDateTime: String,
+    val agentName: String
 )
 
 @Entity(tableName = "transactionTrackingTable")

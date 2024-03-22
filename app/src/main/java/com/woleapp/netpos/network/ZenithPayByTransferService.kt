@@ -2,12 +2,11 @@ package com.woleapp.netpos.network
 
 import com.woleapp.netpos.model.GetPayByTransferUserAccount
 import com.woleapp.netpos.model.GetZenithPayByTransferUserTransactions
+import com.woleapp.netpos.model.MerchantDetailsResponse
 import com.woleapp.netpos.model.ZenithPayByTransferRegisterDeviceTokenModel
 import io.reactivex.Single
-import retrofit2.http.Body
-import retrofit2.http.GET
-import retrofit2.http.POST
-import retrofit2.http.Path
+import retrofit2.Response
+import retrofit2.http.*
 
 interface ZenithPayByTransferService {
     @GET("api/getUserAccount/{terminalId}")
@@ -22,4 +21,5 @@ interface ZenithPayByTransferService {
 
     @POST("api/addFirebaseToken")
     fun registerDeviceToken(@Body req: ZenithPayByTransferRegisterDeviceTokenModel): Single<String>
+
 }

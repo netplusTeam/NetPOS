@@ -61,7 +61,8 @@ class AuthViewModel : ViewModel() {
         }
         auth(username, password)
     }
-    fun login(deviceId:String) {
+
+    fun login(deviceId: String) {
         val username = usernameLiveData.value
         val password = passwordLiveData.value
         if (username.isNullOrEmpty() || password.isNullOrEmpty()) {
@@ -72,7 +73,7 @@ class AuthViewModel : ViewModel() {
             _message.value = Event("Please enter a valid email")
             return
         }
-            easyPOSAuth(username, password, deviceId)
+        easyPOSAuth(username, password, deviceId)
     }
 
     private fun auth(username: String, password: String) {
@@ -152,6 +153,14 @@ class AuthViewModel : ViewModel() {
                         } else {
                             " "
                         }
+                    this.email =
+                        if (userTokenDecoded.claims.containsKey("username")) {
+                            userTokenDecoded.getClaim(
+                                "username",
+                            ).asString()
+                        } else {
+                            " "
+                        }
                     this.partnerId =
                         if (userTokenDecoded.claims.containsKey("partnerId")) {
                             userTokenDecoded.getClaim(
@@ -215,7 +224,7 @@ class AuthViewModel : ViewModel() {
             }.disposeWith(disposables)
     }
 
-    private fun easyPOSAuth(username: String, password: String, deviceId:String) {
+    private fun easyPOSAuth(username: String, password: String, deviceId: String) {
         authInProgress.value = true
         val credentials = JsonObject()
             .apply {
@@ -282,6 +291,14 @@ class AuthViewModel : ViewModel() {
                         if (userTokenDecoded.claims.containsKey("stormId")) {
                             userTokenDecoded.getClaim(
                                 "stormId",
+                            ).asString()
+                        } else {
+                            " "
+                        }
+                    this.email =
+                        if (userTokenDecoded.claims.containsKey("username")) {
+                            userTokenDecoded.getClaim(
+                                "username",
                             ).asString()
                         } else {
                             " "

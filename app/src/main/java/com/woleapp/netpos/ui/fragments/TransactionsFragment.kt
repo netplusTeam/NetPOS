@@ -153,16 +153,32 @@ class TransactionsFragment : BaseFragment() {
 
     private fun setUpDefaultAdapter() {
         adapter = ServiceAdapter {
-            val nextFrag: Fragment? = when (it.id) {
-                0 -> SalesFragment.newInstance()
-                1 -> SalesFragment.newInstance(TransactionType.DEPOSIT)
+            val nextFrag: Any? = when (it.id) {
+                0 -> {
+//                    showFragment(SalesFragment.newInstance(), "Sales")
+                    parentFragmentManager.beginTransaction()
+                        .replace(R.id.container_main, SalesFragment.newInstance())
+                        .addToBackStack(null)
+                        .commit()
+                }
+                1 -> {
+//                    showFragment(SalesFragment.newInstance(TransactionType.DEPOSIT), "Sales")
+                    parentFragmentManager.beginTransaction()
+                        .replace(R.id.container_main, SalesFragment.newInstance(TransactionType.DEPOSIT))
+                        .addToBackStack(null)
+                        .commit()
+                }
                 2 -> {
                     showPreAuthDialog()
                     null
                 }
                 4 -> {
 //                    showQRBottomSheetDialog()
-                    QRFragment()
+                  //  QRFragment()
+                    parentFragmentManager.beginTransaction()
+                        .replace(R.id.container_main, SettingsFragment())
+                        .addToBackStack(null)
+                        .commit()
                 }
                 5 -> {
                     if ((BuildConfig.FLAVOR == "wema" || BuildConfig.FLAVOR == "zenith") && Prefs.contains(
@@ -172,17 +188,46 @@ class TransactionsFragment : BaseFragment() {
                         inputPasswordDialog.show()
                         return@ServiceAdapter
                     }
-                    ReprintFragment()
+//                    showFragment(ReprintFragment(), "Reprint")
+                    parentFragmentManager.beginTransaction()
+                        .replace(R.id.container_main, ReprintFragment())
+                        .addToBackStack(null)
+                        .commit()
 //                    TransactionHistoryFragment.newInstance(action = HISTORY_ACTION_REPRINT)
                 }
 //                6 -> SalesFragment.newInstance(isVend = true)
-                6 -> ZenithPayByTransferFragment()
-                7 -> PurchaseFragment()
-                else -> SalesFragment.newInstance(TransactionType.CASH_ADVANCE)
+                6 -> {
+//                    showFragment(ZenithPayByTransferFragment(), "ZenithPayByTransferFragment")
+                    parentFragmentManager.beginTransaction()
+                        .replace(R.id.container_main, ZenithPayByTransferFragment())
+                        .addToBackStack(null)
+                        .commit()
+                }
+                7 -> {
+//                    showFragment(PurchaseFragment(), "Purchase")
+                    parentFragmentManager.beginTransaction()
+                        .replace(R.id.container_main, PurchaseFragment())
+                        .addToBackStack(null)
+                        .commit()
+                }
+                8 -> {
+//                    showFragment(PurchaseFragment(), "Purchase")
+                    parentFragmentManager.beginTransaction()
+                        .replace(R.id.container_main, PurchaseFragment())
+                        .addToBackStack(null)
+                        .commit()
+                }
+                else -> {
+//                    showFragment(SalesFragment.newInstance(TransactionType.CASH_ADVANCE), "Sales")
+                    parentFragmentManager.beginTransaction()
+                        .replace(R.id.container_main, SalesFragment.newInstance(TransactionType.CASH_ADVANCE))
+                        .addToBackStack(null)
+                        .commit()
+                }
             }
-            nextFrag?.let { fragment ->
-                addFragmentWithoutRemove(fragment)
-            }
+//            nextFrag?.let { fragment ->
+//                addFragmentWithoutRemove(fragment)
+//            }
         }
         val listOfService = if (BuildConfig.FLAVOR.equals("wemacashout", true)) {
             arrayListOf(
@@ -198,7 +243,8 @@ class TransactionsFragment : BaseFragment() {
                 Service(1, "Cash", R.drawable.ic_baseline_money_24),
                 Service(2, "PRE AUTHORIZATION", R.drawable.ic_pre_auth),
                 Service(3, "Cash Advance", R.drawable.ic_pay_cash_icon),
-                Service(4, "QR", R.drawable.ic_qr_code),
+             //   Service(4, "QR", R.drawable.ic_qr_code),
+                Service(4, "Settings", R.drawable.ic_baseline_settings),
                 Service(5, "Reprint", R.drawable.ic_print),
                 Service(7, "Web Purchase", R.drawable.ic_purchase),
             )
@@ -208,6 +254,13 @@ class TransactionsFragment : BaseFragment() {
                         6,
                         getString(R.string.pay_by_transfer),
                         R.drawable.ic_lending,
+                    ),
+                )
+                serviceArr.add(
+                    Service(
+                        8,
+                        getString(R.string.pay_by_transfer),
+                        R.drawable.trans,
                     ),
                 )
             }

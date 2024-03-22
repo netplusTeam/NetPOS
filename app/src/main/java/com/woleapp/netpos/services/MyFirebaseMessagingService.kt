@@ -15,8 +15,11 @@ import com.google.firebase.messaging.RemoteMessage
 import com.google.gson.Gson
 import com.woleapp.netpos.R
 import com.woleapp.netpos.model.GetZenithPayByTransferUserTransactionsModel
+import com.woleapp.netpos.model.PayWithCardNotificationModelResponse
 import com.woleapp.netpos.ui.activities.MainActivity
 import com.woleapp.netpos.util.* // ktlint-disable no-wildcard-imports
+import com.woleapp.netpos.util.ModelMapper.mapToTransactionResponse
+import com.woleapp.netpos.util.RandomNumUtil.formatAmountToNaira
 import com.woleapp.netpos.util.RandomNumUtil.formatCurrencyAmountUsingCurrentModule
 import com.woleapp.netpos.worker.RegisterDeviceTokenToBackendOnTokenChangeWorker
 import com.woleapp.netpos.worker.SaveTransactionFromFirebaseMessagingServiceToDbWorker
@@ -39,31 +42,36 @@ class MyFirebaseMessagingService : FirebaseMessagingService() {
 
         // Check if message contains a data payload.
         if (remoteMessage.data.isNotEmpty()) {
-            val transactionNotificationFromFirebase = remoteMessage.data["TransactionNotification"]
 
-            val temporalTransaction: GetZenithPayByTransferUserTransactionsModel =
-                gson.fromJson(
-                    transactionNotificationFromFirebase,
-                    GetZenithPayByTransferUserTransactionsModel::class.java,
-                )
+            handleTransactionMessageForVirtualAccount(remoteMessage)
+            handleTransactionMessage(remoteMessage)
 
-            val newPaidAt = increaseHourInDate(temporalTransaction.paid_at)
-            val modifiedTransaction: GetZenithPayByTransferUserTransactionsModel =
-                temporalTransaction.copy(
-                    amount = temporalTransaction.amount.div(100),
-                    paid_at = newPaidAt,
-                )
 
-            val transaction = gson.toJson(modifiedTransaction)
-
-            transaction?.let {
-                scheduleJobToSaveTransactionToDatabase(it)
-            }
+//            val transactionNotificationFromFirebase = remoteMessage.data["TransactionNotification"]
+//
+//            val temporalTransaction: GetZenithPayByTransferUserTransactionsModel =
+//                gson.fromJson(
+//                    transactionNotificationFromFirebase,
+//                    GetZenithPayByTransferUserTransactionsModel::class.java,
+//                )
+//
+//            val newPaidAt = increaseHourInDate(temporalTransaction.paid_at)
+//            val modifiedTransaction: GetZenithPayByTransferUserTransactionsModel =
+//                temporalTransaction.copy(
+//                    amount = temporalTransaction.amount.div(100),
+//                    paid_at = newPaidAt,
+//                )
+//
+//            val transaction = gson.toJson(modifiedTransaction)
+//
+//            transaction?.let {
+//                scheduleJobToSaveTransactionToDatabase(it)
+//            }
         }
 
         // Also if you intend on generating your own notifications as a result of a received FCM
         // message, here is where that should be initiated. See sendNotification method below.
-        remoteMessage.data["TransactionNotification"]?.let {
+        remoteMessage.data["VirtualNotification"]?.let {
             val temporalTransaction: GetZenithPayByTransferUserTransactionsModel =
                 gson.fromJson(it, GetZenithPayByTransferUserTransactionsModel::class.java)
 
@@ -83,6 +91,55 @@ class MyFirebaseMessagingService : FirebaseMessagingService() {
                 })",
             )
         }
+
+        // Also if you intend on generating your own notifications as a result of a received FCM
+        // message, here is where that should be initiated. See sendNotification method below.
+        remoteMessage.data["TransactionNotification"]?.let {
+            val transactionNotificationFromFirebase = remoteMessage.data["TransactionNotification"]
+            val temporalTransaction: PayWithCardNotificationModelResponse = gson.fromJson(
+                transactionNotificationFromFirebase,
+                PayWithCardNotificationModelResponse::class.java,
+            )
+
+            if (temporalTransaction.email.contains(MERCHANT_QR_PREFIX)) {
+                createTransactionNotification(
+                    getString(
+                        R.string.notification_message_body,
+                        temporalTransaction.amount.toDouble()
+                            .formatCurrencyAmountUsingCurrentModule(),
+                        temporalTransaction.status,
+                        temporalTransaction.customerName,
+                        temporalTransaction.maskedPan,
+                    ),
+                )
+            }
+        }
+
+        // Also if you intend on generating your own notifications as a result of a received FCM
+        // message, here is where that should be initiated. See sendNotification method below.
+//        remoteMessage.data["VirtualNotification"]?.let {
+//            val temporalTransaction: GetZenithPayByTransferUserTransactionsModel =
+//                gson.fromJson(it, GetZenithPayByTransferUserTransactionsModel::class.java)
+//
+////            val newPaidAt = increaseHourInDate(temporalTransaction.paid_at)
+//            val transaction: GetZenithPayByTransferUserTransactionsModel =
+//                gson.fromJson(it, GetZenithPayByTransferUserTransactionsModel::class.java).copy(
+//                    amount = temporalTransaction.amount, paid_at = temporalTransaction.paid_at
+//                )
+//            val transactionAmount = transaction.amount
+//            Log.d("1234567890", it)
+//            sendNotification(
+//                "${
+//                    formatAmountToNaira(transactionAmount.toDouble())
+//                } Received \nFrom: ${transaction.payer_account_name}   (${
+//                    transaction.details.split(
+//                        "/",
+//                    )[1]
+//                })",
+//            )
+//            Log.d("NOWWCHECKKKKK", transactionAmount.formatCurrencyAmountUsingCurrentModule())
+//        }
+
     }
 
     private fun sendNotification(messageBody: String) {
@@ -124,11 +181,102 @@ class MyFirebaseMessagingService : FirebaseMessagingService() {
         notificationManager.notify(0 /* ID of notification */, notificationBuilder.build())
     }
 
+    private fun createTransactionNotification(messageBody: String) {
+        val intent = Intent(this, MainActivity::class.java)
+        intent.action = STRING_FIREBASE_INTENT_ACTION
+        intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP)
+        intent.putExtra(TAG_NOTIFICATION_RECEIVED_FROM_BACKEND, true)
+        val pendingIntent = PendingIntent.getActivity(
+            this,
+            INT_FIREBASE_PENDING_INTENT_REQUEST_CODE, /* Request code */
+            intent,
+            PendingIntent.FLAG_IMMUTABLE,
+        )
+
+        val channelId = "fcm_default_channel"
+        val defaultSoundUri = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION)
+        val notificationBuilder = NotificationCompat.Builder(this, channelId)
+            .setContentTitle(getString(R.string.transacion_received))
+            .setStyle(NotificationCompat.BigTextStyle().bigText(messageBody))
+            .setSmallIcon(R.drawable.ic_netpos_logo).setPriority(NotificationCompat.PRIORITY_HIGH)
+            .setContentText(messageBody).setAutoCancel(true).setSound(defaultSoundUri)
+            .setContentIntent(pendingIntent)
+
+        val notificationManager =
+            getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+
+        // Since android Oreo notification channel is needed.
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            val channel = NotificationChannel(
+                channelId,
+                getString(R.string.transacion_received),
+                NotificationManager.IMPORTANCE_DEFAULT,
+            )
+            notificationManager.createNotificationChannel(channel)
+        }
+
+        notificationManager.notify(0 /* ID of notification */, notificationBuilder.build())
+    }
+
+
     private fun sendRegistrationToServer(token: String) {
         // Implement this method to send token to your app server.
         Log.d(TAG_NEW_TOKEN_RECEIVED, "sendRegistrationTokenToServer($token)")
         scheduleJobToRegisterNewToken(token)
     }
+
+    private fun handleTransactionMessage(remoteMessage: RemoteMessage) {
+        val transactionNotificationFromFirebase = remoteMessage.data["TransactionNotification"]
+        Timber.tag("INCOMING_INCOMING").d(transactionNotificationFromFirebase)
+        transactionNotificationFromFirebase?.let {
+            val temporalTransaction: PayWithCardNotificationModelResponse = gson.fromJson(
+                it,
+                PayWithCardNotificationModelResponse::class.java,
+            )
+            val transaction = gson.toJson(
+                temporalTransaction.copy(
+                    email = temporalTransaction.email.removePrefix(MERCHANT_QR_PREFIX),
+                ).mapToTransactionResponse(),
+            )
+
+            if (temporalTransaction.email.contains(MERCHANT_QR_PREFIX)) {
+                Timber.tag("INCOMING_INCOMING_").d(gson.toJson(temporalTransaction))
+                transaction?.let { transactionResponse ->
+                    scheduleJobToSaveTransactionToDatabase(transactionResponse)
+                    val intent = Intent(this, MainActivity::class.java)
+                    intent.action = STRING_FIREBASE_INTENT_ACTION
+                    intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP)
+                    intent.putExtra(TAG_NOTIFICATION_RECEIVED_FROM_BACKEND, true)
+                    this.startActivity(intent)
+                }
+            }
+        }
+    }
+
+    private fun handleTransactionMessageForVirtualAccount(remoteMessage: RemoteMessage) {
+        val transactionNotificationFromFirebase = remoteMessage.data["VirtualNotification"]
+        Timber.tag("INCOMING_INCOMING").d(transactionNotificationFromFirebase)
+        transactionNotificationFromFirebase?.let {
+            val temporalTransaction: GetZenithPayByTransferUserTransactionsModel = gson.fromJson(
+                it,
+                GetZenithPayByTransferUserTransactionsModel::class.java,
+            )
+            val transaction = gson.toJson(
+                temporalTransaction.mapToTransactionResponse(),
+            )
+
+            Timber.tag("INCOMING_INCOMING_").d(gson.toJson(temporalTransaction))
+            transaction?.let { transactionResponse ->
+                scheduleJobToSaveTransactionToDatabase(transactionResponse)
+                val intent = Intent(this, MainActivity::class.java)
+                intent.action = STRING_FIREBASE_INTENT_ACTION
+                intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP)
+                intent.putExtra(TAG_NOTIFICATION_RECEIVED_FROM_BACKEND, true)
+                this.startActivity(intent)
+            }
+        }
+    }
+
 
     private fun scheduleJobToSaveTransactionToDatabase(transactionFromFireBaseInStringFormat: String) {
         val inputData: Data = Data.Builder()

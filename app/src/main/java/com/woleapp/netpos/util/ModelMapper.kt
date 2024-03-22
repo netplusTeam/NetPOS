@@ -2,14 +2,22 @@ package com.woleapp.netpos.util
 
 import android.app.Activity
 import android.content.Context
+import android.text.Html
+import android.text.Spanned
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.LifecycleOwner
 import com.danbamitale.epmslib.entities.* // ktlint-disable no-wildcard-imports
 import com.danbamitale.epmslib.utils.IsoAccountType
+import com.woleapp.netpos.model.GetZenithPayByTransferUserTransactionsModel
+import com.woleapp.netpos.model.PayWithCardNotificationModelResponse
 import com.woleapp.netpos.model.Row
 import com.woleapp.netpos.model.TransactionResponseModelFromGateWay
+import com.woleapp.netpos.util.RandomNumUtil.dateStr2Long
+import com.woleapp.netpos.util.RandomNumUtil.dateStrToLong
 import com.woleapp.netpos.util.RandomNumUtil.formattedTime
+import com.woleapp.netpos.util.RandomNumUtil.getCurrentDateTime
 import com.woleapp.netpos.util.RandomNumUtil.getDateInMillis
+import com.woleapp.netpos.util.RandomNumUtil.getLocaleCurrentDateTime
 import pub.devrel.easypermissions.EasyPermissions
 
 object ModelMapper {
@@ -182,4 +190,46 @@ object ModelMapper {
             )
         }
     }
+
+    fun PayWithCardNotificationModelResponse.mapToTransactionResponse(): TransactionResponse {
+        val currentDateTime = getLocaleCurrentDateTime()
+        return TransactionResponse().apply {
+            transactionType = TransactionType.PURCHASE
+            maskedPan = this@mapToTransactionResponse.maskedPan
+            amount = this@mapToTransactionResponse.amount.toDouble().toLong()
+            transmissionDateTime = currentDateTime
+            STAN = ""
+            RRN = this@mapToTransactionResponse.rrn
+            responseCode = this@mapToTransactionResponse.code
+            cardLabel = ""
+            cardHolder = this@mapToTransactionResponse.customerName
+            transactionTimeInMillis = dateStrToLong(currentDateTime, "yyyy-MM-dd hh:mm a")
+            accountType = IsoAccountType.DEFAULT_UNSPECIFIED
+            terminalId = this@mapToTransactionResponse.terminalId
+            merchantId = this@mapToTransactionResponse.merchantId
+        }
+    }
+
+    fun GetZenithPayByTransferUserTransactionsModel.mapToTransactionResponse(): TransactionResponse {
+        val currentDateTime = getCurrentDateTime()
+        val boldText = "<b>PayByTransfer</b>"
+        val spanned: Spanned = Html.fromHtml(boldText, Html.FROM_HTML_MODE_LEGACY)
+
+        return TransactionResponse().apply {
+            transactionType = TransactionType.PURCHASE
+            maskedPan = ""
+            amount = this@mapToTransactionResponse.amount.toDouble().toLong()
+            transmissionDateTime = paid_at
+            STAN = ""
+            RRN = "$spanned ${this@mapToTransactionResponse.transaction_reference}"
+            responseCode = "00"
+            cardLabel = this@mapToTransactionResponse.payer_account_number
+            cardHolder = this@mapToTransactionResponse.payer_account_name
+            transactionTimeInMillis = dateStrToLong(paid_at, "yyyy-MM-dd hh:mm:ss")
+            accountType = IsoAccountType.DEFAULT_UNSPECIFIED
+            terminalId = this@mapToTransactionResponse.terminalId
+            merchantId = this@mapToTransactionResponse.merchantId
+        }
+    }
+
 }

@@ -12,6 +12,7 @@ import android.location.LocationManager
 import android.os.Bundle
 import android.util.Log
 import android.view.LayoutInflater
+import android.view.View
 import android.widget.Toast
 import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
@@ -27,6 +28,7 @@ import com.google.android.material.bottomsheet.BottomSheetDialog
 import com.google.firebase.messaging.FirebaseMessaging
 import com.google.gson.Gson
 import com.pixplicity.easyprefs.library.Prefs
+import com.woleapp.netpos.BuildConfig
 import com.woleapp.netpos.R
 import com.woleapp.netpos.database.AppDatabase
 import com.woleapp.netpos.databinding.ActivityMainBinding
@@ -40,12 +42,12 @@ import com.woleapp.netpos.network.getTokenClient
 import com.woleapp.netpos.nibss.CONFIGURATION_STATUS
 import com.woleapp.netpos.nibss.NetPosTerminalConfig
 import com.woleapp.netpos.receivers.BatteryReceiver
-import com.woleapp.netpos.ui.fragments.DashboardFragment
-import com.woleapp.netpos.ui.fragments.SettingsFragment
-import com.woleapp.netpos.ui.fragments.TransactionHistoryFragment
-import com.woleapp.netpos.ui.fragments.TransactionsFragment
+import com.woleapp.netpos.ui.fragments.*
+import com.woleapp.netpos.ui.fragments.dialog.LoadingDialog
 import com.woleapp.netpos.util.* // ktlint-disable no-wildcard-imports
 import com.woleapp.netpos.util.ModelMapper.mapRowToTransactionResponse
+import com.woleapp.netpos.util.RandomNumUtil.getNetPlusPayMid
+import com.woleapp.netpos.util.RandomNumUtil.observeServerResponseActivity
 import com.woleapp.netpos.viewmodels.NetPosViewModelFactories
 import com.woleapp.netpos.viewmodels.PayByZenithViewModel
 import com.woleapp.netpos.viewmodels.TransactionsViewModel
@@ -82,6 +84,7 @@ class MainActivity : AppCompatActivity(), EasyPermissions.PermissionCallbacks {
     private lateinit var alertDialog: AlertDialog
     private lateinit var binding: ActivityMainBinding
     private var compositeDisposable: CompositeDisposable = CompositeDisposable()
+    private lateinit var copyAccountNumber: String
 
     // private lateinit var client: MqttAndroidClient
     private val receiver = object : BroadcastReceiver() {
@@ -183,6 +186,17 @@ class MainActivity : AppCompatActivity(), EasyPermissions.PermissionCallbacks {
         binding = DataBindingUtil.setContentView(this, R.layout.activity_main)
         bottomNavView = binding.bottomNavigationView
 
+        if (BuildConfig.FLAVOR.contains("zenith")){
+            payByTransferViewModel.getMerchantDetails(getNetPlusPayMid())
+        } else if (BuildConfig.FLAVOR.contains("providus")){
+            payByTransferViewModel.getProvidusMerchantDetails(getNetPlusPayMid())
+            generateMerchantDetails()
+        } else if (BuildConfig.FLAVOR.contains("easypay")){
+            payByTransferViewModel.getFcmbMerchantDetails(getNetPlusPayMid())
+            generateMerchantDetails()
+        }
+
+
         endOfDayProgressDialog = ProgressDialog(this).apply {
             this.setCancelable(false)
             this.setMessage(getString(R.string.please_wait))
@@ -269,8 +283,8 @@ class MainActivity : AppCompatActivity(), EasyPermissions.PermissionCallbacks {
                     return@setOnItemSelectedListener true
                 }
 
-                R.id.balance -> {
-                    getBalance()
+                R.id.displayQr -> {
+                    showFragment(DisplayQrFragment(), DisplayQrFragment::class.java.simpleName)
                     return@setOnItemSelectedListener true
                 }
 
@@ -279,8 +293,8 @@ class MainActivity : AppCompatActivity(), EasyPermissions.PermissionCallbacks {
                     return@setOnItemSelectedListener true
                 }
 
-                R.id.settings -> {
-                    showFragment(SettingsFragment(), SettingsFragment::class.java.simpleName)
+                R.id.balance -> {
+                    getBalance()
                     return@setOnItemSelectedListener true
                 }
                 else -> {
@@ -288,6 +302,10 @@ class MainActivity : AppCompatActivity(), EasyPermissions.PermissionCallbacks {
                     return@setOnItemSelectedListener true
                 }
             }
+        }
+
+        binding.dashboardHeader.merchantDetails.setOnClickListener {
+            copyText()
         }
     }
 
@@ -751,6 +769,30 @@ class MainActivity : AppCompatActivity(), EasyPermissions.PermissionCallbacks {
             disposable.clear()
         } catch (e: Exception) {
             Timber.d("GET_ISW_TOKEN_ERROR===>%s$e")
+        }
+    }
+
+    private fun copyText() {
+        val clipboardManager = getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
+        val clip = ClipData.newPlainText("Text copied", copyAccountNumber)
+        clipboardManager.setPrimaryClip(clip)
+        Toast.makeText(this, "Account number copied", Toast.LENGTH_SHORT).show()
+    }
+
+    private fun generateMerchantDetails() {
+        observeServerResponseActivity(
+            this,
+            this,
+            payByTransferViewModel.payByTransfer,
+            LoadingDialog(),
+            supportFragmentManager,
+        ) {
+            payByTransferViewModel.payByTransfer.value?.data?.user?.let {
+                binding.dashboardHeader.parentConstraintLayout.visibility = View.VISIBLE
+                binding.dashboardHeader.merchantDetails.text = it.acctNumber
+                binding.dashboardHeader.bankName.text = it.bank
+                copyAccountNumber = it.acctNumber
+            }
         }
     }
 }

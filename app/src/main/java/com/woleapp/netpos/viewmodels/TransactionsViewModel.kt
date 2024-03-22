@@ -446,6 +446,7 @@ class TransactionsViewModel(private val appDatabase: AppDatabase) : ViewModel() 
             }.disposeWith(compositeDisposable)
     }
 
+
     fun sendSmS(number: String) {
         sendSmS(
             lastTransactionResponse.value!!,

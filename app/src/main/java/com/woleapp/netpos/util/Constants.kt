@@ -79,6 +79,8 @@ const val PAYMENT_KEY = "payment_key"
 const val CURRENCY_KEY = "currency_key"
 const val CONTACT = "contact"
 const val CUSTOMER = "customer"
+const val MERCHANT_QR_PREFIX = "MERCHANT_DISPLAY_QR==="
+
 
 val testPbtTransactions = arrayListOf(
     GetZenithPayByTransferUserTransactionsModel(

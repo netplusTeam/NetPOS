@@ -20,15 +20,16 @@
         android:title="@string/menu_item_end_of_day" />
 
     <item
-        android:id="@+id/settings"
-        android:enabled="true"
-        android:icon="@drawable/ic_baseline_settings"
-        android:title="@string/menu_item_settings" />
-
-    <item
         android:id="@+id/balance"
         android:enabled="true"
         android:icon="@drawable/ic_write"
         android:title="@string/check_bal" />
+
+    <item
+        android:id="@+id/displayQr"
+        android:enabled="true"
+        android:icon="@drawable/ic_qr_code"
+        android:title="@string/menu_item_display_qr" />
+
 
 </menu>

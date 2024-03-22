@@ -1,24 +1,42 @@
 package com.woleapp.netpos.util
 
 import android.annotation.SuppressLint
+import android.app.AlertDialog
 import android.content.Context
 import android.os.Build
 import android.provider.Settings
 import android.telephony.TelephonyManager
 import android.text.Html
 import android.text.Spanned
+import android.util.Log
+import android.view.LayoutInflater
+import android.view.View
+import android.widget.Toast
+import androidx.fragment.app.Fragment
+import androidx.fragment.app.FragmentManager
+import androidx.lifecycle.LifecycleOwner
+import androidx.lifecycle.LiveData
 import com.danbamitale.epmslib.entities.TransactionRequestData
 import com.danbamitale.epmslib.entities.TransactionResponse
 import com.danbamitale.epmslib.utils.IsoTimeManager
+import com.google.android.material.snackbar.Snackbar
 import com.woleapp.netpos.BuildConfig
+import com.woleapp.netpos.R
+import com.woleapp.netpos.model.Alerter.showToast
 import com.woleapp.netpos.model.MakePaymentParams
+import com.woleapp.netpos.model.MerchantDetailsResponse
 import com.woleapp.netpos.model.TransactionResponseX
 import com.woleapp.netpos.model.TransactionToLogBeforeConnectingToNibbs
+import com.woleapp.netpos.ui.fragments.dialog.LoadingDialog
+import com.woleapp.netpos.util.Singletons.getCurrentlyLoggedInUser
+import com.woleapp.netpos.util.UtilityParams.STRING_MERCHANT_ID
+import com.woleapp.netpos.util.resourceWrapper.Resource
+import com.woleapp.netpos.util.resourceWrapper.Status
+import io.reactivex.Scheduler
+import io.reactivex.Single
+import io.reactivex.disposables.CompositeDisposable
 import timber.log.Timber
-import java.text.DateFormat
-import java.text.DecimalFormat
-import java.text.ParseException
-import java.text.SimpleDateFormat
+import java.text.*
 import java.time.LocalDateTime
 import java.time.ZoneOffset
 import java.time.format.DateTimeFormatter
@@ -79,6 +97,20 @@ object RandomNumUtil {
         return try {
             val c = Calendar.getInstance()
             c.time = SimpleDateFormat("yyyy-MM-dd hh:mm")
+                .parse(dateStr)!!
+            c.timeInMillis
+        } catch (e: ParseException) {
+            e.printStackTrace()
+            0
+        }
+    }
+
+    @SuppressLint("SimpleDateFormat")
+    fun dateStrToLong(dateStr: String, inputDateFormat: String): Long {
+        val formattedDateString = dateStr.removeSuffix(dateStr.takeLast(3))
+        return try {
+            val c = Calendar.getInstance()
+            c.time = SimpleDateFormat(inputDateFormat)
                 .parse(dateStr)!!
             c.timeInMillis
         } catch (e: ParseException) {
@@ -164,6 +196,15 @@ object RandomNumUtil {
         return dateFormatter.format(today)
     }
 
+    @SuppressLint("ConstantLocale")
+    fun getLocaleCurrentDateTime() =
+        SimpleDateFormat(
+            "yyyy-MM-dd hh:mm a",
+            Locale.getDefault(),
+        ).format(System.currentTimeMillis())
+            .format(Date())
+
+
     @SuppressLint("SimpleDateFormat")
     fun getCurrentDate(): String {
         val dateFormatter: DateFormat = SimpleDateFormat("yyyy-MM-dd")
@@ -228,7 +269,8 @@ object RandomNumUtil {
                 terminalId = terminalId,
                 transactionTimeInMillis = transactionTimeInMillis,
                 transactionType = transactionType.name,
-                transmissionDateTime = getCurrentDateTime()
+                transmissionDateTime = getCurrentDateTime(),
+                agentName = Singletons.getCurrentlyLoggedInUser()?.email!!
             )
         }
     }
@@ -273,7 +315,8 @@ object RandomNumUtil {
                     terminalId = terminal_id,
                     transactionTimeInMillis = 0,
                     transactionType = requestData.transactionType.name,
-                    transmissionDateTime = getCurrentDateTime()
+                    transmissionDateTime = getCurrentDateTime(),
+                    agentName = Singletons.getCurrentlyLoggedInUser()?.email!!
                 )
             )
         }
@@ -320,6 +363,26 @@ object RandomNumUtil {
 
     fun getBankName(): String? = bankList[BuildConfig.FLAVOR]
 
+    fun initPartnerId(): String {
+        var partnerID = ""
+        val bankList = mapOf(
+            "firstbank" to "7FD43DF1-633F-4250-8C6F-B49DBB9650EA",
+            "easypay" to "1B0E68FD-7676-4F2C-883D-3931C3564190",
+            "stanbic" to "377F47E9-55F9-45E0-B77A-1BAA4BC88026",
+            "providus" to "8B26F328-040F-4F27-A5BC-4414AB9D1EFA",
+            "providus" to "8B26F328-040F-4F27-A5BC-4414AB9D1EFA",
+            "wema" to "1E3D050B-6995-495F-982A-0511114959C8",
+            "zenith" to "C936667C-0B02-4A34-80D0-0FC5B525256E",
+            "tingopay" to "1EED19E0-9625-49AA-A0CF-2EFCD8F30036",
+        )
+
+        for (element in bankList) {
+            if (element.key == BuildConfig.FLAVOR) {
+                partnerID = element.value
+            }
+        }
+        return partnerID
+    }
 
     fun displayCurrency(): ArrayList<String> {
         return arrayListOf(
@@ -332,4 +395,138 @@ object RandomNumUtil {
         )
     }
 
+    fun getNetPlusPayMid(): String = getCurrentlyLoggedInUser()?.netplusPayMid ?: STRING_MERCHANT_ID
+
+
+    fun <T> observeServerResponseActivity(
+        context: Context,
+        lifecycle: LifecycleOwner,
+        serverResponse: LiveData<Resource<T>>,
+        loadingDialog: LoadingDialog,
+        fragmentManager: FragmentManager,
+        successAction: () -> Unit,
+    ) {
+        serverResponse.observe(lifecycle) {
+            when (it.status) {
+                Status.SUCCESS -> {
+                    loadingDialog.dismiss()
+                    if (it.data is MerchantDetailsResponse) {
+                        successAction()
+                    } else {
+                        Toast.makeText(context, R.string.an_error_occurred, Toast.LENGTH_SHORT)
+                            .show()
+                    }
+                }
+                Status.LOADING -> {
+                    loadingDialog.show(
+                        fragmentManager,
+                        STRING_LOADING_DIALOG_TAG,
+                    )
+                }
+                Status.ERROR -> {
+                    loadingDialog.dismiss()
+                    Toast.makeText(context, R.string.an_error_occurred, Toast.LENGTH_SHORT).show()
+                }
+                Status.TIMEOUT -> {
+                    loadingDialog.dismiss()
+                    Toast.makeText(context, R.string.timeOut, Toast.LENGTH_SHORT).show()
+                }
+            }
+        }
+    }
+
+    fun <T> Fragment.observeServerResponse(
+        serverResponse: Single<Resource<T>>,
+        loadingDialog: AlertDialog,
+        compositeDisposable: CompositeDisposable,
+        ioScheduler: Scheduler,
+        mainThreadSchedulers: Scheduler,
+        successAction: () -> Unit,
+    ) {
+        compositeDisposable.add(
+            serverResponse.subscribeOn(ioScheduler).observeOn(mainThreadSchedulers)
+                .subscribe { data, error ->
+                    data?.let {
+                        when (it.status) {
+                            Status.SUCCESS -> {
+                                Log.d("NOWJUSTCHECKING", it.data.toString())
+                                loadingDialog.dismiss()
+                                if (
+                                    it.data is String
+                                ) {
+                                    successAction()
+                                } else {
+                                    Log.d("JUSTCHECKING", it.toString())
+//                                    showSnackBar(
+//                                        this.requireView(),
+//                                        getString(R.string.an_error_occurred),
+//                                    )
+                                }
+                            }
+                            Status.LOADING -> {
+                                loadingDialog.show()
+                            }
+                            Status.ERROR -> {
+                                loadingDialog.cancel()
+                                loadingDialog.dismiss()
+                                if (it.data is String) {
+                                    showToast(it.data)
+                                } else {
+                                    showToast("An error occurred, please try again")
+                                }
+                            }
+                            Status.TIMEOUT -> {
+                                loadingDialog.cancel()
+                                loadingDialog.dismiss()
+                                showSnackBar(this.requireView(), getString(R.string.timeOut))
+                            }
+                            else -> {}
+                        }
+                    }
+                    error?.let {
+                        loadingDialog.cancel()
+                        loadingDialog.dismiss()
+                        showSnackBar(this.requireView(), getString(R.string.an_error_occurred))
+                    }
+                },
+        )
+    }
+
+    fun alertDialog(
+        context: Context,
+    ): AlertDialog {
+        val dialogView: View = LayoutInflater.from(context)
+            .inflate(R.layout.layout_loading_dialog, null)
+        val dialogBuilder: AlertDialog.Builder = AlertDialog.Builder(context)
+        dialogBuilder.setCancelable(false)
+        dialogBuilder.setView(dialogView)
+
+        return dialogBuilder.create()
+    }
+
+    fun alertDialog(
+        context: Context,
+        setCancelable: Boolean
+    ): AlertDialog {
+        val dialogView: View =
+            LayoutInflater.from(context).inflate(R.layout.layout_loading_dialog, null)
+        val dialogBuilder: AlertDialog.Builder = AlertDialog.Builder(context)
+        dialogBuilder.setCancelable(setCancelable)
+        dialogBuilder.setView(dialogView)
+
+        return dialogBuilder.create()
+    }
+
+
+    fun LifecycleOwner.showSnackBar(rootView: View, message: String) {
+        Snackbar.make(rootView, message, Snackbar.LENGTH_LONG).show()
+    }
+
+    fun formatAmountToNaira(amount: Double): String {
+        val format = NumberFormat.getCurrencyInstance(Locale("en", "NG"))
+        return format.format(amount)
+    }
+    fun Fragment.showToast(message: String) {
+        Toast.makeText(requireContext(), message, Toast.LENGTH_SHORT).show()
+    }
 }

@@ -31,6 +31,7 @@ class ZenithPayByTransferRepository @Inject constructor(
                 Singletons.getCurrentlyLoggedInUser()!!.terminal_id!!
             )
         )
+
 }
 
 @Singleton

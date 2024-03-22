@@ -15,6 +15,8 @@
     <string name="sales">Sales</string>
     <string name="hint_amount">Enter Amount</string>
     <string name="naira_symbol">₦</string>
+    <string name="timeOut">Time out! Please try again</string>
+    <string name="an_error_occurred">An error occurred please try again</string>
     <string name="enter_pin">Enter Card Pin</string>
     <string name="proceess">Process</string>
     <string name="transaction_failed">transaction failed</string>
@@ -140,6 +142,7 @@
     <string name="zenith_bank">Zenith Bank</string>
     <string name="unavailable_try_again">Error fetching account details please try again later…</string>
     <string name="pay_by_transfer">Pay By Transfer</string>
+    <string name="pay_by_transfer_">Pay By Transfer</string>
     <string name="transacion_received">NetPos Transaction Notification!</string>
     <string name="pbt_transactions">(PBT) Transactions History</string>
     <string name="transaction_details">TRANSACTION DETAILS</string>
@@ -204,7 +207,9 @@
     <string name="menu_item_scan_qr">Scan QR</string>
     <string name="menu_item_end_of_day">End Of Day</string>
     <string name="menu_item_settings">Settings</string>
+    <string name="menu_item_display_qr">Display QR</string>
     <string name="fastpay">FastPay</string>
+    <string name="notification_message_body">%1$s - <b>%2$s</b> \nFrom <b>%3$s</b>   (%4$s)</string>
     <string name="check_bal">Balance</string>
     <string name="quick_cashout">Quick Cashout</string>
     <string name="enter_amount">Enter Amount</string>

@@ -47,8 +47,8 @@ android {
         applicationId "com.woleapp.netpos"
         minSdkVersion 23
         targetSdkVersion 30
-        versionCode 219
-        versionName "1.1.219"
+        versionCode 224
+        versionName "1.1.224"
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         def environmentPath
         if (appModeProd == "true")
@@ -66,6 +66,7 @@ android {
         netPosProperties.load(rootProject.file("local.properties").newDataInputStream())
         buildConfigField("String", "STRING_DEFAULT_BASE_URL", "\"${netPosProperties.getProperty("STRING_DEFAULT_BASE_URL")}\"")
         buildConfigField("String", "STRING_ZENITH_BASE_URL", "\"${netPosProperties.getProperty("STRING_ZENITH_BASE_URL")}\"")
+        buildConfigField("String", "STRING_CONTACTLESS_PAYMENT_WITH_QR_BASE_URL", "\"${netPosProperties.getProperty("STRING_CONTACTLESS_PAYMENT_WITH_QR_BASE_URL")}\"")
     }
 
     buildTypes {
