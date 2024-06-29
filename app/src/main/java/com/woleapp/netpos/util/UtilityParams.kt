@@ -11,6 +11,9 @@ object UtilityParams {
     private external fun getProvidusMerchantsAccountBaseUrl(): String
     private external fun getFCMBMerchantsAccountBaseUrl(): String
     private external fun getComplaintsBaseUrl(): String
+    private external fun getCheckoutBaseUrl(): String
+    private external fun getWebViewBaseUrl(): String
+    private external fun getCheckoutMerchantId(): String
 
 
     val RRN_BASE_URL: String = getRrnUrl()
@@ -20,5 +23,7 @@ object UtilityParams {
     val COMPLAINTS_BASE_URL = getComplaintsBaseUrl()
     val PROVIDUS_MERCHANTS_ACCOUNT_BASE_URL = getProvidusMerchantsAccountBaseUrl()
     val FCMB_MERCHANTS_ACCOUNT_BASE_URL = getFCMBMerchantsAccountBaseUrl()
-
+    val STRING_CHECKOUT_BASE_URL = getCheckoutBaseUrl()
+    val STRING_WEB_VIEW_BASE_URL = getWebViewBaseUrl()
+    val STRING_CHECKOUT_MERCHANT_ID = getCheckoutMerchantId()
 }

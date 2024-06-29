@@ -37,3 +37,18 @@ Java_com_woleapp_netpos_util_UtilityParams_getProvidusMerchantsAccountBaseUrl(JN
                                                                               jobject thiz) {
     return (*env) -> NewStringUTF(env, "https://pbt.providus.netpluspay.com/api/");
 }
+
+JNIEXPORT jstring JNICALL
+Java_com_woleapp_netpos_util_UtilityParams_getCheckoutBaseUrl(JNIEnv *env, jobject thiz) {
+    return (*env) -> NewStringUTF(env, "https://paytally.netpluspay.com/");
+}
+
+JNIEXPORT jstring JNICALL
+Java_com_woleapp_netpos_util_UtilityParams_getWebViewBaseUrl(JNIEnv *env, jobject thiz) {
+    return (*env) -> NewStringUTF(env, "https://api.netpluspay.com/transactions/requery/");
+}
+
+JNIEXPORT jstring JNICALL
+Java_com_woleapp_netpos_util_UtilityParams_getCheckoutMerchantId(JNIEnv *env, jobject thiz) {
+    return (*env) -> NewStringUTF(env, "MID63dbdc67badab");
+}

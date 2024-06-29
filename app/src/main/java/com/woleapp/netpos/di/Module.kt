@@ -13,6 +13,7 @@ import com.woleapp.netpos.util.UtilityParams.FCMB_MERCHANTS_ACCOUNT_BASE_URL
 import com.woleapp.netpos.util.UtilityParams.PAY_BY_TRANSFER_BASE_URL
 import com.woleapp.netpos.util.UtilityParams.PROVIDUS_MERCHANTS_ACCOUNT_BASE_URL
 import com.woleapp.netpos.util.UtilityParams.RRN_BASE_URL
+import com.woleapp.netpos.util.UtilityParams.STRING_CHECKOUT_BASE_URL
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -72,6 +73,11 @@ object Module {
     @Singleton
     @Named("fcmbMerchantsAccountBaseUrl")
     fun fcmbMerchantsAccountBaseUrl(): String = FCMB_MERCHANTS_ACCOUNT_BASE_URL
+
+    @Provides
+    @Singleton
+    @Named("checkoutBaseUrl")
+    fun providesCheckoutBaseUrl(): String = STRING_CHECKOUT_BASE_URL
 
 
     @Provides
@@ -177,6 +183,22 @@ object Module {
             .client(okhttp)
             .build()
 
+
+    @Provides
+    @Singleton
+    @Named("defaultCheckoutRetrofit")
+    fun providesCheckoutRetrofit(
+        @Named("defaultOkHttpClient") okhttp: OkHttpClient,
+        @Named("checkoutBaseUrl") baseUrl: String
+    ): Retrofit =
+        Retrofit.Builder()
+            .addConverterFactory(GsonConverterFactory.create())
+            .addCallAdapterFactory(RxJava2CallAdapterFactory.create())
+            .baseUrl(baseUrl)
+            .client(okhttp)
+            .build()
+
+
     @Provides
     @Singleton
     @Named("rrnRetrofit")
@@ -281,6 +303,13 @@ object Module {
     fun providesNotificationService(
         @Named("notificationRetrofit") retrofit: Retrofit,
     ): SubmitComplaintsService = retrofit.create(SubmitComplaintsService::class.java)
+
+    @Provides
+    @Singleton
+    fun providesCheckoutService(
+        @Named("defaultCheckoutRetrofit") retrofit: Retrofit
+    ): CheckoutService = retrofit.create(CheckoutService::class.java)
+
 
     @Provides
     @Singleton

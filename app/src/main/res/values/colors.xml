@@ -11,4 +11,9 @@
     <color name="white">#FFFFFF</color>
     <color name="off_white">#E6DEDE</color>
     <color name="transparent_black">#73000000</color>
+    <color name="colorDivider">#ffe6ebf3</color>
+    <color name="pinButtonText">#ffffff</color>
+    <color name="pinButtonBackground">@color/colorPrimary</color>
+    <color name="success">#1A9211</color>
+    <color name="failed">#F01808</color>
 </resources>

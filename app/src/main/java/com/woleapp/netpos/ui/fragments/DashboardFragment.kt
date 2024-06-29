@@ -8,6 +8,7 @@ import android.app.ProgressDialog
 import android.content.Context
 import android.content.DialogInterface
 import android.os.Bundle
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -24,8 +25,8 @@ import androidx.work.NetworkType
 import androidx.work.OneTimeWorkRequestBuilder
 import androidx.work.WorkManager
 import com.danbamitale.epmslib.entities.TransactionResponse
-import com.danbamitale.epmslib.entities.TransactionType
 import com.danbamitale.epmslib.extensions.formatCurrencyAmount
+import com.danbamitale.epmslib.utils.TripleDES
 import com.google.android.material.bottomsheet.BottomSheetDialog
 import com.google.android.material.snackbar.Snackbar
 import com.google.gson.Gson
@@ -34,24 +35,28 @@ import com.woleapp.netpos.BuildConfig
 import com.woleapp.netpos.R
 import com.woleapp.netpos.adapter.ServiceAdapter
 import com.woleapp.netpos.database.AppDatabase
-import com.woleapp.netpos.databinding.* // ktlint-disable no-wildcard-imports
-import com.woleapp.netpos.model.* // ktlint-disable no-wildcard-imports
+import com.woleapp.netpos.databinding.*
+import com.woleapp.netpos.model.*
+import com.woleapp.netpos.model.checkout.CheckOutModel
 import com.woleapp.netpos.network.StormApiClient
 import com.woleapp.netpos.network.TokenPassportRequest
 import com.woleapp.netpos.network.getTokenClient
 import com.woleapp.netpos.nibss.NetPosTerminalConfig
-import com.woleapp.netpos.util.* // ktlint-disable no-wildcard-imports
+import com.woleapp.netpos.util.*
 import com.woleapp.netpos.util.ModelMapper.mapEntityToTransFromGateWay
 import com.woleapp.netpos.util.ModelMapper.mapRowToTransactionResponse
 import com.woleapp.netpos.util.ModelMapper.mapTransFromGateWayToEntity
+import com.woleapp.netpos.util.RandomNumUtil.alertDialog
 import com.woleapp.netpos.util.RandomNumUtil.getDateInMilliSecsForLocal
 import com.woleapp.netpos.util.RandomNumUtil.getDateInMilliSecsForLocalForEndOfDay
 import com.woleapp.netpos.util.RandomNumUtil.getDateInTheFormatExpectedByTheNewService
 import com.woleapp.netpos.util.RandomNumUtil.getDateInTheFormatExpectedByTheNewServiceForEnd
+import com.woleapp.netpos.util.RandomNumUtil.observeServerResponse
 import com.woleapp.netpos.util.pdfUtils.createPdf
 import com.woleapp.netpos.util.pdfUtils.initViewsForPdfLayout
 import com.woleapp.netpos.util.pdfUtils.sharePdf
-import com.woleapp.netpos.viewmodels.* // ktlint-disable no-wildcard-imports
+import com.woleapp.netpos.viewmodels.*
+import com.woleapp.netpos.webview.WebViewFragment
 import com.woleapp.netpos.worker.RepushFailedTransactionToBackendWorker
 import dagger.hilt.android.AndroidEntryPoint
 import io.reactivex.Single
@@ -97,6 +102,7 @@ class DashboardFragment : BaseFragment() {
     private lateinit var dialogPrintTypeBinding: DialogPrintTypeBinding
     private lateinit var printTypeDialog: AlertDialog
     private lateinit var printerErrorDialog: AlertDialog
+    private lateinit var loader: android.app.AlertDialog
 
     @Inject
     lateinit var gson: Gson
@@ -540,6 +546,7 @@ class DashboardFragment : BaseFragment() {
         }
 
         handlePdfReceiptPrinting()
+        loader = alertDialog(requireContext())
     }
 
     private fun repushTransactionsToBackend() {
@@ -878,6 +885,7 @@ class DashboardFragment : BaseFragment() {
             event.getContentIfNotHandled()?.let { shouldGetCardData ->
                 if (shouldGetCardData) {
                     Timber.d("NOT_FROM_PURCHASE_2")
+                    Log.d("CHECKING", shouldGetCardData.toString())
                     showCardDialog(
                         requireActivity(),
                         viewLifecycleOwner,
@@ -899,8 +907,22 @@ class DashboardFragment : BaseFragment() {
                                 viewModel.setCardScheme(it.cardScheme!!)
                                 viewModel.setCustomerName(it.customerName ?: "Customer")
                                 viewModel.setAccountType(it.accountType!!)
+                                Log.d("ACCTTYPE", it.accountType.toString())
                                 viewModel.cardData = it.cardData
-                                viewModel.makePayment(requireContext(), TransactionType.PURCHASE)
+                                zenithPbtViewModel.cardData = it.cardData
+                                Log.d("AMOUNT", viewModel.amountLong.toString())
+                                Log.d("CARD_DATA1", it.cardData.pan.toString())
+                                Log.d("CARD_DATA2", it.cardData.pinBlock.toString())
+                                val clearPinKey = Singletons.getClearPinKey()
+                                zenithPbtViewModel.cvv = it.cardData.let { it1 ->
+                                    decodePinBlock(
+                                        it1.pinBlock.toString(),
+                                        it1.pan,
+                                        clearPinKey.toString()
+                                    )
+                                }
+//                                viewModel.makePayment(requireContext(), TransactionType.PURCHASE)
+                                mpgsTransactions()
                             }
                         }
                     }
@@ -917,7 +939,8 @@ class DashboardFragment : BaseFragment() {
                 receiptDialogBinding.progress.visibility = View.GONE
                 receiptDialogBinding.sendButton.isEnabled = true
                 if (it) {
-                    Toast.makeText(requireContext(), "Sent Receipt", Toast.LENGTH_LONG).show()
+                    Toast.makeText(requireContext(), "Sent Receipt", Toast.LENGTH_LONG)
+                        .show()
                     alertDialog.dismiss()
                     viewModel.finish()
                 }
@@ -998,4 +1021,60 @@ class DashboardFragment : BaseFragment() {
             viewModel.validateField()
         }
     }
+
+
+    private fun mpgsTransactions() {
+        Log.d("CVV_DIALOG", "SHOWING")
+        zenithPbtViewModel._payResponse.value = null
+        zenithPbtViewModel.payResponse.removeObservers(viewLifecycleOwner)
+        binding.button.isEnabled = false
+        binding.mgsProgressBar.visibility = View.VISIBLE
+        val user = Singletons.gson.fromJson(Prefs.getString(PREF_USER, ""), User::class.java)
+        val checkOutModel = CheckOutModel(
+            "MID63dbdc67badab",
+            user.name.toString(),
+            user.email.toString(),
+            viewModel.amountLong.toDouble() / 100,
+            currency = "NGN"
+        )
+        zenithPbtViewModel.payQrCharges(requireContext(), checkOutModel)
+        observeServerResponse(
+            zenithPbtViewModel.payResponse,
+            loader,
+            requireActivity().supportFragmentManager
+        ) {
+            binding.button.isEnabled = true
+            binding.mgsProgressBar.visibility = View.GONE
+            if (zenithPbtViewModel.payResponse.value?.data?.code == "90") {
+                showToast(zenithPbtViewModel.payResponse.value?.data?.result.toString())
+            } else {
+                showFragment(
+                    targetFragment = WebViewFragment(),
+                    className = "Webview Fragment"
+                )
+                //                        if (findNavController().currentDestination?.id == R.id.generateQrFragment) {
+                //                            val action =
+                //                                GenerateQrFragmentDirections.actionGenerateQrFragmentToWebViewFragment()
+                //                            findNavController().navigate(action)
+                //                        } else {
+                //                            findNavController().popBackStack()
+                //                        }
+            }
+        }
+
+    }
+
+    private fun decodePinBlock(pinBlock: String, pan: String, key: String): String {
+        val outData: String = TripleDES.decrypt(pinBlock, key)
+        val cardNum: String = "0000" + pan.substring(3, 15)
+        val pinPacket: String = XorUtil.xorHex(outData, cardNum)
+        val pin: String = pinPacket.substring(2, 6)
+        Log.d("PIN_RESULT", pin)
+        return pin;
+    }
+
 }
+
+
+
+

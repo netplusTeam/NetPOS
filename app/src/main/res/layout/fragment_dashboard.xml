@@ -93,6 +93,7 @@
 
 
             <ProgressBar
+                android:id="@+id/mgs_progress_bar"
                 android:layout_width="wrap_content"
                 android:layout_height="0dp"
                 android:elevation="2dp"

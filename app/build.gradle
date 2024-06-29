@@ -214,7 +214,8 @@ dependencies {
     implementation 'net.sf.j8583:j8583:1.12.0'
 
     //netpos sdk
-    implementation 'com.github.netplusTeam.NetposContactSdk:netpossdk:1.0.30'
+//    implementation 'com.github.netplusTeam.NetposContactSdk:netpossdk:1.0.30'
+    implementation 'com.netpluspay.netpossdk:netpossdk:1.0.25'
 
     //Timber
     implementation 'com.jakewharton.timber:timber:4.7.1'
@@ -304,6 +305,12 @@ dependencies {
 
     implementation "com.google.dagger:hilt-android:2.38.1"
     kapt "com.google.dagger:hilt-compiler:2.38.1"
+
+    implementation "androidx.security:security-crypto:1.1.0-alpha02"
+
+    // Lootie
+    implementation "com.airbnb.android:lottie:5.2.0"
+
 
 }
 apply plugin: 'com.google.gms.google-services'

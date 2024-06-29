@@ -226,4 +226,22 @@
         <item>Last Transaction</item>
         <item>All Transactions</item>
     </string-array>
+
+    <string name="btn_cal_00">00</string>
+    <string name="btn_cal_0">0</string>
+    <string name="btn_cal_1">1</string>
+    <string name="btn_cal_2">2</string>
+    <string name="btn_cal_3">3</string>
+    <string name="btn_cal_4">4</string>
+    <string name="btn_cal_5">5</string>
+    <string name="btn_cal_6">6</string>
+    <string name="btn_cal_7">7</string>
+    <string name="btn_cal_8">8</string>
+    <string name="btn_cal_9">9</string>
+    <string name="btn_esc">Esc</string>
+    <string name="btn_confirm">Confirm</string>
+    <string name="max_input">Maximum input reached</string>
+    <string name="please_enter_pin">Please enter your card CVV</string>
+    <string name="success_mpgs">Success</string>
+    <string name="failed_mpgs">Failed</string>
 </resources>

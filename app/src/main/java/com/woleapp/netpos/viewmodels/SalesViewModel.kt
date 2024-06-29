@@ -167,7 +167,11 @@ class SalesViewModel(
             return
         }
         this.amountLong = amountDbl.toLong()
-        _getCardData.value = Event(true)
+        if (BuildConfig.FLAVOR.contains("wema")) {
+            _getCardData.value = Event(true)
+        }else{
+            _getCardData.value = Event(true)
+        }
     }
 
     private fun logTransactionBeforeConnectingToNibss(

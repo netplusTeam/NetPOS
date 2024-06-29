@@ -24,6 +24,7 @@ const val PREF_AUTHENTICATED = "authenticated"
 const val PREF_CONFIGURATION_DATA = "configuration_data"
 const val PREF_KEYHOLDER = "pref_keyholder"
 const val PREF_CONFIG_DATA = "pref_config_data"
+const val CLEAR_PIN_KEY = "pref_clear_pin_key"
 const val PREF_LAST_LOCATION = "pref_last_location"
 const val PREF_FIREBASE_APP_TOKEN = "pref_firebase_app_token"
 const val PREF_USE_STORM_TERMINAL_ID = "pref_use_storm_tid"
@@ -80,6 +81,13 @@ const val CURRENCY_KEY = "currency_key"
 const val CONTACT = "contact"
 const val CUSTOMER = "customer"
 const val MERCHANT_QR_PREFIX = "MERCHANT_DISPLAY_QR==="
+
+
+const val STRING_TAG_JAVASCRIPT_INTERFACE_TAG = "Android"
+const val TRANS_ID_AND_AMOUNT = "TRANS_ID_AND_AMOUNT"
+const val MPGS_TRANSACTION_RESULT_REQUEST_KEY = "MPGS_TRANSACTION_RESULT_REQUEST_KEY"
+const val MPGS_TRANSACTION_RESULT_BUNDLE_KEY = "MPGS_TRANSACTION_RESULT_BUNDLE_KEY"
+const val STRING_MPGS_RESPONSE_MODAL_DIALOG_TAG = "STRING_QR_RESPONSE_MODAL_DIALOG_TAG"
 
 
 val testPbtTransactions = arrayListOf(

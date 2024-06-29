@@ -65,7 +65,10 @@ object Singletons {
 
     fun getConfigData(): ConfigData? =
         gson.fromJson(Prefs.getString(PREF_CONFIG_DATA, null), ConfigData::class.java)
+
+    fun getClearPinKey(): String? = Prefs.getString(CLEAR_PIN_KEY, "")
 }
+
 
 var TransactionResponse.additionalAmount: Long?
     get() = 0

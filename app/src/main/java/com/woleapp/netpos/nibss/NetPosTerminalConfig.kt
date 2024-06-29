@@ -3,6 +3,7 @@ package com.woleapp.netpos.nibss
 import android.content.Context
 import android.content.Intent
 import android.text.format.DateUtils
+import android.util.Log
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.localbroadcastmanager.content.LocalBroadcastManager
@@ -125,7 +126,9 @@ class NetPosTerminalConfig {
                             Prefs.putLong(LAST_POS_CONFIGURATION_TIME, System.currentTimeMillis())
                             Prefs.putString(PREF_CONFIG_DATA, gson.toJson(pair.second))
                             Prefs.putString(PREF_KEYHOLDER, gson.toJson(pair.first))
-                            writeTpkKey(DeviceConfig.TPKIndex, pair.first!!.clearPinKey, context)
+                            writeTpkKey(DeviceConfig.TPKIndex, pair.first!!.clearPinKey)
+                            Prefs.putString(CLEAR_PIN_KEY, pair.first!!.clearPinKey)
+                            Log.d("CLEAR_PIN_KEY", pair.first!!.clearPinKey)
                             this.configData = pair.second
                         }
                         configurationStatus = 1
