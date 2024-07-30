@@ -2,6 +2,7 @@ package com.woleapp.netpos.viewmodels
 
 import android.content.Context
 import android.os.Build
+import android.util.Log
 import android.widget.Toast
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
@@ -80,7 +81,7 @@ class SalesViewModel(
     var stormApiService: StormApiService? = null
     var transResp: TransactionResponse? = null
     private var isVend: Boolean = false
-    var cardData: CardData? = null
+     var cardData: CardData? = null
     private var netPOSCashService: NetPOSCashService = StormApiClient.getCashInstance()
     private var rrnApiService: RrnApiService = StormApiClient.getRrnApiServiceInstance()
     private val compositeDisposable: CompositeDisposable by lazy { CompositeDisposable() }
@@ -92,8 +93,9 @@ class SalesViewModel(
     var pin = MutableLiveData("")
     val customerName = MutableLiveData("")
     val remark = MutableLiveData("")
-    private var isoAccountType: IsoAccountType? = null
+     var isoAccountType: IsoAccountType? = null
     private var cardScheme: String? = null
+     var userCardScheme: String? = null
     private val _showPrintDialog = MutableLiveData<Event<String>>()
     private var amountDbl: Double = 0.0
     private val _shouldRefreshNibssKeys = MutableLiveData<Event<Boolean>>()
@@ -612,6 +614,7 @@ class SalesViewModel(
 
     fun setCardScheme(cardScheme: String?) {
         this.cardScheme = if (cardScheme.equals("no match", true)) "VERVE" else cardScheme
+        this.userCardScheme = if (cardScheme.equals("no match", true)) "VERVE" else cardScheme
     }
 
     fun showReceiptDialog() {

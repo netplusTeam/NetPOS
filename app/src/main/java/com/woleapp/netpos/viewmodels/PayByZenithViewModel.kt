@@ -72,6 +72,8 @@ class PayByZenithViewModel @Inject constructor(
     var cardData: CardData? = null
     var cvv: String? = null
 
+
+
     @Inject
     lateinit var gson: Gson
     private val _zenithPbtTransactions: MutableLiveData<List<GetZenithPayByTransferUserTransactionsModel>> =

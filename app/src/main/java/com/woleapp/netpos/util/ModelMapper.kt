@@ -12,6 +12,7 @@ import com.woleapp.netpos.model.GetZenithPayByTransferUserTransactionsModel
 import com.woleapp.netpos.model.PayWithCardNotificationModelResponse
 import com.woleapp.netpos.model.Row
 import com.woleapp.netpos.model.TransactionResponseModelFromGateWay
+import com.woleapp.netpos.model.pay.QrTransactionResponseModel
 import com.woleapp.netpos.util.RandomNumUtil.dateStr2Long
 import com.woleapp.netpos.util.RandomNumUtil.dateStrToLong
 import com.woleapp.netpos.util.RandomNumUtil.formattedTime
@@ -138,6 +139,29 @@ object ModelMapper {
             terminalId = Singletons.getCurrentlyLoggedInUser()?.terminal_id ?: ""
             transactionTimeInMillis = transTimeInMillis
             transactionType = this@mapRequestDataToTransactionResponse.transactionType
+            transmissionDateTime = formattedTime
+        }
+
+    fun QrTransactionResponseModel.mapMpgsDataToTransactionResponse(
+        cardData: CardData,
+        isoAccountType: IsoAccountType
+    ): TransactionResponse =
+        TransactionResponse().apply {
+            this.RRN = this@mapMpgsDataToTransactionResponse.orderId ?: ""
+            accountType = isoAccountType
+            acquiringInstCode = cardData.acquiringInstitutionIdCode
+            additionalAmount_54 = ""
+            amount = this@mapMpgsDataToTransactionResponse.amount.toDouble().toLong() * 100
+            authCode = ""
+            cardExpiry = cardData.expiryDate
+            cardHolder = this@mapMpgsDataToTransactionResponse.customerName ?: ""
+            cardLabel = ""
+            this.errorMessage = this@mapMpgsDataToTransactionResponse.message
+            this.maskedPan = cardData.pan
+            originalForwardingInstCode = ""
+            this.responseCode = this@mapMpgsDataToTransactionResponse.code
+            terminalId = Singletons.getCurrentlyLoggedInUser()?.terminal_id ?: ""
+            transactionTimeInMillis = System.currentTimeMillis()
             transmissionDateTime = formattedTime
         }
 

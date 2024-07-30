@@ -20,6 +20,7 @@ import com.danbamitale.epmslib.entities.responseMessage
 import com.woleapp.netpos.BuildConfig
 import com.woleapp.netpos.R
 import com.woleapp.netpos.databinding.LayoutPosReceiptPdfBinding
+import com.woleapp.netpos.databinding.LayoutPosReceiptWemaPdfBinding
 import com.woleapp.netpos.util.DateTimeUtil.getCurrentDateTimeAsFormattedString
 import com.woleapp.netpos.util.PDF_REPRINT_IDENTIFIER
 import com.woleapp.netpos.util.Singletons
@@ -35,6 +36,18 @@ fun initViewsForPdfLayout(
     when (receipt) {
         is TransactionResponse -> {
             initViewsForPosReceipt((pdfView as LayoutPosReceiptPdfBinding), receipt)
+        }
+        else -> { /* Do nothing */
+        }
+    }
+}
+fun initViewsForMpgsPdfLayout(
+    pdfView: ViewDataBinding,
+    receipt: Any?
+) {
+    when (receipt) {
+        is TransactionResponse -> {
+            initViewsForMpgsPosReceipt((pdfView as LayoutPosReceiptWemaPdfBinding), receipt)
         }
         else -> { /* Do nothing */
         }
@@ -135,6 +148,68 @@ fun createPdf(
 
 private fun initViewsForPosReceipt(
     pdfView: LayoutPosReceiptPdfBinding,
+    transResponse: TransactionResponse
+) {
+    pdfView.apply {
+        transResponse.let {
+            merchantName.text = pdfView.root.context.getString(
+                R.string.merchant_name_place_holder,
+                Singletons.getCurrentlyLoggedInUser()?.business_name
+                    ?: "${BuildConfig.FLAVOR} POS MERCHANT"
+            )
+            rrn.text = pdfView.root.context.getString(R.string.rrn_place_holder, it.RRN)
+            terminalIdPlaceHolder.text =
+                pdfView.appVersion.context.getString(
+                    R.string.terminal_id_place_holder,
+                    it.terminalId
+                )
+            dateTime.text =
+                pdfView.appVersion.context.getString(
+                    R.string.date_time_place_holder,
+                    it.transactionTimeInMillis.formatDate()
+                )
+//            isReprint.visibility =
+//                if (it.localDate_13.contains(PDF_REPRINT_IDENTIFIER)) View.VISIBLE else View.GONE
+            transAmount.text = pdfView.appVersion.context.getString(
+                R.string.amount_place_holder,
+                it.amount.div(100).toDouble().formatCurrencyAmountUsingCurrentModule()
+            )
+            stan.text =
+                pdfView.appVersion.context.getString(
+                    R.string.stan_place_holder,
+                    it.STAN
+                )
+            cardHolder.text =
+                pdfView.appVersion.context.getString(
+                    R.string.card_holder_place_holder,
+                    it.cardHolder
+                )
+            status.text =
+                pdfView.appVersion.context.getString(
+                    R.string.transaction_status_place_holder,
+                    if (it.responseCode == "00" || it.responseCode == "16") "APPROVED" else "DECLINED"
+                )
+            responseCode.text =
+                pdfView.appVersion.context.getString(
+                    R.string.response_code_place_holder,
+                    it.responseCode
+                )
+            message.text = pdfView.appVersion.context.getString(
+                R.string.message_place_holder,
+                it.responseMessage
+            )
+            cardType.text =
+                pdfView.appVersion.context.getString(R.string.card_type_place_holder, it.cardLabel)
+            appVersion.text = pdfView.appVersion.context.getString(
+                R.string.app_version_place_holder,
+                "${BuildConfig.FLAVOR} POS ${BuildConfig.VERSION_NAME}"
+            )
+        }
+    }
+}
+
+private fun initViewsForMpgsPosReceipt(
+    pdfView: LayoutPosReceiptWemaPdfBinding,
     transResponse: TransactionResponse
 ) {
     pdfView.apply {

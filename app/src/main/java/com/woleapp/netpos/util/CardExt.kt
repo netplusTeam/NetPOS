@@ -187,7 +187,12 @@ fun getCardLiveData(
             }
         }, {
             dialog.dismiss()
-            showSelectAccountTypeDialog(context, iccCardHelper!!, liveData)
+            iccCardHelper?.apply {
+                this.accountType = IsoAccountType.SAVINGS
+            }
+            liveData.value = Event(iccCardHelper!!)
+//            showSelectAccountTypeDialog(context, iccCardHelper!!, liveData)
+//            liveData.value = Event(iccCardHelper!!)
         })
 
     dialog.setButton(DialogInterface.BUTTON_POSITIVE, "Stop") { d, _ ->

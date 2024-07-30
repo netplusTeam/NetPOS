@@ -25,6 +25,7 @@ import androidx.work.NetworkType
 import androidx.work.OneTimeWorkRequestBuilder
 import androidx.work.WorkManager
 import com.danbamitale.epmslib.entities.TransactionResponse
+import com.danbamitale.epmslib.entities.TransactionType
 import com.danbamitale.epmslib.extensions.formatCurrencyAmount
 import com.danbamitale.epmslib.utils.TripleDES
 import com.google.android.material.bottomsheet.BottomSheetDialog
@@ -226,6 +227,7 @@ class DashboardFragment : BaseFragment() {
                     setCancelable(false)
                     show()
                 }
+                Log.d("DOWNLOAD3", "FIRST_CHECK $it") //
             }
         }
     }
@@ -803,6 +805,7 @@ class DashboardFragment : BaseFragment() {
     }
 
     private fun downloadPdfImpl() {
+        Log.d("DOWNLOAD", "FIRST_CHECK") //
         viewModel.currentLastTransactionResponse.value?.let { transResponse ->
             initViewsForPdfLayout(
                 pdfView,
@@ -813,6 +816,7 @@ class DashboardFragment : BaseFragment() {
     }
 
     private fun handlePdfReceiptPrinting() {
+        Log.d("DOWNLOAD1", "FIRST_CHECK1")
         viewModel.downloadOrShareReceiptAsPdfLiveData.observe(viewLifecycleOwner) { event ->
             event.getContentIfNotHandled()?.let {
                 when (it) {
@@ -907,12 +911,8 @@ class DashboardFragment : BaseFragment() {
                                 viewModel.setCardScheme(it.cardScheme!!)
                                 viewModel.setCustomerName(it.customerName ?: "Customer")
                                 viewModel.setAccountType(it.accountType!!)
-                                Log.d("ACCTTYPE", it.accountType.toString())
                                 viewModel.cardData = it.cardData
                                 zenithPbtViewModel.cardData = it.cardData
-                                Log.d("AMOUNT", viewModel.amountLong.toString())
-                                Log.d("CARD_DATA1", it.cardData.pan.toString())
-                                Log.d("CARD_DATA2", it.cardData.pinBlock.toString())
                                 val clearPinKey = Singletons.getClearPinKey()
                                 zenithPbtViewModel.cvv = it.cardData.let { it1 ->
                                     decodePinBlock(
@@ -921,6 +921,9 @@ class DashboardFragment : BaseFragment() {
                                         clearPinKey.toString()
                                     )
                                 }
+                                Prefs.putString(PREF_CARD_DATA, gson.toJson(it.cardData))
+                                Prefs.putString(PREF_ISO_ACCOUNT_TYPE, gson.toJson(it.accountType))
+//                                Prefs.putString(PREF_CARD_SCHEME, it.cardScheme)
 //                                viewModel.makePayment(requireContext(), TransactionType.PURCHASE)
                                 mpgsTransactions()
                             }
@@ -1024,14 +1027,13 @@ class DashboardFragment : BaseFragment() {
 
 
     private fun mpgsTransactions() {
-        Log.d("CVV_DIALOG", "SHOWING")
         zenithPbtViewModel._payResponse.value = null
         zenithPbtViewModel.payResponse.removeObservers(viewLifecycleOwner)
         binding.button.isEnabled = false
         binding.mgsProgressBar.visibility = View.VISIBLE
         val user = Singletons.gson.fromJson(Prefs.getString(PREF_USER, ""), User::class.java)
         val checkOutModel = CheckOutModel(
-            "MID63dbdc67badab",
+            user.netplusPayMid.toString(), //MID63dbdc67badab
             user.name.toString(),
             user.email.toString(),
             viewModel.amountLong.toDouble() / 100,
@@ -1052,13 +1054,6 @@ class DashboardFragment : BaseFragment() {
                     targetFragment = WebViewFragment(),
                     className = "Webview Fragment"
                 )
-                //                        if (findNavController().currentDestination?.id == R.id.generateQrFragment) {
-                //                            val action =
-                //                                GenerateQrFragmentDirections.actionGenerateQrFragmentToWebViewFragment()
-                //                            findNavController().navigate(action)
-                //                        } else {
-                //                            findNavController().popBackStack()
-                //                        }
             }
         }
 
@@ -1069,7 +1064,6 @@ class DashboardFragment : BaseFragment() {
         val cardNum: String = "0000" + pan.substring(3, 15)
         val pinPacket: String = XorUtil.xorHex(outData, cardNum)
         val pin: String = pinPacket.substring(2, 6)
-        Log.d("PIN_RESULT", pin)
         return pin;
     }
 

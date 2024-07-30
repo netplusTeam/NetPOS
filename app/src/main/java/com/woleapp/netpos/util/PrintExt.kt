@@ -348,6 +348,33 @@ fun TransactionResponse.buildSMSText(s: String? = null): StringBuilder = StringB
     append("Merchant: ${Singletons.getCurrentlyLoggedInUser()?.business_name}\n")
     append("Terminal ID: $terminalId\n")
 }
+fun TransactionResponse.buildMpgsText(transactionResponse: TransactionResponse, s: String? = null): StringBuilder = StringBuilder().apply {
+    append("POS ${transactionResponse.transactionType} ${if (transactionResponse.responseCode == "00") "Approved" else "Declined"}\n\n")
+    if (!Singletons.getCurrentlyLoggedInUser()?.business_address.isNullOrEmpty()) {
+        append("Merchant Address: ${Singletons.getCurrentlyLoggedInUser()?.business_address}\n")
+    }
+    if (!Singletons.getCurrentlyLoggedInUser()?.business_phone_number.isNullOrEmpty()) {
+        append("Merchant Phone Number: ${Singletons.getCurrentlyLoggedInUser()?.business_phone_number}\n")
+    }
+    append("Response Code: ${transactionResponse.responseCode} \n")
+    append("Amount: ${transactionResponse.amount.div(100).formatCurrencyAmount("\u20A6")}\n")
+    append("Date/Time: \n${transactionResponse.transactionTimeInMillis.formatDate()}\n")
+    s?.let {
+        append("Remark: $it\n")
+    }
+    append("RRN: ${transactionResponse.RRN}\n")
+    append("Card: ${transactionResponse.cardLabel} - ${maskPan(transactionResponse.maskedPan)}\n")
+    append("Merchant: ${Singletons.getCurrentlyLoggedInUser()?.business_name}\n")
+    append("Terminal ID: ${transactionResponse.terminalId}\n")
+}
+
+fun maskPan(pan: String, maskChar: Char = '*'): String {
+    val visibleDigits = 4
+    val maskedLength = pan.length - visibleDigits
+    val maskedPart = maskChar.toString().repeat(maskedLength)
+    val visiblePart = pan.takeLast(visibleDigits)
+    return "$maskedPart$visiblePart"
+}
 
 fun TransactionResponse.buildReceipt(
     context: Context,

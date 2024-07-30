@@ -40,7 +40,7 @@
                 android:layout_marginTop="@dimen/dimen_8dp"
                 android:paddingHorizontal="36dp"
                 app:setPrintButtonLabelText="@{``}"
-                android:textColor="@color/white"
+                android:textColor="@color/transparent_black"
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintTop_toBottomOf="@id/transaction_content" />
