@@ -125,6 +125,10 @@ android {
             dimension "whiteLabels"
             applicationIdSuffix ".wemaagent"
         }
+        wemampgs {
+            dimension "whiteLabels"
+            applicationIdSuffix ".wemampgs"
+        }
         heritage {
             dimension "whiteLabels"
             applicationIdSuffix ".heritage"
@@ -169,6 +173,9 @@ android {
             java.srcDirs('src/defaults/java')
         }
         wemacashout {
+            java.srcDirs('src/defaults/java')
+        }
+        wemampgs {
             java.srcDirs('src/defaults/java')
         }
         heritage {
