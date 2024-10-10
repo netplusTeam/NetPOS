@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "398724347263",
+    "project_id": "netpos2",
+    "storage_bucket": "netpos2.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:398724347263:android:033ff68fc3a8e9b666564a",
+        "android_client_info": {
+          "package_name": "com.woleapp.netpos.wemampgs.debug"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBFsDP35_J1qS2DWOrhHLPdRasqm17nK5M"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

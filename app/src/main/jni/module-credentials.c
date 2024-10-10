@@ -40,7 +40,7 @@ Java_com_woleapp_netpos_util_UtilityParams_getProvidusMerchantsAccountBaseUrl(JN
 
 JNIEXPORT jstring JNICALL
 Java_com_woleapp_netpos_util_UtilityParams_getCheckoutBaseUrl(JNIEnv *env, jobject thiz) {
-    return (*env) -> NewStringUTF(env, "https://paytally.netpluspay.com/");
+    return (*env) -> NewStringUTF(env, "https://tabul.paysaddle.com/");
 }
 
 JNIEXPORT jstring JNICALL

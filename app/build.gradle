@@ -47,8 +47,8 @@ android {
         applicationId "com.woleapp.netpos"
         minSdkVersion 23
         targetSdkVersion 30
-        versionCode 226
-        versionName "1.1.226"
+        versionCode 228
+        versionName "1.1.228"
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         def environmentPath
         if (appModeProd == "true")
@@ -256,7 +256,8 @@ dependencies {
     }
 
     //easyprefs
-    implementation 'com.pixplicity.easyprefs:library:1.9.0'
+//    implementation 'com.pixplicity.easyprefs:library:1.9.0'
+    implementation 'com.pixplicity.easyprefs:EasyPrefs:1.10.0'
 
     //JWT
     implementation 'com.auth0:java-jwt:3.10.0'

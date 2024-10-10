@@ -7,16 +7,6 @@
     <title>Payment</title>
 </head>
 <body>
-<!--<div id="redirect" style="height: 100vh; width:100% !important;"></div>-->
-<!--<form id="authData" method="POST" target="threeDS">-->
-<!--    <div style="display:none;">-->
-<!--        <input name="TermUrl" id="TermUrl">-->
-<!--        <input name="MD" id="MD">-->
-<!--        <input name="cReq" id="cReq">-->
-<!--    </div>-->
-<!--</form>-->
-<!--<iframe id="redirect" name="" frameborder="0"-->
-<!--        style="height: 100vh; width: 100vw; display:none;"></iframe>-->
 <div id="redirect" style="height: 100vh; width:100vw !important; display: none; border-width: 0; border-color: white; border-style: none;"></div>
 <script type="text/javascript">
 
@@ -28,10 +18,13 @@
             const cReqVal = dataFromAndroid[2];
             const acsUrlVal = dataFromAndroid[3];
             const transIdVal = dataFromAndroid[4];
-            const reQueryUrl = "https://paytally.netpluspay.com/transactions/requery/MID63dbdc67badab/"; //dataFromAndroid[5];
+            const userData = Android.getUserData(); // Call the method from Android
+            const user = Android.getUserData();
+            const reQueryUrl = "https://tabul.paysaddle.com/transactions/requery/user/";
+            //const reQueryUrl = "https://tabul.paysaddle.com/transactions/requery/MID629dcf88a4537/"; //dataFromAndroid[5];
             const redirectHtml = dataFromAndroid[6];
 
-            console.log("CHECKREDIRECTHTML", redirectHtml)
+            console.log("CHECKREUSER", user)
              const dis = document.getElementById('redirect');
                         dis.style.display = 'block';
                         dis.innerHTML = redirectHtml;

@@ -1,6 +1,5 @@
 package com.woleapp.netpos.webview
 
-
 import android.os.Bundle
 import android.util.Log
 import android.view.LayoutInflater
@@ -25,7 +24,6 @@ import javax.inject.Inject
 
 @AndroidEntryPoint
 class WebViewFragment : BaseFragment() {
-
     private lateinit var binding: FragmentWebviewBinding
     private lateinit var webView: WebView
     private lateinit var webSettings: WebSettings
@@ -35,10 +33,10 @@ class WebViewFragment : BaseFragment() {
     @Inject
     lateinit var customWebViewClient: WebViewCallBack
 
-
     override fun onCreateView(
-        inflater: LayoutInflater, container: ViewGroup?,
-        savedInstanceState: Bundle?
+        inflater: LayoutInflater,
+        container: ViewGroup?,
+        savedInstanceState: Bundle?,
     ): View {
         // Inflate the layout for this fragment
         binding = DataBindingUtil.inflate(inflater, R.layout.fragment_webview, container, false)
@@ -53,33 +51,38 @@ class WebViewFragment : BaseFragment() {
                     } else {
                         showFragment(
                             targetFragment = DashboardFragment(),
-                            className = "Dashboard Fragment"
+                            className = "Dashboard Fragment",
                         )
                     }
                 }
-            }
+            },
         )
         return binding.root
     }
 
-    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+    override fun onViewCreated(
+        view: View,
+        savedInstanceState: Bundle?,
+    ) {
         super.onViewCreated(view, savedInstanceState)
         webView = binding.webView
         qrViewModel.payResponse.observe(viewLifecycleOwner) { response ->
             Log.d("NEW_DATA_WEB", response?.data.toString())
             response?.data?.let {
-                javaScriptInterface = JavaScriptInterface(
-                    parentFragmentManager,
-                    null,
-                    null,
-                    null,
-                    null,
-                    it.transId,
-                    it.redirectHtml
-                )
+                javaScriptInterface =
+                    JavaScriptInterface(
+                        parentFragmentManager,
+                        null,
+                        null,
+                        null,
+                        null,
+                        it.transId,
+                        it.redirectHtml,
+                    )
             }
             setUpWebView(webView)
-        } }
+        }
+    }
 
     private fun setUpWebView(webView: WebView) {
         webSettings = webView.settings
@@ -88,6 +91,7 @@ class WebViewFragment : BaseFragment() {
             loadWithOverviewMode = true
             useWideViewPort = true
         }
+
         webView.apply {
             webViewClient = customWebViewClient
             webChromeClient = WebChromeClient()

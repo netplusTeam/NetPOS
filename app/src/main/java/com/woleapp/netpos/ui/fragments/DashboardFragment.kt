@@ -25,7 +25,6 @@ import androidx.work.NetworkType
 import androidx.work.OneTimeWorkRequestBuilder
 import androidx.work.WorkManager
 import com.danbamitale.epmslib.entities.TransactionResponse
-import com.danbamitale.epmslib.entities.TransactionType
 import com.danbamitale.epmslib.extensions.formatCurrencyAmount
 import com.danbamitale.epmslib.utils.TripleDES
 import com.google.android.material.bottomsheet.BottomSheetDialog
@@ -118,23 +117,25 @@ class DashboardFragment : BaseFragment() {
         container: ViewGroup?,
         savedInstanceState: Bundle?,
     ): View {
-        binding = FragmentDashboardBinding.inflate(inflater, container, false).apply {
-            viewmodel = viewModel
-            lifecycleOwner = viewLifecycleOwner
-            executePendingBindings()
-        }
-        progressDialog = ProgressDialog(requireContext())
-        endOfDayProgressDialog = ProgressDialog(requireContext()).apply {
-            this.setCancelable(false)
-            this.setMessage(getString(R.string.please_wait))
-            this.setButton(
-                DialogInterface.BUTTON_POSITIVE,
-                getString(R.string.cancel),
-            ) { dialog, _ ->
-                compositeDisposable.clear()
-                dialog.cancel()
+        binding =
+            FragmentDashboardBinding.inflate(inflater, container, false).apply {
+                viewmodel = viewModel
+                lifecycleOwner = viewLifecycleOwner
+                executePendingBindings()
             }
-        }
+        progressDialog = ProgressDialog(requireContext())
+        endOfDayProgressDialog =
+            ProgressDialog(requireContext()).apply {
+                this.setCancelable(false)
+                this.setMessage(getString(R.string.please_wait))
+                this.setButton(
+                    DialogInterface.BUTTON_POSITIVE,
+                    getString(R.string.cancel),
+                ) { dialog, _ ->
+                    compositeDisposable.clear()
+                    dialog.cancel()
+                }
+            }
         getIswToken(requireContext())
         transRemark = binding.transactionRemark
 
@@ -144,62 +145,66 @@ class DashboardFragment : BaseFragment() {
 
         transactionResultDialog = createTransactionResultDialog()
 
-        receiptDialogBinding = DialogTransactionResultBinding.inflate(inflater, null, false)
-            .apply { executePendingBindings() }
-        dialogPrintTypeBinding = DialogPrintTypeBinding.inflate(layoutInflater, null, false).apply {
-            executePendingBindings()
-        }
-        printTypeDialog = AlertDialog.Builder(requireContext()).setCancelable(false)
-            .apply {
-                setView(dialogPrintTypeBinding.root)
-                dialogPrintTypeBinding.apply {
-                    cancel.setOnClickListener {
-                        printTypeDialog.cancel()
+        receiptDialogBinding =
+            DialogTransactionResultBinding.inflate(inflater, null, false)
+                .apply { executePendingBindings() }
+        dialogPrintTypeBinding =
+            DialogPrintTypeBinding.inflate(layoutInflater, null, false).apply {
+                executePendingBindings()
+            }
+        printTypeDialog =
+            AlertDialog.Builder(requireContext()).setCancelable(false)
+                .apply {
+                    setView(dialogPrintTypeBinding.root)
+                    dialogPrintTypeBinding.apply {
+                        cancel.setOnClickListener {
+                            printTypeDialog.cancel()
+                            viewModel.finish()
+                        }
+                        customer.setOnClickListener {
+                            printTypeDialog.cancel()
+                            viewModel.printReceipt(
+                                requireContext(),
+                                isMerchantCopy = false,
+                                selected = true,
+                            )
+                        }
+                        merchant.setOnClickListener {
+                            printTypeDialog.cancel()
+                            viewModel.printReceipt(
+                                requireContext(),
+                                isMerchantCopy = true,
+                                selected = true,
+                            )
+                        }
+                        download.setOnClickListener {
+                            printTypeDialog.cancel()
+                            viewModel.downloadOrShareReceipt(PREF_VALUE_PRINT_DOWNLOAD_RECEIPT)
+                        }
+                        share.setOnClickListener {
+                            printTypeDialog.cancel()
+                            viewModel.downloadOrShareReceipt(PREF_VALUE_PRINT_SHARE_RECEIPT)
+                        }
+                        downloadAndShare.setOnClickListener {
+                            printTypeDialog.cancel()
+                            viewModel.downloadOrShareReceipt(PREF_VALUE_PRINT_DOWNLOAD_AND_SHARE_RECEIPT)
+                        }
+                    }
+                }.create()
+        printerErrorDialog =
+            AlertDialog.Builder(requireContext())
+                .apply {
+                    setTitle("Printer Error")
+                    setIcon(R.drawable.ic_warning)
+                    setPositiveButton("Send Receipt") { d, _ ->
+                        d.cancel()
+                        viewModel.showReceiptDialog()
+                    }
+                    setNegativeButton("Dismiss") { d, _ ->
+                        d.cancel()
                         viewModel.finish()
                     }
-                    customer.setOnClickListener {
-                        printTypeDialog.cancel()
-                        viewModel.printReceipt(
-                            requireContext(),
-                            isMerchantCopy = false,
-                            selected = true,
-                        )
-                    }
-                    merchant.setOnClickListener {
-                        printTypeDialog.cancel()
-                        viewModel.printReceipt(
-                            requireContext(),
-                            isMerchantCopy = true,
-                            selected = true,
-                        )
-                    }
-                    download.setOnClickListener {
-                        printTypeDialog.cancel()
-                        viewModel.downloadOrShareReceipt(PREF_VALUE_PRINT_DOWNLOAD_RECEIPT)
-                    }
-                    share.setOnClickListener {
-                        printTypeDialog.cancel()
-                        viewModel.downloadOrShareReceipt(PREF_VALUE_PRINT_SHARE_RECEIPT)
-                    }
-                    downloadAndShare.setOnClickListener {
-                        printTypeDialog.cancel()
-                        viewModel.downloadOrShareReceipt(PREF_VALUE_PRINT_DOWNLOAD_AND_SHARE_RECEIPT)
-                    }
-                }
-            }.create()
-        printerErrorDialog = AlertDialog.Builder(requireContext())
-            .apply {
-                setTitle("Printer Error")
-                setIcon(R.drawable.ic_warning)
-                setPositiveButton("Send Receipt") { d, _ ->
-                    d.cancel()
-                    viewModel.showReceiptDialog()
-                }
-                setNegativeButton("Dismiss") { d, _ ->
-                    d.cancel()
-                    viewModel.finish()
-                }
-            }.create()
+                }.create()
 
         implementationCopiedFromDashBoard()
 
@@ -214,7 +219,7 @@ class DashboardFragment : BaseFragment() {
         userZenithPbtVirtualAccount =
             gson.fromJson(savedUserVirtualAccount, GetPayByTransferUserAccountModel::class.java)
         if (savedUserVirtualAccount.trim().isEmpty()) {
-//            zenithPbtViewModel.getZenithPbtUserAccount()
+            zenithPbtViewModel.getZenithPbtUserAccount()
             val virtualAccount = Prefs.getString(PREF_ZENITH_PBT_USER_ACCOUNT, "")
             userZenithPbtVirtualAccount =
                 gson.fromJson(virtualAccount, GetPayByTransferUserAccountModel::class.java)
@@ -233,111 +238,118 @@ class DashboardFragment : BaseFragment() {
     }
 
     private fun setUpAdapterForTingoPay() {
-        adapter = ServiceAdapter {
-            when (it.id) {
-                0 -> addFragmentWithoutRemove(TransactionsFragment())
+        adapter =
+            ServiceAdapter {
+                when (it.id) {
+                    0 -> addFragmentWithoutRemove(TransactionsFragment())
 
-                2 -> addFragmentWithoutRemove(NipNotificationFragment.newInstance())
-                3 -> addFragmentWithoutRemove(BillsFragment())
-                4 -> showCalendarDialog()
-                else -> {
-                    sendPayload()
+                    2 -> addFragmentWithoutRemove(NipNotificationFragment.newInstance())
+                    3 -> addFragmentWithoutRemove(BillsFragment())
+                    4 -> showCalendarDialog()
+                    else -> {
+                        sendPayload()
+                    }
                 }
+                // addFragmentWithoutRemove(nextFrag)
             }
-            // addFragmentWithoutRemove(nextFrag)
-        }
-        val listOfServices = arrayListOf<Service>(
-            Service(0, getString(R.string.transactions), R.drawable.ic_trans),
-            Service(1, getString(R.string.balance_enquiry), R.drawable.ic_write),
-            Service(2, getString(R.string.bank_transfer), R.drawable.ic_lending),
-            // add(Service(3, "Pay Bills", R.drawable.ic_bill))
-            Service(4, getString(R.string.veiw_eod), R.drawable.ic_print),
-        )
+        val listOfServices =
+            arrayListOf<Service>(
+                Service(0, getString(R.string.transactions), R.drawable.ic_trans),
+                Service(1, getString(R.string.balance_enquiry), R.drawable.ic_write),
+                Service(2, getString(R.string.bank_transfer), R.drawable.ic_lending),
+                // add(Service(3, "Pay Bills", R.drawable.ic_bill))
+                Service(4, getString(R.string.veiw_eod), R.drawable.ic_print),
+            )
         adapter.submitList(listOfServices)
     }
 
     private fun setupKongaAdapter() {
-        adapter = ServiceAdapter {
-            when (it.id) {
-                0 -> addFragmentWithoutRemove(TransactionsFragment())
+        adapter =
+            ServiceAdapter {
+                when (it.id) {
+                    0 -> addFragmentWithoutRemove(TransactionsFragment())
 
-                2 -> addFragmentWithoutRemove(NipNotificationFragment.newInstance())
-                3 -> addFragmentWithoutRemove(BillsFragment())
-                4 -> showCalendarDialog()
-                else -> {
-                    sendPayload()
+                    2 -> addFragmentWithoutRemove(NipNotificationFragment.newInstance())
+                    3 -> addFragmentWithoutRemove(BillsFragment())
+                    4 -> showCalendarDialog()
+                    else -> {
+                        sendPayload()
+                    }
                 }
+                // addFragmentWithoutRemove(nextFrag)
             }
-            // addFragmentWithoutRemove(nextFrag)
-        }
-        val listOfServices = arrayListOf<Service>(
-            Service(0, getString(R.string.transactions), R.drawable.ic_trans),
-            Service(1, getString(R.string.balance_enquiry), R.drawable.ic_write),
-            Service(2, getString(R.string.bank_transfer), R.drawable.ic_lending),
-            // add(Service(3, "Pay Bills", R.drawable.ic_bill))
-            Service(4, getString(R.string.veiw_eod), R.drawable.ic_print),
-        )
+        val listOfServices =
+            arrayListOf<Service>(
+                Service(0, getString(R.string.transactions), R.drawable.ic_trans),
+                Service(1, getString(R.string.balance_enquiry), R.drawable.ic_write),
+                Service(2, getString(R.string.bank_transfer), R.drawable.ic_lending),
+                // add(Service(3, "Pay Bills", R.drawable.ic_bill))
+                Service(4, getString(R.string.veiw_eod), R.drawable.ic_print),
+            )
         adapter.submitList(listOfServices)
     }
 
     private fun setUpAdapterForAellaCredit() {
-        adapter = ServiceAdapter {
-            when (it.id) {
-                0 -> addFragmentWithoutRemove(TransactionsFragment())
+        adapter =
+            ServiceAdapter {
+                when (it.id) {
+                    0 -> addFragmentWithoutRemove(TransactionsFragment())
 
-                2 -> {
-                    if (BuildConfig.FLAVOR == "zenith") {
-                        addFragmentWithoutRemove(ZenithPayByTransferFragment())
-                    } else {
-                        addFragmentWithoutRemove(NipNotificationFragment.newInstance())
+                    2 -> {
+                        if (BuildConfig.FLAVOR == "zenith") {
+                            addFragmentWithoutRemove(ZenithPayByTransferFragment())
+                        } else {
+                            addFragmentWithoutRemove(NipNotificationFragment.newInstance())
+                        }
+                    }
+                    3 -> addFragmentWithoutRemove(BillsFragment())
+                    4 -> showCalendarDialog()
+                    5 -> {
+                        parentFragmentManager.beginTransaction()
+                            .replace(R.id.container_main, SettingsFragment())
+                            .addToBackStack(null)
+                            .commit()
+                    }
+                    else -> {
+                        sendPayload()
                     }
                 }
-                3 -> addFragmentWithoutRemove(BillsFragment())
-                4 -> showCalendarDialog()
-                5 -> {
-                    parentFragmentManager.beginTransaction()
-                        .replace(R.id.container_main, SettingsFragment())
-                        .addToBackStack(null)
-                        .commit()
-                }
-                else -> {
-                    sendPayload()
-                }
+                // addFragmentWithoutRemove(nextFrag)
             }
-            // addFragmentWithoutRemove(nextFrag)
-        }
-        val listOfServices = ArrayList<Service>()
-            .apply {
-                add(Service(0, getString(R.string.purchase), R.drawable.ic_trans))
+        val listOfServices =
+            ArrayList<Service>()
+                .apply {
+                    add(Service(0, getString(R.string.purchase), R.drawable.ic_trans))
 //                add(Service(1, "Balance Inquiry", R.drawable.ic_write))
-                if (BuildConfig.FLAVOR.equals("wemacashout", true).not()) {
-                    add(
-                        Service(
-                            2,
-                            if (BuildConfig.FLAVOR == "zenith") {
-                                getString(R.string.pay_by_transfer)
-                            } else {
-                                getString(
-                                    R.string.bank_transfer,
-                                )
-                            },
-                            R.drawable.ic_lending,
-                        ),
-                    )
-                }
+                    if (BuildConfig.FLAVOR.equals("wemacashout", true).not()) {
+                        add(
+                            Service(
+                                2,
+                                if (BuildConfig.FLAVOR == "zenith") {
+                                    getString(R.string.pay_by_transfer)
+                                } else {
+                                    getString(
+                                        R.string.bank_transfer,
+                                    )
+                                },
+                                R.drawable.ic_lending,
+                            ),
+                        )
+                    }
 //                add(Service(3, "Pay Bills", R.drawable.ic_bill))
-                add(Service(4, getString(R.string.veiw_eod), R.drawable.ic_print))
-                add(Service(5, getString(R.string.settings), R.drawable.ic_baseline_settings))
-            }
+                    add(Service(4, getString(R.string.veiw_eod), R.drawable.ic_print))
+                    add(Service(5, getString(R.string.settings), R.drawable.ic_baseline_settings))
+                }
         adapter.submitList(listOfServices)
     }
 
     private fun getIswToken(context: Context) {
         Timber.d("CALLED")
-        val req = TokenPassportRequest(
-            context.getString(R.string.userMD),
-            Singletons.getCurrentlyLoggedInUser()!!.terminal_id!!,
-        )
+        val req =
+            TokenPassportRequest(
+                context.getString(R.string.userMD),
+                Singletons.getCurrentlyLoggedInUser()!!.terminal_id!!,
+            )
         try {
             val disposable = CompositeDisposable()
             disposable.add(
@@ -363,62 +375,64 @@ class DashboardFragment : BaseFragment() {
     }
 
     private fun setUpDefaultAdapter() {
-        adapter = ServiceAdapter {
-            when (it.id) {
-                0 -> addFragmentWithoutRemove(TransactionsFragment())
+        adapter =
+            ServiceAdapter {
+                when (it.id) {
+                    0 -> addFragmentWithoutRemove(TransactionsFragment())
 
-                2 -> {
-                    if (BuildConfig.FLAVOR == "zenith") {
-                        addFragmentWithoutRemove(ZenithPayByTransferFragment())
-                    } else if (BuildConfig.FLAVOR == "tingopay") {
-                        showToast("Not yet available")
-                    } else {
-                        addFragmentWithoutRemove(NipNotificationFragment.newInstance())
+                    2 -> {
+                        if (BuildConfig.FLAVOR == "zenith") {
+                            addFragmentWithoutRemove(ZenithPayByTransferFragment())
+                        } else if (BuildConfig.FLAVOR == "tingopay") {
+                            showToast("Not yet available")
+                        } else {
+                            addFragmentWithoutRemove(NipNotificationFragment.newInstance())
+                        }
+                    }
+                    3 -> {
+                        if (BuildConfig.FLAVOR == "tingopay") {
+                            showToast("Not yet available")
+                        } else {
+                            addFragmentWithoutRemove(BillsFragment())
+                        }
+                    }
+                    4 -> showCalendarDialog()
+                    5 -> {
+                        parentFragmentManager.beginTransaction()
+                            .replace(R.id.container_main, SettingsFragment())
+                            .addToBackStack(null)
+                            .commit()
+                    }
+                    else -> {
+                        sendPayload()
                     }
                 }
-                3 -> {
-                    if (BuildConfig.FLAVOR == "tingopay") {
-                        showToast("Not yet available")
-                    } else {
-                        addFragmentWithoutRemove(BillsFragment())
+                // addFragmentWithoutRemove(nextFrag)
+            }
+        val listOfServices =
+            ArrayList<Service>()
+                .apply {
+                    add(Service(0, getString(R.string.transactions), R.drawable.ic_trans))
+                    add(Service(1, getString(R.string.balance_enquiry), R.drawable.ic_write))
+                    if (BuildConfig.FLAVOR.equals("wemacashout", true).not()) {
+                        add(
+                            Service(
+                                2,
+                                if (BuildConfig.FLAVOR == "zenith") {
+                                    getString(R.string.pay_by_transfer)
+                                } else {
+                                    getString(
+                                        R.string.bank_transfer,
+                                    )
+                                },
+                                R.drawable.ic_lending,
+                            ),
+                        )
                     }
+                    add(Service(3, getString(R.string.pay_bills), R.drawable.ic_bill))
+                    add(Service(4, getString(R.string.veiw_eod), R.drawable.ic_print))
+                    add(Service(5, getString(R.string.settings), R.drawable.ic_baseline_settings))
                 }
-                4 -> showCalendarDialog()
-                5 -> {
-                    parentFragmentManager.beginTransaction()
-                        .replace(R.id.container_main, SettingsFragment())
-                        .addToBackStack(null)
-                        .commit()
-                }
-                else -> {
-                    sendPayload()
-                }
-            }
-            // addFragmentWithoutRemove(nextFrag)
-        }
-        val listOfServices = ArrayList<Service>()
-            .apply {
-                add(Service(0, getString(R.string.transactions), R.drawable.ic_trans))
-                add(Service(1, getString(R.string.balance_enquiry), R.drawable.ic_write))
-                if (BuildConfig.FLAVOR.equals("wemacashout", true).not()) {
-                    add(
-                        Service(
-                            2,
-                            if (BuildConfig.FLAVOR == "zenith") {
-                                getString(R.string.pay_by_transfer)
-                            } else {
-                                getString(
-                                    R.string.bank_transfer,
-                                )
-                            },
-                            R.drawable.ic_lending,
-                        ),
-                    )
-                }
-                add(Service(3, getString(R.string.pay_bills), R.drawable.ic_bill))
-                add(Service(4, getString(R.string.veiw_eod), R.drawable.ic_print))
-                add(Service(5, getString(R.string.settings), R.drawable.ic_baseline_settings))
-            }
         adapter.submitList(listOfServices)
     }
 
@@ -428,20 +442,22 @@ class DashboardFragment : BaseFragment() {
         val be1: Long = Timestamp.from(Instant.ofEpochMilli(be).plusSeconds(86400)).time
         val df = SimpleDateFormat("dd:MM:yyyy hh:mm:ss", Locale.getDefault())
 
-        val data = HashMap<String, String>().apply {
-            put("terminalId", NetPosTerminalConfig.getTerminalId())
-            put("count", "1000")
-            put("from", df.format(be))
-            put("to", df.format(be1))
-        }
+        val data =
+            HashMap<String, String>().apply {
+                put("terminalId", NetPosTerminalConfig.getTerminalId())
+                put("count", "1000")
+                put("from", df.format(be))
+                put("to", df.format(be1))
+            }
 
-        val parameters = GetEodFromNewServiceModel(
-            NetPosTerminalConfig.getTerminalId().trim(),
-            getDateInTheFormatExpectedByTheNewService(df.format(be)),
-            getDateInTheFormatExpectedByTheNewServiceForEnd(df.format(be)),
-            1,
-            1000,
-        )
+        val parameters =
+            GetEodFromNewServiceModel(
+                NetPosTerminalConfig.getTerminalId().trim(),
+                getDateInTheFormatExpectedByTheNewService(df.format(be)),
+                getDateInTheFormatExpectedByTheNewServiceForEnd(df.format(be)),
+                1,
+                1000,
+            )
         stormApiService.getTransactionsFromNewService(
             parameters.terminalId,
             parameters.from,
@@ -449,16 +465,17 @@ class DashboardFragment : BaseFragment() {
             parameters.page,
             parameters.pageSize,
         ).flatMap {
-            it.data.rows = it.data.rows.map { transaction ->
-                transaction.amount =
-                    if (transaction.amount is Int) {
-                        (transaction.amount as Int).times(100)
-                    } else {
-                        (transaction.amount as Double)
-                            .times(100)
-                    }
-                transaction
-            }
+            it.data.rows =
+                it.data.rows.map { transaction ->
+                    transaction.amount =
+                        if (transaction.amount is Int) {
+                            (transaction.amount as Int).times(100)
+                        } else {
+                            (transaction.amount as Double)
+                                .times(100)
+                        }
+                    transaction
+                }
             Single.just(it)
         }.flatMap {
             if (it.data.rows.isEmpty()) {
@@ -531,7 +548,10 @@ class DashboardFragment : BaseFragment() {
         }
     }
 
-    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+    override fun onViewCreated(
+        view: View,
+        savedInstanceState: Bundle?,
+    ) {
         super.onViewCreated(view, savedInstanceState)
         when (BuildConfig.FLAVOR) {
             "konga" -> setupKongaAdapter()
@@ -552,13 +572,14 @@ class DashboardFragment : BaseFragment() {
     }
 
     private fun repushTransactionsToBackend() {
-        val workRequest = OneTimeWorkRequestBuilder<RepushFailedTransactionToBackendWorker>()
-            .setConstraints(
-                Constraints.Builder()
-                    .setRequiredNetworkType(
-                        NetworkType.CONNECTED,
-                    ).build(),
-            ).build()
+        val workRequest =
+            OneTimeWorkRequestBuilder<RepushFailedTransactionToBackendWorker>()
+                .setConstraints(
+                    Constraints.Builder()
+                        .setRequiredNetworkType(
+                            NetworkType.CONNECTED,
+                        ).build(),
+                ).build()
         workManager.enqueue(workRequest)
     }
 
@@ -628,13 +649,14 @@ class DashboardFragment : BaseFragment() {
                 }
             }
         }
-        val bottomSheet = BottomSheetDialog(requireContext(), R.style.SheetDialog)
-            .apply {
-                dismissWithAnimation = true
-                setCancelable(false)
-                setContentView(endOfDay.root)
-                show()
-            }
+        val bottomSheet =
+            BottomSheetDialog(requireContext(), R.style.SheetDialog)
+                .apply {
+                    dismissWithAnimation = true
+                    setCancelable(false)
+                    setContentView(endOfDay.root)
+                    show()
+                }
         endOfDay.view.setOnClickListener {
             if (transactions.isNotEmpty()) {
                 transactionViewModel.setEndOfDayList(
@@ -656,24 +678,26 @@ class DashboardFragment : BaseFragment() {
         }
     }
 
-    private fun getEndOfDayLocal(be: Long, be1: Long) =
-        AppDatabase.getDatabaseInstance(requireContext())
-            .transactionResponseDao()
-            .getEndOfDayTransactionSingle(be, be1, NetPosTerminalConfig.getTerminalId())
-            .doOnError {
-                Timber.d("ERROR_HAPPENING=========>%s", it.localizedMessage)
-            }
-            .flatMap { transactionList ->
-                Timber.d("CHECKING_TIME==>%s", gson.toJson(transactionList))
-                Single.just(
-                    GateWayTransactionResponse(
-                        mapTransFromGateWayToEntity(transactionList),
-                        transactionList.size,
-                        1,
-                        1000,
-                    ),
-                )
-            }
+    private fun getEndOfDayLocal(
+        be: Long,
+        be1: Long,
+    ) = AppDatabase.getDatabaseInstance(requireContext())
+        .transactionResponseDao()
+        .getEndOfDayTransactionSingle(be, be1, NetPosTerminalConfig.getTerminalId())
+        .doOnError {
+            Timber.d("ERROR_HAPPENING=========>%s", it.localizedMessage)
+        }
+        .flatMap { transactionList ->
+            Timber.d("CHECKING_TIME==>%s", gson.toJson(transactionList))
+            Single.just(
+                GateWayTransactionResponse(
+                    mapTransFromGateWayToEntity(transactionList),
+                    transactionList.size,
+                    1,
+                    1000,
+                ),
+            )
+        }
 
     private fun showCalendarDialog() {
         val calendar = Calendar.getInstance()
@@ -696,20 +720,22 @@ class DashboardFragment : BaseFragment() {
         val be1: Long = Timestamp.from(Instant.ofEpochMilli(be).plusSeconds(86400)).time
         val df = SimpleDateFormat("dd:MM:yyyy hh:mm:ss", Locale.getDefault())
 
-        val data = HashMap<String, String>().apply {
-            put("terminalId", NetPosTerminalConfig.getTerminalId())
-            put("count", "1000")
-            put("from", df.format(be))
-            put("to", df.format(be1))
-        }
+        val data =
+            HashMap<String, String>().apply {
+                put("terminalId", NetPosTerminalConfig.getTerminalId())
+                put("count", "1000")
+                put("from", df.format(be))
+                put("to", df.format(be1))
+            }
 
-        val parameters = GetEodFromNewServiceModel(
-            NetPosTerminalConfig.getTerminalId().trim(),
-            getDateInTheFormatExpectedByTheNewService(df.format(be)),
-            getDateInTheFormatExpectedByTheNewServiceForEnd(df.format(be)),
-            1,
-            1000,
-        )
+        val parameters =
+            GetEodFromNewServiceModel(
+                NetPosTerminalConfig.getTerminalId().trim(),
+                getDateInTheFormatExpectedByTheNewService(df.format(be)),
+                getDateInTheFormatExpectedByTheNewServiceForEnd(df.format(be)),
+                1,
+                1000,
+            )
 
         getEndOfDayLocal(
             getDateInMilliSecsForLocal(df.format(be)),
@@ -724,12 +750,14 @@ class DashboardFragment : BaseFragment() {
                         parameters.page,
                         parameters.pageSize,
                     ).map {
-                        val dataWithModifiedAmount = it.data.rows.map { it1 ->
-                            it1.copy(amount = (it1.amount as Int * 100))
-                        }
-                        val modifiedData = it.data.copy(
-                            rows = dataWithModifiedAmount,
-                        )
+                        val dataWithModifiedAmount =
+                            it.data.rows.map { it1 ->
+                                it1.copy(amount = (it1.amount as Int * 100))
+                            }
+                        val modifiedData =
+                            it.data.copy(
+                                rows = dataWithModifiedAmount,
+                            )
                         Single.just(it.copy(data = modifiedData))
                     }
                 } else {
@@ -744,12 +772,14 @@ class DashboardFragment : BaseFragment() {
                     parameters.page,
                     parameters.pageSize,
                 ).map {
-                    val dataWithModifiedAmount = it.data.rows.map { it1 ->
-                        it1.copy(amount = (it1.amount as Double * 100))
-                    }
-                    val modifiedData = it.data.copy(
-                        rows = dataWithModifiedAmount,
-                    )
+                    val dataWithModifiedAmount =
+                        it.data.rows.map { it1 ->
+                            it1.copy(amount = (it1.amount as Double * 100))
+                        }
+                    val modifiedData =
+                        it.data.copy(
+                            rows = dataWithModifiedAmount,
+                        )
                     Single.just(it.copy(data = modifiedData))
                 }
             }
@@ -914,13 +944,14 @@ class DashboardFragment : BaseFragment() {
                                 viewModel.cardData = it.cardData
                                 zenithPbtViewModel.cardData = it.cardData
                                 val clearPinKey = Singletons.getClearPinKey()
-                                zenithPbtViewModel.cvv = it.cardData.let { it1 ->
-                                    decodePinBlock(
-                                        it1.pinBlock.toString(),
-                                        it1.pan,
-                                        clearPinKey.toString()
-                                    )
-                                }
+                                zenithPbtViewModel.cvv =
+                                    it.cardData.let { it1 ->
+                                        decodePinBlock(
+                                            it1.pinBlock.toString(),
+                                            it1.pan,
+                                            clearPinKey.toString(),
+                                        )
+                                    }
                                 Prefs.putString(PREF_CARD_DATA, gson.toJson(it.cardData))
                                 Prefs.putString(PREF_ISO_ACCOUNT_TYPE, gson.toJson(it.accountType))
 //                                Prefs.putString(PREF_CARD_SCHEME, it.cardScheme)
@@ -930,6 +961,13 @@ class DashboardFragment : BaseFragment() {
                         }
                     }
                 }
+            }
+        }
+        zenithPbtViewModel.payMessage.observe(viewLifecycleOwner) { event ->
+            event.getContentIfNotHandled()?.let {
+                binding.button.isEnabled = true
+                binding.mgsProgressBar.visibility = View.GONE
+                showSnackBar(it)
             }
         }
         viewModel.showReceiptType.observe(viewLifecycleOwner) { event ->
@@ -967,30 +1005,31 @@ class DashboardFragment : BaseFragment() {
                 }.show()
             }
         }
-        alertDialog = AlertDialog.Builder(requireContext()).setCancelable(false).apply {
-            setView(receiptDialogBinding.root)
-            receiptDialogBinding.apply {
-                closeBtn.setOnClickListener {
-                    alertDialog.dismiss()
-                    viewModel.finish()
-                }
-                sendButton.setOnClickListener {
-                    if (receiptDialogBinding.telephone.text.toString().length != 11) {
-                        Toast.makeText(
-                            requireContext(),
-                            "Please enter a valid phone number",
-                            Toast.LENGTH_LONG,
-                        ).show()
-                        return@setOnClickListener
+        alertDialog =
+            AlertDialog.Builder(requireContext()).setCancelable(false).apply {
+                setView(receiptDialogBinding.root)
+                receiptDialogBinding.apply {
+                    closeBtn.setOnClickListener {
+                        alertDialog.dismiss()
+                        viewModel.finish()
                     }
-                    viewModel.sendSmS(
-                        receiptDialogBinding.telephone.text.toString(),
-                    )
-                    progress.visibility = View.VISIBLE
-                    sendButton.isEnabled = false
+                    sendButton.setOnClickListener {
+                        if (receiptDialogBinding.telephone.text.toString().length != 11) {
+                            Toast.makeText(
+                                requireContext(),
+                                "Please enter a valid phone number",
+                                Toast.LENGTH_LONG,
+                            ).show()
+                            return@setOnClickListener
+                        }
+                        viewModel.sendSmS(
+                            receiptDialogBinding.telephone.text.toString(),
+                        )
+                        progress.visibility = View.VISIBLE
+                        sendButton.isEnabled = false
+                    }
                 }
-            }
-        }.create()
+            }.create()
         alertDialog.window?.setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_ADJUST_PAN)
         viewModel.showPrintDialog.observe(viewLifecycleOwner) { event ->
             event.getContentIfNotHandled()?.let {
@@ -1025,50 +1064,49 @@ class DashboardFragment : BaseFragment() {
         }
     }
 
-
     private fun mpgsTransactions() {
         zenithPbtViewModel._payResponse.value = null
         zenithPbtViewModel.payResponse.removeObservers(viewLifecycleOwner)
         binding.button.isEnabled = false
         binding.mgsProgressBar.visibility = View.VISIBLE
         val user = Singletons.gson.fromJson(Prefs.getString(PREF_USER, ""), User::class.java)
-        val checkOutModel = CheckOutModel(
-            user.netplusPayMid.toString(), //MID63dbdc67badab
-            user.name.toString(),
-            user.email.toString(),
-            viewModel.amountLong.toDouble() / 100,
-            currency = "NGN"
-        )
+        val checkOutModel =
+            CheckOutModel(
+                user.netplusPayMid.toString(), // MID63dbdc67badab
+                user.name.toString(),
+                user.email.toString(),
+                viewModel.amountLong.toDouble() / 100,
+                currency = "NGN",
+            )
         zenithPbtViewModel.payQrCharges(requireContext(), checkOutModel)
         observeServerResponse(
             zenithPbtViewModel.payResponse,
             loader,
-            requireActivity().supportFragmentManager
+            requireActivity().supportFragmentManager,
         ) {
             binding.button.isEnabled = true
             binding.mgsProgressBar.visibility = View.GONE
             if (zenithPbtViewModel.payResponse.value?.data?.code == "90") {
+                Log.d("RESPONSE_CODEN", zenithPbtViewModel.payResponse.value?.data?.code.toString())
                 showToast(zenithPbtViewModel.payResponse.value?.data?.result.toString())
             } else {
                 showFragment(
                     targetFragment = WebViewFragment(),
-                    className = "Webview Fragment"
+                    className = "Webview Fragment",
                 )
             }
         }
-
     }
 
-    private fun decodePinBlock(pinBlock: String, pan: String, key: String): String {
+    private fun decodePinBlock(
+        pinBlock: String,
+        pan: String,
+        key: String,
+    ): String {
         val outData: String = TripleDES.decrypt(pinBlock, key)
         val cardNum: String = "0000" + pan.substring(3, 15)
         val pinPacket: String = XorUtil.xorHex(outData, cardNum)
         val pin: String = pinPacket.substring(2, 6)
-        return pin;
+        return pin
     }
-
 }
-
-
-
-

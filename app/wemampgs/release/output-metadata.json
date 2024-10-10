@@ -1,0 +1,20 @@
+{
+  "version": 3,
+  "artifactType": {
+    "type": "APK",
+    "kind": "Directory"
+  },
+  "applicationId": "com.woleapp.netpos.wemampgs",
+  "variantName": "wemampgsRelease",
+  "elements": [
+    {
+      "type": "SINGLE",
+      "filters": [],
+      "attributes": [],
+      "versionCode": 228,
+      "versionName": "1.1.228",
+      "outputFile": "app-wemampgs-release.apk"
+    }
+  ],
+  "elementType": "File"
+}
