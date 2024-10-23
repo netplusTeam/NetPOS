@@ -1,3 +1,5 @@
+@file:Suppress("ktlint:standard:no-wildcard-imports")
+
 package com.woleapp.netpos.nibss
 
 import android.content.Context
@@ -7,14 +9,14 @@ import android.util.Log
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.localbroadcastmanager.content.LocalBroadcastManager
-import com.danbamitale.epmslib.entities.* // ktlint-disable no-wildcard-imports
+import com.danbamitale.epmslib.entities.*
 import com.danbamitale.epmslib.processors.TerminalConfigurator
 import com.netpluspay.netpossdk.NetPosSdk
 import com.netpluspay.netpossdk.NetPosSdk.writeTpkKey
 import com.netpluspay.netpossdk.utils.DeviceConfig
 import com.pixplicity.easyprefs.library.Prefs
 import com.woleapp.netpos.model.ConfigurationData
-import com.woleapp.netpos.util.* // ktlint-disable no-wildcard-imports
+import com.woleapp.netpos.util.*
 import com.woleapp.netpos.util.Singletons.getSavedConfigurationData
 import com.woleapp.netpos.util.Singletons.gson
 import io.reactivex.Single
@@ -34,11 +36,12 @@ class NetPosTerminalConfig {
     companion object {
         private var configurationData: ConfigurationData = getSavedConfigurationData()
         private val disposables = CompositeDisposable()
-        var connectionData: ConnectionData = ConnectionData(
-            ipAddress = configurationData.ip,
-            ipPort = configurationData.port.toInt(),
-            isSSL = true,
-        )
+        var connectionData: ConnectionData =
+            ConnectionData(
+                ipAddress = configurationData.ip,
+                ipPort = configurationData.port.toInt(),
+                isSSL = true,
+            )
         private var terminalId: String? = null
         var isConfigurationInProcess = false
         var configurationStatus = -1
@@ -87,61 +90,63 @@ class NetPosTerminalConfig {
                 mutableLiveData.value = Event(configurationStatus)
                 mutableLiveData.value = Event(-99)
             }
-            val req = when {
-                DateUtils.isToday(Prefs.getLong(LAST_POS_CONFIGURATION_TIME, 0)).not() -> {
-                    Timber.e("last configuration time was not today, configure terminal now")
-                    configureTerminal(context)
-                }
-                keyHolder != null && configData != null -> {
-                    Timber.e("calling home")
-                    configurationStatus = 1
-                    callHome(context).onErrorResumeNext {
-                        Timber.e(it)
-                        Timber.e("call home failed, configure terminal")
+            val req =
+                when {
+                    DateUtils.isToday(Prefs.getLong(LAST_POS_CONFIGURATION_TIME, 0)).not() -> {
+                        Timber.e("last configuration time was not today, configure terminal now")
                         configureTerminal(context)
                     }
-                }
-                else -> configureTerminal(context)
-            }
-            val disposable = req.subscribeOn(Schedulers.io())
-                .observeOn(AndroidSchedulers.mainThread())
-                .doOnSubscribe {
-                    isConfigurationInProcess = true
-                }
-                .doFinally { isConfigurationInProcess = false }
-                .subscribe { pair, error ->
-                    error?.let {
-                        // TerminalManager.getInstance().beep(context, TerminalManager.BEEP_MODE_FAILURE)
-                        configurationStatus = -1
-                        if (configureSilently.not()) {
-                            mutableLiveData.value = Event(configurationStatus)
-                            mutableLiveData.value = Event(-99)
-                        }
-                        sendIntent.putExtra(CONFIGURATION_STATUS, configurationStatus)
-                        localBroadcastManager.sendBroadcast(sendIntent)
-                        Timber.e(it)
-                    }
-                    pair?.let {
-                        pair.first?.let {
-                            Prefs.putLong(LAST_POS_CONFIGURATION_TIME, System.currentTimeMillis())
-                            Prefs.putString(PREF_CONFIG_DATA, gson.toJson(pair.second))
-                            Prefs.putString(PREF_KEYHOLDER, gson.toJson(pair.first))
-                            writeTpkKey(DeviceConfig.TPKIndex, pair.first!!.clearPinKey)
-                            Prefs.putString(CLEAR_PIN_KEY, pair.first!!.clearPinKey)
-                            Log.d("CLEAR_PIN_KEY", pair.first!!.clearPinKey)
-                            this.configData = pair.second
-                        }
+                    keyHolder != null && configData != null -> {
+                        Timber.e("calling home")
                         configurationStatus = 1
-                        sendIntent.putExtra(CONFIGURATION_STATUS, configurationStatus)
-                        localBroadcastManager.sendBroadcast(sendIntent)
-                        if (configureSilently.not()) {
-                            mutableLiveData.value = Event(configurationStatus)
-                            mutableLiveData.value = Event(-99)
+                        callHome(context).onErrorResumeNext {
+                            Timber.e(it)
+                            Timber.e("call home failed, configure terminal")
+                            configureTerminal(context)
                         }
-                        Timber.e("Config data set")
-                        disposeDisposables()
                     }
+                    else -> configureTerminal(context)
                 }
+            val disposable =
+                req.subscribeOn(Schedulers.io())
+                    .observeOn(AndroidSchedulers.mainThread())
+                    .doOnSubscribe {
+                        isConfigurationInProcess = true
+                    }
+                    .doFinally { isConfigurationInProcess = false }
+                    .subscribe { pair, error ->
+                        error?.let {
+                            // TerminalManager.getInstance().beep(context, TerminalManager.BEEP_MODE_FAILURE)
+                            configurationStatus = -1
+                            if (configureSilently.not()) {
+                                mutableLiveData.value = Event(configurationStatus)
+                                mutableLiveData.value = Event(-99)
+                            }
+                            sendIntent.putExtra(CONFIGURATION_STATUS, configurationStatus)
+                            localBroadcastManager.sendBroadcast(sendIntent)
+                            Timber.e(it)
+                        }
+                        pair?.let {
+                            pair.first?.let {
+                                Prefs.putLong(LAST_POS_CONFIGURATION_TIME, System.currentTimeMillis())
+                                Prefs.putString(PREF_CONFIG_DATA, gson.toJson(pair.second))
+                                Prefs.putString(PREF_KEYHOLDER, gson.toJson(pair.first))
+                                writeTpkKey(DeviceConfig.TPKIndex, pair.first!!.clearPinKey, context)
+                                Prefs.putString(CLEAR_PIN_KEY, pair.first!!.clearPinKey)
+                                Log.d("CLEAR_PIN_KEY", pair.first!!.clearPinKey)
+                                this.configData = pair.second
+                            }
+                            configurationStatus = 1
+                            sendIntent.putExtra(CONFIGURATION_STATUS, configurationStatus)
+                            localBroadcastManager.sendBroadcast(sendIntent)
+                            if (configureSilently.not()) {
+                                mutableLiveData.value = Event(configurationStatus)
+                                mutableLiveData.value = Event(-99)
+                            }
+                            Timber.e("Config data set")
+                            disposeDisposables()
+                        }
+                    }
             disposables.add(disposable)
         }
 

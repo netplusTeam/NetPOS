@@ -47,8 +47,8 @@ android {
         applicationId "com.woleapp.netpos"
         minSdkVersion 23
         targetSdkVersion 30
-        versionCode 228
-        versionName "1.1.228"
+        versionCode 229
+        versionName "1.1.229"
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         def environmentPath
         if (appModeProd == "true")
@@ -222,7 +222,7 @@ dependencies {
 
     //netpos sdk
 //    implementation 'com.github.netplusTeam.NetposContactSdk:netpossdk:1.0.30'
-    implementation 'com.netpluspay.netpossdk:netpossdk:1.0.25'
+    implementation 'com.netpluspay.netpossdk:netpossdk:1.0.26'
 
     //Timber
     implementation 'com.jakewharton.timber:timber:4.7.1'
