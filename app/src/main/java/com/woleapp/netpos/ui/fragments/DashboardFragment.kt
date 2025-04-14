@@ -25,6 +25,7 @@ import androidx.work.NetworkType
 import androidx.work.OneTimeWorkRequestBuilder
 import androidx.work.WorkManager
 import com.danbamitale.epmslib.entities.TransactionResponse
+import com.danbamitale.epmslib.entities.TransactionType
 import com.danbamitale.epmslib.extensions.formatCurrencyAmount
 import com.danbamitale.epmslib.utils.TripleDES
 import com.google.android.material.bottomsheet.BottomSheetDialog
@@ -955,14 +956,18 @@ class DashboardFragment : BaseFragment() {
                                 Prefs.putString(PREF_CARD_DATA, gson.toJson(it.cardData))
                                 Prefs.putString(PREF_ISO_ACCOUNT_TYPE, gson.toJson(it.accountType))
 //                                Prefs.putString(PREF_CARD_SCHEME, it.cardScheme)
-//                                viewModel.makePayment(requireContext(), TransactionType.PURCHASE)
-                                mpgsTransactions()
+                                Log.d("NIBSS_ICC", "${it.cardData}")
+                                viewModel.makePayment(requireContext(), TransactionType.PURCHASE)
+//                                mpgsTransactions()
                             }
                         }
                     }
                 }
             }
         }
+        9F260870E64F50F20760BF9F2701809F100706010A03A0E8009F3704D4DE85D49F3602097A950508C00480009A032503059C01009F02060000000009005F2A020566820238009F1A0205669F34034203009F3303E068C89F3501229F1E0831343531363133318407A00000000310109F0902008C9F03060000000000005F340101
+
+        9F260819EB4D9C9E8B55BC9F2701809F10120110A040002A0000000000000000000000FF9F3704276345529F3602020E950500000480009A032503069C01009F02060000000000015F2A020566820239009F1A0205669F34034203009F3303E068C89F3501229F1E0831343531363133318407A00000000410109F090200029F03060000000000005F340101
         zenithPbtViewModel.payMessage.observe(viewLifecycleOwner) { event ->
             event.getContentIfNotHandled()?.let {
                 binding.button.isEnabled = true
