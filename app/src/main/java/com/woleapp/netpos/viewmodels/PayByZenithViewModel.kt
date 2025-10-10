@@ -345,7 +345,7 @@ class PayByZenithViewModel
             )
         }
 
-        fun convertExpiryDate(yearAndMonth: String): String {
+        private fun convertExpiryDate(yearAndMonth: String): String {
             // Extract year and month
             val year = yearAndMonth.substring(0, 2)
             val month = yearAndMonth.substring(2, 4)
@@ -355,7 +355,7 @@ class PayByZenithViewModel
             return monthAndYear
         }
 
-        fun pickFirstThreeDigits(pin: String): String {
+        private fun pickFirstThreeDigits(pin: String): String {
             val pinStr = pin.toString()
             return if (pinStr.length > 3) pinStr.substring(0, 3) else pinStr
             println("FirstThree: ${if (pinStr.length > 3) pinStr.substring(0, 3) else pinStr}") // Output: Month and Year: 12/24

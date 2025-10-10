@@ -1,4 +1,4 @@
-@file:Suppress("DEPRECATION")
+@file:Suppress("DEPRECATION", "ktlint:standard:no-wildcard-imports")
 
 package com.woleapp.netpos.ui.fragments
 
@@ -6,6 +6,7 @@ import android.Manifest
 import android.app.ProgressDialog
 import android.content.DialogInterface
 import android.os.Bundle
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -20,10 +21,10 @@ import com.google.gson.JsonObject
 import com.netpluspay.netpossdk.NetPosSdk
 import com.woleapp.netpos.R
 import com.woleapp.netpos.database.AppDatabase
-import com.woleapp.netpos.databinding.* // ktlint-disable no-wildcard-imports
+import com.woleapp.netpos.databinding.*
 import com.woleapp.netpos.model.Vend
 import com.woleapp.netpos.nibss.NetPosTerminalConfig
-import com.woleapp.netpos.util.* // ktlint-disable no-wildcard-imports
+import com.woleapp.netpos.util.*
 import com.woleapp.netpos.util.pdfUtils.createPdf
 import com.woleapp.netpos.util.pdfUtils.initViewsForPdfLayout
 import com.woleapp.netpos.util.pdfUtils.sharePdf
@@ -46,20 +47,21 @@ class SalesFragment : BaseFragment() {
     companion object {
         fun newInstance(
             transactionType: TransactionType = TransactionType.PURCHASE,
-            isVend: Boolean = false
+            isVend: Boolean = false,
         ): SalesFragment =
             SalesFragment().apply {
-                arguments = Bundle().apply {
-                    putString(TRANSACTION_TYPE, transactionType.name)
-                    putBoolean("IS_VEND", isVend)
-                }
+                arguments =
+                    Bundle().apply {
+                        putString(TRANSACTION_TYPE, transactionType.name)
+                        putBoolean("IS_VEND", isVend)
+                    }
             }
     }
 
     private val viewModel by viewModels<SalesViewModel> {
         SalesViewModelProvider(
             AppDatabase.getDatabaseInstance(requireContext()).transactionResponseDao(),
-            AppDatabase.getDatabaseInstance(requireContext()).transactionTrackingTableDao()
+            AppDatabase.getDatabaseInstance(requireContext()).transactionTrackingTableDao(),
         )
     }
     private lateinit var receiptPdf: File
@@ -79,15 +81,16 @@ class SalesFragment : BaseFragment() {
     override fun onCreateView(
         inflater: LayoutInflater,
         container: ViewGroup?,
-        savedInstanceState: Bundle?
+        savedInstanceState: Bundle?,
     ): View {
         binding = FragmentSalesBinding.inflate(inflater, container, false)
-        transactionType = TransactionType.valueOf(
-            arguments?.getString(
-                TRANSACTION_TYPE,
-                TransactionType.PURCHASE.name
-            ) ?: TransactionType.PURCHASE.name
-        )
+        transactionType =
+            TransactionType.valueOf(
+                arguments?.getString(
+                    TRANSACTION_TYPE,
+                    TransactionType.PURCHASE.name,
+                ) ?: TransactionType.PURCHASE.name,
+            )
 
         transactionResultDialogBinding =
             DialogTransactionResultShowResultBinding.inflate(inflater, null, false)
@@ -100,62 +103,66 @@ class SalesFragment : BaseFragment() {
         }
         isVend = arguments?.getBoolean("IS_VEND", false) ?: false
         viewModel.isVend(isVend)
-        receiptDialogBinding = DialogTransactionResultBinding.inflate(inflater, null, false)
-            .apply { executePendingBindings() }
-        dialogPrintTypeBinding = DialogPrintTypeBinding.inflate(layoutInflater, null, false).apply {
-            executePendingBindings()
-        }
-        printTypeDialog = AlertDialog.Builder(requireContext()).setCancelable(false)
-            .apply {
-                setView(dialogPrintTypeBinding.root)
-                dialogPrintTypeBinding.apply {
-                    cancel.setOnClickListener {
-                        printTypeDialog.cancel()
+        receiptDialogBinding =
+            DialogTransactionResultBinding.inflate(inflater, null, false)
+                .apply { executePendingBindings() }
+        dialogPrintTypeBinding =
+            DialogPrintTypeBinding.inflate(layoutInflater, null, false).apply {
+                executePendingBindings()
+            }
+        printTypeDialog =
+            AlertDialog.Builder(requireContext()).setCancelable(false)
+                .apply {
+                    setView(dialogPrintTypeBinding.root)
+                    dialogPrintTypeBinding.apply {
+                        cancel.setOnClickListener {
+                            printTypeDialog.cancel()
+                            viewModel.finish()
+                        }
+                        customer.setOnClickListener {
+                            printTypeDialog.cancel()
+                            viewModel.printReceipt(
+                                requireContext(),
+                                isMerchantCopy = false,
+                                selected = true,
+                            )
+                        }
+                        merchant.setOnClickListener {
+                            printTypeDialog.cancel()
+                            viewModel.printReceipt(
+                                requireContext(),
+                                isMerchantCopy = true,
+                                selected = true,
+                            )
+                        }
+                        download.setOnClickListener {
+                            printTypeDialog.cancel()
+                            viewModel.downloadOrShareReceipt(PREF_VALUE_PRINT_DOWNLOAD_RECEIPT)
+                        }
+                        share.setOnClickListener {
+                            printTypeDialog.cancel()
+                            viewModel.downloadOrShareReceipt(PREF_VALUE_PRINT_SHARE_RECEIPT)
+                        }
+                        downloadAndShare.setOnClickListener {
+                            printTypeDialog.cancel()
+                            viewModel.downloadOrShareReceipt(PREF_VALUE_PRINT_DOWNLOAD_AND_SHARE_RECEIPT)
+                        }
+                    }
+                }.create()
+        printerErrorDialog =
+            AlertDialog.Builder(requireContext())
+                .apply {
+                    setTitle("Printer Error")
+                    setIcon(R.drawable.ic_warning)
+                    setPositiveButton("Send Receipt") { d, _ ->
+                        d.cancel()
+                        viewModel.showReceiptDialog()
+                    }
+                    setNegativeButton("Dismiss") { d, _ ->
+                        d.cancel()
                         viewModel.finish()
                     }
-                    customer.setOnClickListener {
-                        printTypeDialog.cancel()
-                        viewModel.printReceipt(
-                            requireContext(),
-                            isMerchantCopy = false,
-                            selected = true
-                        )
-                    }
-                    merchant.setOnClickListener {
-                        printTypeDialog.cancel()
-                        viewModel.printReceipt(
-                            requireContext(),
-                            isMerchantCopy = true,
-                            selected = true
-                        )
-                    }
-                    download.setOnClickListener {
-                        printTypeDialog.cancel()
-                        viewModel.downloadOrShareReceipt(PREF_VALUE_PRINT_DOWNLOAD_RECEIPT)
-                    }
-                    share.setOnClickListener {
-                        printTypeDialog.cancel()
-                        viewModel.downloadOrShareReceipt(PREF_VALUE_PRINT_SHARE_RECEIPT)
-                    }
-                    downloadAndShare.setOnClickListener {
-                        printTypeDialog.cancel()
-                        viewModel.downloadOrShareReceipt(PREF_VALUE_PRINT_DOWNLOAD_AND_SHARE_RECEIPT)
-                    }
-                }
-            }.create()
-        printerErrorDialog = AlertDialog.Builder(requireContext())
-            .apply {
-                setTitle("Printer Error")
-                setIcon(R.drawable.ic_warning)
-                setPositiveButton("Send Receipt") { d, _ ->
-                    d.cancel()
-                    viewModel.showReceiptDialog()
-                }
-                setNegativeButton("Dismiss") { d, _ ->
-                    d.cancel()
-                    viewModel.finish()
-                }
-            }.create()
+                }.create()
         binding.apply {
             viewmodel = viewModel
             lifecycleOwner = viewLifecycleOwner
@@ -176,7 +183,7 @@ class SalesFragment : BaseFragment() {
                         viewLifecycleOwner,
                         viewModel.amountLong / 100,
                         0L,
-                        compositeDisposable
+                        compositeDisposable,
                     ).observe(viewLifecycleOwner) { event ->
                         event.getContentIfNotHandled()?.let {
                             it.error?.let { error ->
@@ -184,7 +191,7 @@ class SalesFragment : BaseFragment() {
                                 Toast.makeText(
                                     requireContext(),
                                     error.message,
-                                    Toast.LENGTH_LONG
+                                    Toast.LENGTH_LONG,
                                 )
                                     .show()
                             }
@@ -194,6 +201,7 @@ class SalesFragment : BaseFragment() {
                                 viewModel.setAccountType(it.accountType!!)
                                 viewModel.cardData = it.cardData
                                 viewModel.makePayment(requireContext(), transactionType)
+                                Log.d("SHALIEE", "SHALIEEEE")
                             }
                         }
                     }
@@ -241,30 +249,31 @@ class SalesFragment : BaseFragment() {
                 }.show()
             }
         }
-        alertDialog = AlertDialog.Builder(requireContext()).setCancelable(false).apply {
-            setView(receiptDialogBinding.root)
-            receiptDialogBinding.apply {
-                closeBtn.setOnClickListener {
-                    alertDialog.dismiss()
-                    viewModel.finish()
-                }
-                sendButton.setOnClickListener {
-                    if (receiptDialogBinding.telephone.text.toString().length != 11) {
-                        Toast.makeText(
-                            requireContext(),
-                            "Please enter a valid phone number",
-                            Toast.LENGTH_LONG
-                        ).show()
-                        return@setOnClickListener
+        alertDialog =
+            AlertDialog.Builder(requireContext()).setCancelable(false).apply {
+                setView(receiptDialogBinding.root)
+                receiptDialogBinding.apply {
+                    closeBtn.setOnClickListener {
+                        alertDialog.dismiss()
+                        viewModel.finish()
                     }
-                    viewModel.sendSmS(
-                        receiptDialogBinding.telephone.text.toString()
-                    )
-                    progress.visibility = View.VISIBLE
-                    sendButton.isEnabled = false
+                    sendButton.setOnClickListener {
+                        if (receiptDialogBinding.telephone.text.toString().length != 11) {
+                            Toast.makeText(
+                                requireContext(),
+                                "Please enter a valid phone number",
+                                Toast.LENGTH_LONG,
+                            ).show()
+                            return@setOnClickListener
+                        }
+                        viewModel.sendSmS(
+                            receiptDialogBinding.telephone.text.toString(),
+                        )
+                        progress.visibility = View.VISIBLE
+                        sendButton.isEnabled = false
+                    }
                 }
-            }
-        }.create()
+            }.create()
         alertDialog.window?.setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_ADJUST_PAN)
         viewModel.showPrintDialog.observe(viewLifecycleOwner) { event ->
             event.getContentIfNotHandled()?.let {
@@ -289,7 +298,7 @@ class SalesFragment : BaseFragment() {
                 if (it) {
                     NetPosTerminalConfig.init(
                         requireContext().applicationContext,
-                        configureSilently = true
+                        configureSilently = true,
                     )
                 }
             }
@@ -340,7 +349,7 @@ class SalesFragment : BaseFragment() {
             requireContext(),
             Manifest.permission.WRITE_EXTERNAL_STORAGE,
             WRITE_PERMISSION_REQUEST_CODE,
-            getString(R.string.storage_permission_rationale_for_download)
+            getString(R.string.storage_permission_rationale_for_download),
         ) {
             receiptPdf = createPdf(view, this)
         }
@@ -350,7 +359,7 @@ class SalesFragment : BaseFragment() {
         viewModel.currentLastTransactionResponse.value?.let { transResponse ->
             initViewsForPdfLayout(
                 pdfView,
-                transResponse
+                transResponse,
             )
             getPermissionAndCreatePdf(pdfView)
         }
@@ -365,21 +374,21 @@ class SalesFragment : BaseFragment() {
                         sharePdf(receiptPdf, this)
                         showSnackBar(
                             getString(R.string.fileDownloaded),
-                            binding.root
+                            binding.root,
                         )
                     }
                     PREF_VALUE_PRINT_DOWNLOAD_RECEIPT -> {
                         downloadPdfImpl()
                         showSnackBar(
                             getString(R.string.fileDownloaded),
-                            binding.root
+                            binding.root,
                         )
                     }
                     PREF_VALUE_PRINT_DOWNLOAD_AND_SHARE_RECEIPT -> {
                         downloadPdfImpl()
                         showSnackBar(
                             getString(R.string.fileDownloaded),
-                            binding.root
+                            binding.root,
                         )
                         sharePdf(receiptPdf, this)
                     }
@@ -400,14 +409,17 @@ class SalesFragment : BaseFragment() {
 
         Snackbar.make(
             requireActivity().findViewById(
-                R.id.container_main
+                R.id.container_main,
             ),
             message,
-            Snackbar.LENGTH_LONG
+            Snackbar.LENGTH_LONG,
         ).show()
     }
 
-    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+    override fun onViewCreated(
+        view: View,
+        savedInstanceState: Bundle?,
+    ) {
         super.onViewCreated(view, savedInstanceState)
         pdfView = LayoutPosReceiptPdfBinding.inflate(layoutInflater)
         vend()
@@ -430,16 +442,17 @@ class SalesFragment : BaseFragment() {
     private fun vend() {
         if (isVend) {
             var count = 0
-            val progressBar = ProgressDialog(context).apply {
-                this.setCancelable(false)
-                this.setButton(DialogInterface.BUTTON_NEGATIVE, "Cancel") { dialog, _ ->
-                    dialog.cancel()
-                    compositeDisposable.clear()
-                    requireActivity().onBackPressed()
+            val progressBar =
+                ProgressDialog(context).apply {
+                    this.setCancelable(false)
+                    this.setButton(DialogInterface.BUTTON_NEGATIVE, "Cancel") { dialog, _ ->
+                        dialog.cancel()
+                        compositeDisposable.clear()
+                        requireActivity().onBackPressed()
+                    }
+                    this.setMessage("Waiting for amount.")
+                    show()
                 }
-                this.setMessage("Waiting for amount.")
-                show()
-            }
             val socket = Socket()
             var printWriter: PrintWriter? = null
             var reader: BufferedReader? = null
@@ -453,10 +466,11 @@ class SalesFragment : BaseFragment() {
             }.flatMap {
                 Observable.interval(0, 5, TimeUnit.SECONDS)
             }.flatMap {
-                val out = JsonObject().apply {
-                    addProperty("serial_number", NetPosSdk.getDeviceSerial())
-                    addProperty("status", "")
-                }.toString()
+                val out =
+                    JsonObject().apply {
+                        addProperty("serial_number", NetPosSdk.getDeviceSerial())
+                        addProperty("status", "")
+                    }.toString()
                 printWriter?.println(out)
                 try {
                     val s = reader?.readLine()
@@ -483,7 +497,7 @@ class SalesFragment : BaseFragment() {
                         Toast.makeText(
                             context,
                             "Did not receive amount after waiting",
-                            Toast.LENGTH_LONG
+                            Toast.LENGTH_LONG,
                         ).show()
                         compositeDisposable.clear()
                         requireActivity().onBackPressed()
@@ -493,7 +507,7 @@ class SalesFragment : BaseFragment() {
                     Toast.makeText(
                         requireContext(),
                         "Error ${it.localizedMessage}",
-                        Toast.LENGTH_SHORT
+                        Toast.LENGTH_SHORT,
                     ).show()
                     Timber.e("Error: ${it.localizedMessage}")
                     requireActivity().onBackPressed()
