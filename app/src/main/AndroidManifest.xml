@@ -33,6 +33,7 @@
 
         <activity
             android:name=".ui.activities.AuthenticationActivity"
+            android:exported="true"
             android:screenOrientation="portrait"
             android:theme="@style/SplashTheme"
             android:windowSoftInputMode="adjustResize">
@@ -43,6 +44,7 @@
             </intent-filter>
         </activity>
         <activity
+
             android:screenOrientation="portrait"
             android:name="com.woleapp.netpos.ui.activities.MainActivity"
             android:windowSoftInputMode="adjustResize">

@@ -449,6 +449,8 @@ object RandomNumUtil {
                     loadingDialog.dismiss()
                     Toast.makeText(context, R.string.timeOut, Toast.LENGTH_SHORT).show()
                 }
+
+                Status.INITIAL_DEFAULT -> {}
             }
         }
     }
@@ -534,6 +536,9 @@ object RandomNumUtil {
                     loadingDialog.cancel()
                     loadingDialog.dismiss()
                 }
+
+                Status.INITIAL_DEFAULT -> {}
+                null -> {}
             }
         }
     }

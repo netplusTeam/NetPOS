@@ -21,6 +21,9 @@ import timber.log.Timber
 import java.text.SimpleDateFormat
 import java.util.* // ktlint-disable no-wildcard-imports
 import java.util.concurrent.TimeUnit
+import androidx.lifecycle.map
+import androidx.lifecycle.switchMap
+import androidx.lifecycle.distinctUntilChanged
 
 open class QRViewModel(
     private val masterPassQRService: MasterPassQRService,
@@ -307,20 +310,21 @@ open class QRViewModel(
     fun getMCC(MCCDto: MCCDto, mccService: MCCService) {
         dataSourceFactory =
             MCCDataSourceFactory(MCCDto, disposable, mccService, zenithQRService, blueCodeService)
-        val networkResourceLiveData: LiveData<Event<NetworkResource>> = Transformations.switchMap(
-            dataSourceFactory.itemLiveDataSource
-        ) {
-            it.networkResource
-        }
 
-        val emptyResultLiveData: LiveData<Event<Boolean>> = Transformations.switchMap(
-            dataSourceFactory.itemLiveDataSource
-        ) {
-            it.emptyResultLiveData
-        }
+        // Call .switchMap directly on the itemLiveDataSource
+        val networkResourceLiveData: LiveData<Event<NetworkResource>> =
+            dataSourceFactory.itemLiveDataSource.switchMap {
+                it.networkResource
+            }
+
+        val emptyResultLiveData: LiveData<Event<Boolean>> =
+            dataSourceFactory.itemLiveDataSource.switchMap {
+                it.emptyResultLiveData
+            }
 
         val data: LiveData<PagedList<MerchantCategory>> =
             LivePagedListBuilder(dataSourceFactory, config).build()
+
         _paginationHelper.postValue(
             PaginationHelper(
                 networkResourceLiveData,
@@ -329,6 +333,32 @@ open class QRViewModel(
             )
         )
     }
+
+//    fun getMCC(MCCDto: MCCDto, mccService: MCCService) {
+//        dataSourceFactory =
+//            MCCDataSourceFactory(MCCDto, disposable, mccService, zenithQRService, blueCodeService)
+//        val networkResourceLiveData: LiveData<Event<NetworkResource>> = Transformations.switchMap(
+//            dataSourceFactory.itemLiveDataSource
+//        ) {
+//            it.networkResource
+//        }
+//
+//        val emptyResultLiveData: LiveData<Event<Boolean>> = Transformations.switchMap(
+//            dataSourceFactory.itemLiveDataSource
+//        ) {
+//            it.emptyResultLiveData
+//        }
+//
+//        val data: LiveData<PagedList<MerchantCategory>> =
+//            LivePagedListBuilder(dataSourceFactory, config).build()
+//        _paginationHelper.postValue(
+//            PaginationHelper(
+//                networkResourceLiveData,
+//                emptyResultLiveData,
+//                data
+//            )
+//        )
+//    }
 
     fun textChanged(filter: String) = subject.onNext(filter)
 

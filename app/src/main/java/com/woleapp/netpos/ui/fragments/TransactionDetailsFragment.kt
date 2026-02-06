@@ -26,7 +26,6 @@ import com.woleapp.netpos.util.pdfUtils.createPdf
 import com.woleapp.netpos.util.pdfUtils.initViewsForPdfLayout
 import com.woleapp.netpos.util.pdfUtils.sharePdf
 import com.woleapp.netpos.viewmodels.TransactionsViewModel
-import kotlinx.android.synthetic.main.dialog_print_type.*
 import timber.log.Timber
 import java.io.File
 

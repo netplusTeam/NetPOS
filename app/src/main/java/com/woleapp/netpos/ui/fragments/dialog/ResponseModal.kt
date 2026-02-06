@@ -35,7 +35,6 @@ import com.woleapp.netpos.viewmodels.PayByZenithViewModel
 import dagger.hilt.android.AndroidEntryPoint
 import io.reactivex.android.schedulers.AndroidSchedulers
 import io.reactivex.schedulers.Schedulers
-import kotlinx.android.synthetic.main.transaction_status_modal.*
 import timber.log.Timber
 import java.io.File
 import javax.inject.Inject

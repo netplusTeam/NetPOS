@@ -24,7 +24,6 @@ import com.woleapp.netpos.util.PREF_USER
 import com.woleapp.netpos.util.RandomNumUtil.displayCurrency
 import com.woleapp.netpos.util.Singletons.gson
 import dagger.hilt.android.AndroidEntryPoint
-import kotlinx.android.synthetic.main.fragment_purchase.*
 
 @AndroidEntryPoint
 class PurchaseFragment : BaseFragment() {

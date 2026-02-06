@@ -80,46 +80,86 @@ class CompletePaymentWebViewFragment : Fragment() {
     }
 
     private fun setUpWebView(webView: WebView) {
-        webSettings = webView.settings
-        webSettings.apply {
+        webView.settings.apply {
             javaScriptEnabled = true
             loadWithOverviewMode = true
             useWideViewPort = true
-            domStorageEnabled = true
-            // Enable Application Cache
-            setAppCacheEnabled(true)
-            setAppCachePath(requireActivity().applicationContext.cacheDir.path)
-            // Enable Database Storage
-            databaseEnabled = true
-            setDatabasePath(requireActivity().applicationContext.getDir("database", 0).path)
-            databasePath = requireActivity().applicationContext.getDir("database", Context.MODE_PRIVATE).path
+            domStorageEnabled = true // Essential for modern web apps
 
-            // Enable Geolocation
+            // Removed: setAppCacheEnabled, setAppCachePath, setDatabasePath
+            // These are handled automatically by the system now.
+
+            databaseEnabled = true
             setGeolocationEnabled(true)
             defaultTextEncodingName = "utf-8"
+
+            // Note: Use MIXED_CONTENT_ALWAYS_ALLOW with caution!
             mixedContentMode = WebSettings.MIXED_CONTENT_ALWAYS_ALLOW
-            // Enable Safe Browsing (optional)
+
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O_MR1) {
-                webSettings.safeBrowsingEnabled = true
+                safeBrowsingEnabled = true
             }
         }
 
         webView.apply {
             webViewClient = object : WebViewClient() {
                 override fun onReceivedSslError(view: WebView?, handler: SslErrorHandler?, error: SslError?) {
-                    // Handle SSL errors here, e.g., proceed or cancel the request.
+                    // WARNING: handler?.proceed() is risky for production apps.
+                    // It allows self-signed or invalid certificates.
                     handler?.proceed()
-                    Log.d("DONEECKSSL", handler.toString())
                 }
+
                 override fun onReceivedError(view: WebView?, request: WebResourceRequest?, error: WebResourceError?) {
-                    // Handle web page loading errors here.
-                    Log.d("CHECKSSL", error.toString())
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                        Log.e("WebViewError", "${error?.description}")
+                    }
                 }
             }
             webChromeClient = WebChromeClient()
-         //   loadUrl("https://oap.providusbank.com/accountopening/#/")
-            //Log.d("PAYMENTURL", "https://qrpay.paysaddle.com/payment/#!/card?NPmerchantId=${merchantID}&terminalId=${userTID}&netposId=${netplusPayMid}&amount=${amount}&name=${CUSTOMER}&email=${CONTACTLESS_TRANSACTION_DEFAULT_EMAIL}&bank=${bank}&app=${CONTACT}&currency=$currency")
             loadUrl("https://qrpay.paysaddle.com/payment/#!/card?NPmerchantId=$merchantID&terminalId=$userTID&netposId=$netplusPayMid&amount=$amount&name=$CUSTOMER&email=$CONTACTLESS_TRANSACTION_DEFAULT_EMAIL&bank=$bank&app=$CONTACT&currency=$currency")
         }
     }
+//    private fun setUpWebView(webView: WebView) {
+//        webSettings = webView.settings
+//        webSettings.apply {
+//            javaScriptEnabled = true
+//            loadWithOverviewMode = true
+//            useWideViewPort = true
+//            domStorageEnabled = true
+//            // Enable Application Cache
+//            setAppCacheEnabled(true)
+//            setAppCachePath(requireActivity().applicationContext.cacheDir.path)
+//            // Enable Database Storage
+//            databaseEnabled = true
+//            setDatabasePath(requireActivity().applicationContext.getDir("database", 0).path)
+//            databasePath = requireActivity().applicationContext.getDir("database", Context.MODE_PRIVATE).path
+//
+//            // Enable Geolocation
+//            setGeolocationEnabled(true)
+//            defaultTextEncodingName = "utf-8"
+//            mixedContentMode = WebSettings.MIXED_CONTENT_ALWAYS_ALLOW
+//            // Enable Safe Browsing (optional)
+//            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O_MR1) {
+//                webSettings.safeBrowsingEnabled = true
+//            }
+//        }
+//
+//        webView.apply {
+//            webViewClient = object : WebViewClient() {
+//                override fun onReceivedSslError(view: WebView?, handler: SslErrorHandler?, error: SslError?) {
+//                    // Handle SSL errors here, e.g., proceed or cancel the request.
+//                    handler?.proceed()
+//                    Log.d("DONEECKSSL", handler.toString())
+//                }
+//                override fun onReceivedError(view: WebView?, request: WebResourceRequest?, error: WebResourceError?) {
+//                    // Handle web page loading errors here.
+//                    Log.d("CHECKSSL", error.toString())
+//                }
+//            }
+//            webChromeClient = WebChromeClient()
+//         //   loadUrl("https://oap.providusbank.com/accountopening/#/")
+//            //Log.d("PAYMENTURL", "https://qrpay.paysaddle.com/payment/#!/card?NPmerchantId=${merchantID}&terminalId=${userTID}&netposId=${netplusPayMid}&amount=${amount}&name=${CUSTOMER}&email=${CONTACTLESS_TRANSACTION_DEFAULT_EMAIL}&bank=${bank}&app=${CONTACT}&currency=$currency")
+//            loadUrl("https://qrpay.paysaddle.com/payment/#!/card?NPmerchantId=$merchantID&terminalId=$userTID&netposId=$netplusPayMid&amount=$amount&name=$CUSTOMER&email=$CONTACTLESS_TRANSACTION_DEFAULT_EMAIL&bank=$bank&app=$CONTACT&currency=$currency")
+//        }
+//    }
 }
