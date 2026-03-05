@@ -19,6 +19,7 @@ import com.woleapp.netpos.model.ConfigurationData
 import com.woleapp.netpos.util.*
 import com.woleapp.netpos.util.Singletons.getSavedConfigurationData
 import com.woleapp.netpos.util.Singletons.gson
+import com.woleapp.netpos.util.horizonpay.K11HardwareBridge
 import io.reactivex.Single
 import io.reactivex.android.schedulers.AndroidSchedulers
 import io.reactivex.disposables.CompositeDisposable
@@ -152,11 +153,18 @@ class NetPosTerminalConfig {
 
         private fun callHome(context: Context): Single<Pair<KeyHolder?, ConfigData?>> {
             Timber.e(keyHolder.toString())
+
+            val serial = if (android.os.Build.MODEL.contains("K11")) {
+                K11HardwareBridge.getSecureSN()
+            } else {
+                NetPosSdk.getDeviceSerial()
+            }
+
             return terminalConfigurator.nibssCallHome(
                 context,
                 getTerminalId(),
                 keyHolder?.clearSessionKey ?: "",
-                NetPosSdk.getDeviceSerial(),
+                serial,
             ).flatMap {
                 Timber.e("call home result $it")
                 if (it == "00") {
@@ -171,11 +179,18 @@ class NetPosTerminalConfig {
             terminalConfigurator.downloadNibssKeys(context, getTerminalId())
                 .flatMap { nibssKeyHolder ->
                     keyHolder = nibssKeyHolder
+
+                    val serial = if (android.os.Build.MODEL.contains("K11")) {
+                        K11HardwareBridge.getSecureSN()
+                    } else {
+                        NetPosSdk.getDeviceSerial()
+                    }
+
                     terminalConfigurator.downloadTerminalParameters(
                         context,
                         getTerminalId(),
                         nibssKeyHolder.clearSessionKey,
-                        NetPosSdk.getDeviceSerial(),
+                        serial,
                     ).map { nibssConfigData ->
                         configData = nibssConfigData
                         return@map Pair(nibssKeyHolder, nibssConfigData)

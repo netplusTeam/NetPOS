@@ -7,6 +7,7 @@ import com.google.gson.annotations.SerializedName
 import com.netpluspay.netpossdk.NetPosSdk
 import com.woleapp.netpos.nibss.NetPosTerminalConfig
 import com.woleapp.netpos.util.Singletons
+import com.woleapp.netpos.util.horizonpay.K11HardwareBridge
 
 enum class MqttEvents(val event: String?) {
     AUTHENTICATION("AUTHENTICATION"),
@@ -63,12 +64,25 @@ data class MqttEvent<T>(
     var geo: String? = null,
     var transactionType: String? = null
 ) {
+//    init {
+//        val user = Singletons.getCurrentlyLoggedInUser()
+//        storm_id = user!!.netplus_id!!
+//        business_name = user.business_name!!
+//        terminalId = NetPosTerminalConfig.getTerminalId()
+//        deviceSerial = NetPosSdk.getDeviceSerial()
+//    }
     init {
         val user = Singletons.getCurrentlyLoggedInUser()
-        storm_id = user!!.netplus_id!!
-        business_name = user.business_name!!
+        storm_id = user?.netplus_id ?: ""
+        business_name = user?.business_name ?: ""
         terminalId = NetPosTerminalConfig.getTerminalId()
-        deviceSerial = NetPosSdk.getDeviceSerial()
+
+        // Use the safe bridge instead of direct SDK call
+        deviceSerial = if (android.os.Build.MODEL.contains("K11")) {
+            K11HardwareBridge.getSecureSN()
+        } else {
+            NetPosSdk.getDeviceSerial() // Fallback for old Kozen devices
+        }
     }
 }
 

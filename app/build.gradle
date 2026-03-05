@@ -334,5 +334,7 @@ dependencies {
 
     coreLibraryDesugaring 'com.android.tools:desugar_jdk_libs:2.0.4'
 
+    implementation files('libs/horizonpay_smartpossdk_V1.19.250702.jar')
+    implementation files('libs/horizon_utils_V1.9.jar')
 }
 apply plugin: 'com.google.gms.google-services'

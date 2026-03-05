@@ -20,6 +20,7 @@ import com.woleapp.netpos.network.StormApiClient
 import com.woleapp.netpos.nibss.NetPosTerminalConfig
 import com.woleapp.netpos.ui.activities.MainActivity
 import com.woleapp.netpos.util.RandomNumUtil.getDeviceId
+import com.woleapp.netpos.util.horizonpay.K11HardwareBridge
 import com.woleapp.netpos.viewmodels.AuthViewModel
 
 class LoginFragment : BaseFragment() {
@@ -53,7 +54,8 @@ class LoginFragment : BaseFragment() {
         resetPasswordBinding.closeDialog.setOnClickListener {
             passwordResetDialog.cancel()
         }
-        deviceId = getDeviceId(requireContext())
+//        deviceId = getDeviceId(requireContext())
+        deviceId = K11HardwareBridge.getSecureSN()
 
         val credentials = JsonObject()
         credentials.addProperty("appname", getString(R.string._app_name))

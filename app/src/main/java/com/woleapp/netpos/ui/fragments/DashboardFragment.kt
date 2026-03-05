@@ -19,6 +19,7 @@ import androidx.appcompat.app.AlertDialog
 import androidx.databinding.ViewDataBinding
 import androidx.fragment.app.activityViewModels
 import androidx.fragment.app.viewModels
+import androidx.lifecycle.LiveData
 import androidx.recyclerview.widget.GridLayoutManager
 import androidx.work.Constraints
 import androidx.work.NetworkType
@@ -104,6 +105,8 @@ class DashboardFragment : BaseFragment() {
     private lateinit var printTypeDialog: AlertDialog
     private lateinit var printerErrorDialog: AlertDialog
     private lateinit var loader: android.app.AlertDialog
+    private var isCardFlowActive = false
+    private var cardFlowJob: LiveData<Event<ICCCardHelper>>? = null
 
     @Inject
     lateinit var gson: Gson
@@ -919,16 +922,26 @@ class DashboardFragment : BaseFragment() {
         viewModel.getCardData.observe(viewLifecycleOwner) { event ->
             event.getContentIfNotHandled()?.let { shouldGetCardData ->
                 if (shouldGetCardData) {
+                    viewModel.stopGettingCardData()
+
+                    if (cardFlowJob != null && cardFlowJob?.hasActiveObservers() == true) {
+                        Log.d("K11_DEBUG", "Prevented a duplicate dialog from opening!")
+                        return@let
+                    }
+                    Log.d("K11_DEBUG", "Starting fresh card flow...")
+
                     Timber.d("NOT_FROM_PURCHASE_2")
                     Log.d("CHECKING", shouldGetCardData.toString())
-                    showCardDialog(
+                    cardFlowJob = showCardDialog(
                         requireActivity(),
                         viewLifecycleOwner,
                         viewModel.amountLong / 100,
                         0L,
                         compositeDisposable,
-                    ).observe(viewLifecycleOwner) { event ->
+                    )
+                    cardFlowJob?.observe(viewLifecycleOwner) { event ->
                         event.getContentIfNotHandled()?.let {
+                            cardFlowJob = null
                             it.error?.let { error ->
                                 Timber.e(error)
                                 Toast.makeText(
@@ -939,20 +952,21 @@ class DashboardFragment : BaseFragment() {
                                     .show()
                             }
                             it.cardData?.let { _ ->
+                                Log.d("CARD_RESULT", "$it")
                                 viewModel.setCardScheme(it.cardScheme!!)
                                 viewModel.setCustomerName(it.customerName ?: "Customer")
                                 viewModel.setAccountType(it.accountType!!)
                                 viewModel.cardData = it.cardData
                                 zenithPbtViewModel.cardData = it.cardData
                                 val clearPinKey = Singletons.getClearPinKey()
-                                zenithPbtViewModel.cvv =
-                                    it.cardData.let { it1 ->
-                                        decodePinBlock(
-                                            it1.pinBlock.toString(),
-                                            it1.pan,
-                                            clearPinKey.toString(),
-                                        )
-                                    }
+//                                zenithPbtViewModel.cvv =
+//                                    it.cardData.let { it1 ->
+//                                        decodePinBlock(
+//                                            it1.pinBlock.toString(),
+//                                            it1.pan,
+//                                            clearPinKey.toString(),
+//                                        )
+//                                    }
                                 Prefs.putString(PREF_CARD_DATA, gson.toJson(it.cardData))
                                 Prefs.putString(PREF_ISO_ACCOUNT_TYPE, gson.toJson(it.accountType))
 //                                Prefs.putString(PREF_CARD_SCHEME, it.cardScheme)
@@ -965,6 +979,45 @@ class DashboardFragment : BaseFragment() {
                 }
             }
         }
+
+
+        // 2. Update the observer
+//        viewModel.getCardData.observe(viewLifecycleOwner) { event ->
+//            event.getContentIfNotHandled()?.let { shouldGetCardData ->
+//                if (shouldGetCardData) {
+//                    viewModel.stopGettingCardData()
+//
+//                    // 3. CRITICAL: If a flow is already active, do NOT start a new one
+//                    if (cardFlowJob != null && cardFlowJob?.hasActiveObservers() == true) {
+//                        Log.d("K11_DEBUG", "Prevented a duplicate dialog from opening!")
+//                        return@let
+//                    }
+//                    Log.d("K11_DEBUG", "Starting fresh card flow...")
+//
+//                    // Store the reference so we can check it next time
+//                    cardFlowJob = showCardDialog(
+//                        requireActivity(),
+//                        viewLifecycleOwner,
+//                        viewModel.amountLong / 100,
+//                        0L,
+//                        compositeDisposable
+//                    )
+//
+//                    cardFlowJob?.observe(viewLifecycleOwner) { cardEvent ->
+//                        cardEvent.getContentIfNotHandled()?.let { result ->
+//                            // 4. Reset the job when finished
+//                            cardFlowJob = null
+//
+//                            // ... your existing logic for success/error ...
+//                            if (result.cardData != null) {
+//                                Log.d("K11_DEBUG", "Transaction logic complete")
+//                            }
+//                        }
+//                    }
+//                }
+//            }
+//        }
+
 
         zenithPbtViewModel.payMessage.observe(viewLifecycleOwner) { event ->
             event.getContentIfNotHandled()?.let {

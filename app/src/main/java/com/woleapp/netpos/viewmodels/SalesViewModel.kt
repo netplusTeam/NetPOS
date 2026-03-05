@@ -42,6 +42,7 @@ import com.woleapp.netpos.util.ResponseCodeWarrantingForReversalConstants.doesRe
 import com.woleapp.netpos.util.ResponseCodeWarrantingForReversalConstants.wasTransactionCompletedPartially
 import com.woleapp.netpos.util.Singletons.getKeyHolder
 import com.woleapp.netpos.util.Singletons.gson
+import com.woleapp.netpos.util.horizonpay.K11HardwareBridge
 import io.reactivex.Single
 import io.reactivex.android.schedulers.AndroidSchedulers
 import io.reactivex.disposables.CompositeDisposable
@@ -74,7 +75,13 @@ class SalesViewModel(
     private val stormPID = Singletons.getCurrentlyLoggedInUser()?.netplus_id ?: ""
     private val partnerId =
         if (BuildConfig.FLAVOR.contains("wemacashout", true)) WEMA_AGENCY_PD else stormPID
-    private val serialNumber = NetPosSdk.getDeviceSerial() /*"1142016190002868"*/
+//    private val serialNumber = NetPosSdk.getDeviceSerial() /*"1142016190002868"*/
+    val serial = if (android.os.Build.MODEL.contains("K11")) {
+        K11HardwareBridge.getSecureSN()
+    } else {
+        NetPosSdk.getDeviceSerial()
+    }
+    private val serialNumber = serial /*"1142016190002868"*/
     private val terminalId = Singletons.getCurrentlyLoggedInUser()?.terminal_id ?: "" /*"2033ALWE"*/
     private val newStormService: NewStormApiService =
         NewStormApiClientForThreshold.getStormApiLoginInstance()
@@ -155,6 +162,10 @@ class SalesViewModel(
 
     fun setCustomerName(name: String) {
         customerName.value = name
+    }
+
+    fun stopGettingCardData() {
+        _getCardData.value = Event(false)
     }
 
     fun validateField() {
