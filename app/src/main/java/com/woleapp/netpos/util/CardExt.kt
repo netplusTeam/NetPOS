@@ -36,6 +36,7 @@ import com.woleapp.netpos.R
 import com.woleapp.netpos.app.DeviceHelper
 import com.woleapp.netpos.databinding.DialogSelectAccountTypeBinding
 import com.woleapp.netpos.nibss.NetPosTerminalConfig
+import com.woleapp.netpos.util.horizonpay.HexUtil
 import io.reactivex.android.schedulers.AndroidSchedulers
 import io.reactivex.disposables.CompositeDisposable
 import io.reactivex.schedulers.Schedulers
@@ -532,6 +533,7 @@ private fun startK11Emv(
 
                 // 1. Get the PAN for PIN block encryption
                 var pan = emvL2.getTagValue("5A")?.replace("F", "") ?: ""
+                val panForPinBlock = pan.substring(pan.length - 13, pan.length - 1)
 //                if (pan.isEmpty()) {
 //                    // Fallback to the card number read during confirmCardNo if 5A is empty
 //                    pan = cardNum
@@ -558,7 +560,7 @@ private fun startK11Emv(
                             bundle,
                             intArrayOf(4, 6), // Allowed lengths
                             60,               // Timeout in seconds
-                            pan,
+                            panForPinBlock,
                             0,                // Key Index (usually 0 for TPK)
                             PinpadConst.PinAlgorithmMode.ISO9564FMT1,
                             object : AidlPinPadInputListener.Stub() {
@@ -568,13 +570,20 @@ private fun startK11Emv(
 //                                    Log.d("K11_EMV", "PIN Input Success. Block: ${data}")
 //                                    emvL2.requestPinResp(data, noPin)
 
-                                    val hexPin =
-                                        data?.joinToString("") { "%02x".format(it) } ?: "NULL"
+//                                    val hexPin = data?.joinToString("") { "%02x".format(it) } ?: "NULL"
+                                    val hexPin = HexUtil.bytesToHexString(data).toLowerCase(Locale.ROOT)
                                     Log.d(
                                         "K11_DEBUG_SECURITY",
-                                        "Encrypted PIN Block (Field 52): $hexPin"
+                                        "Encrypted PIN Block (Field 52): $hexPin == $pan"
                                     )
-                                    encryptedPinBlock = hexPin
+                                    if (hexPin.length == 16) {
+                                        encryptedPinBlock = hexPin
+                                    } else {
+                                        Log.d(
+                                            "K11_DEBUG_SECURITY",
+                                            "E NO REACH: $panForPinBlock"
+                                        )
+                                    }
                                     // Store it in the variable we created above
 //                                    iccCardHelper?.cardData?.apply { pinBlock = hexPin }
 //                                    Log.d("K11_DEBUG_SECURITY", "Encrypted PIN Block (Field 52): ${iccCardHelper?.cardData}")
@@ -600,6 +609,7 @@ private fun startK11Emv(
                                         "Encrypted PIN Block LAST ONE: $hexPin"
                                     )
                                     emvL2.requestPinResp(data, noPin)
+
                                 }
 
                                 override fun onSendKey(keyCode: Int) {}
