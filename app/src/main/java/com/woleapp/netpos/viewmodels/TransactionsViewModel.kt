@@ -2,6 +2,7 @@ package com.woleapp.netpos.viewmodels
 
 import android.content.Context
 import android.os.Build
+import android.util.Log
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
@@ -19,6 +20,7 @@ import com.woleapp.netpos.model.User
 import com.woleapp.netpos.network.StormApiClient
 import com.woleapp.netpos.nibss.NetPosTerminalConfig
 import com.woleapp.netpos.util.* // ktlint-disable no-wildcard-imports
+import com.woleapp.netpos.util.horizonpay.K11ReceiptPrinter
 import io.reactivex.Single
 import io.reactivex.android.schedulers.AndroidSchedulers
 import io.reactivex.disposables.CompositeDisposable
@@ -197,7 +199,7 @@ class TransactionsViewModel(private val appDatabase: AppDatabase) : ViewModel() 
             requestData,
             cardData!!,
         ).flatMap {
-            if (it.responseCode == "A3") {
+            if (it.responseCode == "22" || it.responseCode == "34" || it.responseCode == "59") {
                 _shouldRefreshNibssKeys.postValue(Event(true))
             }
             _message.postValue(Event("Transaction: ${it.responseMessage}"))
@@ -251,7 +253,8 @@ class TransactionsViewModel(private val appDatabase: AppDatabase) : ViewModel() 
                     this.cardExpiry = ""
                 }
 
-        if (Build.MODEL.equals("Pro", true) || Build.MODEL.equals("P3", true)) {
+        // UPDATE HERE: Added check for K11
+        if (Build.MODEL.equals("Pro", true) || Build.MODEL.equals("P3", true) || Build.MODEL.contains("K11", true)) {
             when (Prefs.getString(PREF_PRINTER_SETTINGS, PREF_VALUE_PRINT_CUSTOMER_COPY_ONLY)) {
                 PREF_VALUE_PRINT_CUSTOMER_COPY_ONLY -> startPrintingReceipt(
                     context,
@@ -296,7 +299,6 @@ class TransactionsViewModel(private val appDatabase: AppDatabase) : ViewModel() 
             }
         }
     }
-
     fun startPrintingReceipt(
         context: Context,
         isMerchantCopy: Boolean = false,
@@ -306,35 +308,108 @@ class TransactionsViewModel(private val appDatabase: AppDatabase) : ViewModel() 
         val modifiedTransaction = lastTransactionResponse.value
         val transactionResponse =
             modifiedTransaction?.copy(localDate_13 = modifiedTransaction.localDate_13 + PDF_REPRINT_IDENTIFIER)
-                .apply {
-                    this?.cardExpiry = ""
+                ?.apply {
+                    this.cardExpiry = ""
                 }
-        transactionResponse?.print(context, isMerchantCopy = isMerchantCopy, isReprint = true)
-            ?.subscribeOn(Schedulers.io())
-            ?.observeOn(AndroidSchedulers.mainThread())
-            ?.subscribe { t1, t2 ->
-                t1?.let {
+
+        if (transactionResponse == null) {
+            inProgress.value = false
+            return
+        }
+
+        // Branching Logic for Horizon K11 Device
+        if (Build.MODEL.contains("K11", ignoreCase = true)) {
+            K11ReceiptPrinter.printReceipt(context, transactionResponse, isMerchantCopy) { success, message ->
+                if (success) {
                     if (printBoth) {
                         if (isMerchantCopy) {
                             _done.value = true
                             inProgress.value = false
                         } else {
+                            // Recursively print the merchant copy next
                             startPrintingReceipt(context, isMerchantCopy = true, printBoth = true)
                         }
                     } else {
                         _done.value = true
                         inProgress.value = false
                     }
-                }
-                t2?.let {
+                } else {
                     _done.value = true
                     inProgress.value = false
-                    _showPrinterError.value = Event(it.localizedMessage ?: "Error")
-                    Timber.e(it)
-                    _message.value = Event(it.localizedMessage ?: "Error")
+                    _showPrinterError.value = Event(message)
+                    Timber.e(message)
+                    _message.value = Event(message)
                 }
-            }?.disposeWith(compositeDisposable)
+            }
+        } else {
+            // Original Logic for NetPos/Other SDKs
+            transactionResponse.print(context, isMerchantCopy = isMerchantCopy, isReprint = true)
+                .subscribeOn(Schedulers.io())
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribe { t1, t2 ->
+                    t1?.let {
+                        if (printBoth) {
+                            if (isMerchantCopy) {
+                                _done.value = true
+                                inProgress.value = false
+                            } else {
+                                // Recursively print the merchant copy next
+                                startPrintingReceipt(context, isMerchantCopy = true, printBoth = true)
+                            }
+                        } else {
+                            _done.value = true
+                            inProgress.value = false
+                        }
+                    }
+                    t2?.let {
+                        _done.value = true
+                        inProgress.value = false
+                        _showPrinterError.value = Event(it.localizedMessage ?: "Error")
+                        Timber.e(it)
+                        _message.value = Event(it.localizedMessage ?: "Error")
+                    }
+                }.disposeWith(compositeDisposable)
+        }
     }
+
+//    fun startPrintingReceipt(
+//        context: Context,
+//        isMerchantCopy: Boolean = false,
+//        printBoth: Boolean = false,
+//    ) {
+//        inProgress.value = true
+//        val modifiedTransaction = lastTransactionResponse.value
+//        val transactionResponse =
+//            modifiedTransaction?.copy(localDate_13 = modifiedTransaction.localDate_13 + PDF_REPRINT_IDENTIFIER)
+//                .apply {
+//                    this?.cardExpiry = ""
+//                }
+//        transactionResponse?.print(context, isMerchantCopy = isMerchantCopy, isReprint = true)
+//            ?.subscribeOn(Schedulers.io())
+//            ?.observeOn(AndroidSchedulers.mainThread())
+//            ?.subscribe { t1, t2 ->
+//                t1?.let {
+//                    if (printBoth) {
+//                        if (isMerchantCopy) {
+//                            _done.value = true
+//                            inProgress.value = false
+//                        } else {
+//                            startPrintingReceipt(context, isMerchantCopy = true, printBoth = true)
+//                        }
+//                    } else {
+//                        _done.value = true
+//                        inProgress.value = false
+//                    }
+//                }
+//                t2?.let {
+//                    _done.value = true
+//                    inProgress.value = false
+//                    _showPrinterError.value = Event(it.localizedMessage ?: "Error")
+//                    Timber.e(it)
+//                    _message.value = Event(it.localizedMessage ?: "Error")
+//                }
+//            }?.disposeWith(compositeDisposable)
+//    }
 
     fun showReceiptDialog() {
         _showPrintDialog.value = Event(
@@ -377,7 +452,7 @@ class TransactionsViewModel(private val appDatabase: AppDatabase) : ViewModel() 
             requestData,
             cardData!!,
         ).flatMap {
-            if (it.responseCode == "A3") {
+            if (it.responseCode == "22" || it.responseCode == "34" || it.responseCode == "59") {
                 _shouldRefreshNibssKeys.postValue(Event(true))
             }
             _showProgressDialog.postValue(Event(false))
@@ -421,7 +496,7 @@ class TransactionsViewModel(private val appDatabase: AppDatabase) : ViewModel() 
         _showProgressDialog.value = Event(true)
         TransactionProcessor(hostConfig).processTransaction(context, requestData, cardData!!)
             .flatMap {
-                if (it.responseCode == "A3") {
+                if (it.responseCode == "22" || it.responseCode == "34" || it.responseCode == "59") {
                     _shouldRefreshNibssKeys.postValue(Event(true))
                 }
                 _showProgressDialog.postValue(Event(false))

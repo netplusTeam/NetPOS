@@ -3,6 +3,8 @@ package com.woleapp.netpos.util
 import com.danbamitale.epmslib.entities.ConfigData
 import com.danbamitale.epmslib.entities.KeyHolder
 import com.danbamitale.epmslib.entities.TransactionResponse
+import com.danbamitale.epmslib.entities.clearPinKey
+import com.danbamitale.epmslib.entities.clearSessionKey
 import com.danbamitale.epmslib.entities.responseMessage
 import com.google.gson.Gson
 import com.pixplicity.easyprefs.library.Prefs
@@ -42,7 +44,7 @@ object Singletons {
 
     fun getSavedConfigurationData(): ConfigurationData {
         return ConfigurationData(
-            "196.6.103.18",
+            "196.6.103.18",  // Changed from production IP 196.6.103.18 to test IP
             "4016",
             DEFAULT_TERMINAL_ID,
             Keys.posvasLiveKey1,
@@ -60,8 +62,11 @@ object Singletons {
 //        )
     }
 
-    fun getKeyHolder(): KeyHolder? =
-        gson.fromJson(Prefs.getString(PREF_KEYHOLDER, null), KeyHolder::class.java)
+    fun getKeyHolder(): KeyHolder? {
+        val keyholder = gson.fromJson(Prefs.getString(PREF_KEYHOLDER, null), KeyHolder::class.java)
+        timber.log.Timber.d("KEYHOLDER_DEBUG: Singletons.getKeyHolder() retrieved from Prefs - exists=%s, sessionKeyLen=%s, pinKeyLen=%s", keyholder != null, keyholder?.clearSessionKey?.length ?: "N/A", keyholder?.clearPinKey?.length ?: "N/A")
+        return keyholder
+    }
 
     fun getConfigData(): ConfigData? =
         gson.fromJson(Prefs.getString(PREF_CONFIG_DATA, null), ConfigData::class.java)

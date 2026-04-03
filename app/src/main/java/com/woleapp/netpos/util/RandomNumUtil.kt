@@ -332,22 +332,27 @@ object RandomNumUtil {
         return "127.22:216MPOS_DEVICE_TYPE111217AdditionalEmvTags${lengthOfLength}${additionalTagManipulation.length}$additionalTagManipulation"
     }
 
+//    fun getDeviceId(context: Context): String {
+//        val deviceId: String =
+//            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+//                Settings.Secure.getString(context.contentResolver, Settings.Secure.ANDROID_ID)
+//            } else {
+//                val mTelephony = context.getSystemService(Context.TELEPHONY_SERVICE) as TelephonyManager
+//                if (mTelephony.deviceId != null) {
+//                    mTelephony.deviceId
+//                } else {
+//                    Settings.Secure.getString(
+//                        context.contentResolver,
+//                        Settings.Secure.ANDROID_ID,
+//                    )
+//                }
+//            }
+//        return deviceId
+//    }
+
+    // Replace TelephonyManager call with this
     fun getDeviceId(context: Context): String {
-        val deviceId: String =
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-                Settings.Secure.getString(context.contentResolver, Settings.Secure.ANDROID_ID)
-            } else {
-                val mTelephony = context.getSystemService(Context.TELEPHONY_SERVICE) as TelephonyManager
-                if (mTelephony.deviceId != null) {
-                    mTelephony.deviceId
-                } else {
-                    Settings.Secure.getString(
-                        context.contentResolver,
-                        Settings.Secure.ANDROID_ID,
-                    )
-                }
-            }
-        return deviceId
+        return Settings.Secure.getString(context.contentResolver, Settings.Secure.ANDROID_ID)
     }
 
     private val bankList =

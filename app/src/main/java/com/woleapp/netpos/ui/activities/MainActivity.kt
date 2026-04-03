@@ -39,9 +39,11 @@ import com.woleapp.netpos.mqtt.MqttHelper
 import com.woleapp.netpos.network.StormApiClient
 import com.woleapp.netpos.network.TokenPassportRequest
 import com.woleapp.netpos.network.getTokenClient
+import com.woleapp.netpos.nibss.CONFIGURATION_ACTION
 import com.woleapp.netpos.nibss.CONFIGURATION_STATUS
 import com.woleapp.netpos.nibss.NetPosTerminalConfig
 import com.woleapp.netpos.receivers.BatteryReceiver
+import androidx.localbroadcastmanager.content.LocalBroadcastManager
 import com.woleapp.netpos.ui.fragments.*
 import com.woleapp.netpos.ui.fragments.dialog.LoadingDialog
 import com.woleapp.netpos.util.* // ktlint-disable no-wildcard-imports
@@ -121,7 +123,7 @@ class MainActivity : AppCompatActivity(), EasyPermissions.PermissionCallbacks {
 
     override fun onStop() {
         super.onStop()
-        // LocalBroadcastManager.getInstance(this).unregisterReceiver(receiver)
+        LocalBroadcastManager.getInstance(this).unregisterReceiver(receiver)
         unregisterReceiver(batteryReceiver)
     }
 
@@ -129,7 +131,7 @@ class MainActivity : AppCompatActivity(), EasyPermissions.PermissionCallbacks {
         super.onStart()
 
         registerReceiver(batteryReceiver, iFilter)
-        // LocalBroadcastManager.getInstance(this).registerReceiver(receiver, IntentFilter(CONFIGURATION_ACTION))
+        LocalBroadcastManager.getInstance(this).registerReceiver(receiver, IntentFilter(CONFIGURATION_ACTION))
         when ( // NetPosTerminalConfig.isConfigurationInProcess -> showProgressDialog()
             NetPosTerminalConfig.configurationStatus
         ) {
@@ -470,7 +472,7 @@ class MainActivity : AppCompatActivity(), EasyPermissions.PermissionCallbacks {
                 }
 
                 response?.let {
-                    if (it.responseCode == "A3") {
+                    if (it.responseCode == "22" || it.responseCode == "34" || it.responseCode == "59") {
                         Prefs.remove(PREF_CONFIG_DATA)
                         Prefs.remove(PREF_KEYHOLDER)
                         NetPosTerminalConfig.init(

@@ -1,6 +1,7 @@
 package com.woleapp.netpos.ui.fragments.dialog
 
 import android.Manifest
+import android.os.Build
 import android.os.Bundle
 import android.util.Log
 import android.view.LayoutInflater
@@ -28,6 +29,7 @@ import com.woleapp.netpos.ui.fragments.DashboardFragment
 import com.woleapp.netpos.util.*
 import com.woleapp.netpos.util.ModelMapper.mapMpgsDataToTransactionResponse
 import com.woleapp.netpos.util.RandomNumUtil.showSnackBar
+import com.woleapp.netpos.util.horizonpay.K11ReceiptPrinter
 import com.woleapp.netpos.util.pdfUtils.createPdf
 import com.woleapp.netpos.util.pdfUtils.initViewsForMpgsPdfLayout
 import com.woleapp.netpos.util.pdfUtils.sharePdf
@@ -162,6 +164,65 @@ class ResponseModal
             qrViewModel.payResponse.removeObservers(viewLifecycleOwner)
             qrViewModel._payResponse.value = null
         }
+
+
+//    override fun onViewCreated(
+//        view: View,
+//        savedInstanceState: Bundle?,
+//    ) {
+//        super.onViewCreated(view, savedInstanceState)
+//        pdfView = LayoutPosReceiptWemaPdfBinding.inflate(layoutInflater)
+//        initViews()
+//        dialog?.window?.apply {
+//            setBackgroundDrawableResource(R.drawable.curve_bg)
+//            isCancelable = false
+//        }
+//
+//        // Move click listeners here to avoid duplicating them on every resume!
+//        cancelBtn.setOnClickListener {
+//            dialog?.dismiss()
+//            showFragment(
+//                targetFragment = DashboardFragment(),
+//                className = "Dashboard Fragment",
+//            )
+//        }
+//
+//        downloadAndShareBtn.setOnClickListener {
+//            dialog?.dismiss()
+//            showFragment(
+//                targetFragment = DashboardFragment(),
+//                className = "Dashboard Fragment",
+//            )
+//
+//            // THE FIX: Trigger the physical Horizon K11 Printer directly!
+//            newWebViewResponse?.let { response ->
+//                // Drop your physical print method here instead of the PDF/SMS logic.
+//                // Depending on how you set it up, it usually looks something like:
+//
+////                 qrViewModel.printReceipt(requireContext(), response)
+//
+//                // OR if calling the K11 utility directly:
+//                if (Build.MODEL.contains("K11", ignoreCase = true)) {
+//                    K11ReceiptPrinter.printReceipt(
+//                        requireContext(),
+//                        response,
+//                        true
+//                    ) { success, message ->
+//                        if (success) {
+//
+//                        }
+//                    }
+//                }
+//            }
+//        }
+//    }
+//
+//    override fun onResume() {
+//        super.onResume()
+//        setData()
+//        qrViewModel.payResponse.removeObservers(viewLifecycleOwner)
+//        qrViewModel._payResponse.value = null
+//    }
 
         private fun initViews() {
             with(binding) {

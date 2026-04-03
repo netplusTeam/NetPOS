@@ -361,7 +361,7 @@ class UtilitiesViewModel: ViewModel() {
             TransactionRequestData(transactionType, 200, 0L, accountType = isoAccountType!!)
         processor.processTransaction(context, requestData, cardData!!)
             .flatMap {
-                if (it.responseCode == "A3") {
+                if (it.responseCode == "22" || it.responseCode == "34" || it.responseCode == "59") {
                     Prefs.remove(PREF_CONFIG_DATA)
                     Prefs.remove(PREF_KEYHOLDER)
                     _shouldRefreshNibssKeys.postValue(Event(true))

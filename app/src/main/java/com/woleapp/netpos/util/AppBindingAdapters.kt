@@ -45,12 +45,28 @@ fun Button.processQuickCashOutButtonState(transactionState: Int) {
     }
 }
 
+//@BindingAdapter("setPrintButtonLabelText")
+//fun Button.setPrintButtonLabelText(dormantInput: String) {
+//    text = if (Build.MODEL.equals("Pro", true) || Build.MODEL.equals("P3", true)) {
+//        resources.getString(R.string.print)
+//    } else {
+//        resources.getString(R.string.download_or_share)
+//    }
+//}
+
 @BindingAdapter("setPrintButtonLabelText")
-fun Button.setPrintButtonLabelText(dormantInput: String) {
-    text = if (Build.MODEL.equals("Pro", true) || Build.MODEL.equals("P3", true)) {
-        resources.getString(R.string.print)
-    } else {
-        resources.getString(R.string.download_or_share)
+fun Button.setPrintButtonLabelText(dormantInput: String?) {
+
+    val isProDevice = Build.MODEL.equals("Pro", true) ||
+            Build.MODEL.equals("P3", true) ||
+            Build.MODEL.contains("K11", ignoreCase = true)
+
+    val isForcedPrint = dormantInput == "PRINT_ONLY"
+
+    text = when {
+        isForcedPrint -> resources.getString(R.string.print)
+        isProDevice -> resources.getString(R.string.print)
+        else -> resources.getString(R.string.download_or_share)
     }
 }
 

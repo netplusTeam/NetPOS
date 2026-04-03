@@ -188,7 +188,7 @@ class TransactionDetailsFragment : BaseFragment() {
                     if (receiptDialogBinding.telephone.text.toString().length != 11) {
                         Toast.makeText(
                             requireContext(),
-                            "Please enter a valid phone number",
+                            "Please enter a valid number",
                             Toast.LENGTH_LONG
                         ).show()
                         return@setOnClickListener

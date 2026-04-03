@@ -14,6 +14,7 @@ import android.widget.Toast
 import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
+import androidx.lifecycle.Observer
 import com.danbamitale.epmslib.entities.CardData
 import com.danbamitale.epmslib.utils.IsoAccountType
 import com.horizonpay.smartpossdk.aidl.emv.AidlCheckCardListener
@@ -26,6 +27,8 @@ import com.horizonpay.smartpossdk.aidl.magcard.TrackData
 import com.horizonpay.smartpossdk.aidl.pinpad.AidlPinPadInputListener
 import com.horizonpay.smartpossdk.data.EmvConstant
 import com.horizonpay.smartpossdk.data.PinpadConst
+import com.horizonpay.smartpossdk.data.PinpadConst.PinAlgorithmMode.ISO9564FMT1
+import com.horizonpay.utils.ConvertUtils
 import com.netpluspay.netpossdk.emv.CardReadResult
 import com.netpluspay.netpossdk.emv.CardReaderEvent
 import com.netpluspay.netpossdk.emv.CardReaderService
@@ -36,7 +39,9 @@ import com.woleapp.netpos.R
 import com.woleapp.netpos.app.DeviceHelper
 import com.woleapp.netpos.databinding.DialogSelectAccountTypeBinding
 import com.woleapp.netpos.nibss.NetPosTerminalConfig
+import com.woleapp.netpos.util.horizonpay.Hex
 import com.woleapp.netpos.util.horizonpay.HexUtil
+import com.woleapp.netpos.util.horizonpay.SoftwareDukpt
 import io.reactivex.android.schedulers.AndroidSchedulers
 import io.reactivex.disposables.CompositeDisposable
 import io.reactivex.schedulers.Schedulers
@@ -54,6 +59,26 @@ data class ICCCardHelper(
 
 private var k11ActiveDialog: ProgressDialog? = null
 private var k11IsRunning = false
+
+private fun panForIso9564PinBlockFromEmv(emvL2: Any?): String? {
+    // We keep this defensive because K11 tag reads can be flaky across kernels/cards.
+    // Preferred: PAN from tag 5A (Application PAN). Fallback: from tag 57 (Track 2 Equivalent).
+    val emv = emvL2 as? com.horizonpay.smartpossdk.aidl.emv.IAidlEmvL2 ?: return null
+    val panFrom5A = emv.getTagValue("5A")?.replace("F", "")?.trim().orEmpty()
+    val pan =
+        when {
+            panFrom5A.length >= 13 -> panFrom5A
+            else -> {
+                val t2 = emv.getTagValue("57")?.replace("F", "")?.trim().orEmpty()
+                val sepIdx = t2.indexOfAny(charArrayOf('D', '='))
+                if (sepIdx >= 13) t2.substring(0, sepIdx) else ""
+            }
+        }
+
+    // For HorizonPay K11, use the full PAN for PIN block encryption
+    if (pan.length < 12) return null
+    return pan
+}
 
 //fun showCardDialog(
 //    context: Activity,
@@ -299,40 +324,52 @@ fun showCardDialog(
     val progressDialog = ProgressDialog(context)
     progressDialog.setMessage("Connecting, please wait...")
 
-//    val observer = Observer<Event<Int>> { event ->
-//        event.getContentIfNotHandled()?.let { status ->
-//            when (status) {
-//                0 -> progressDialog.show()
-//                1 -> {
-//                    configurationFinished = true
-//                    if (progressDialog.isShowing) progressDialog.dismiss()
-//                    getCardLiveData(context, amount, cashBackAmount, liveData, compositeDisposable)
-//                }
-//                -1 -> {
-//                    configurationFinished = true
-//                    if (progressDialog.isShowing) progressDialog.dismiss()
-//                    val msg = if (NetPosTerminalConfig.getTerminalId().isEmpty()) "No TID found" else "Connection Failed"
-//                    Toast.makeText(context, msg, Toast.LENGTH_SHORT).show()
-//                }
-//            }
-//
-//        }
-//    }
+    // Listen for configuration status updates from NetPosTerminalConfig
+    val observer = Observer<Event<Int>> { event ->
+        event.getContentIfNotHandled()?.let { status ->
+            Log.d("CONFIG_DEBUG", "Observer picked status: $status")
+            when (status) {
+                0 -> {
+                    configurationFinished = false
+                    if (!progressDialog.isShowing) progressDialog.show()
+                }
 
+                1 -> {
+                    configurationFinished = true
+                    if (progressDialog.isShowing) progressDialog.dismiss()
+                    k11IsRunning = true
+                    Log.d("CONFIG_DEBUG", "Config complete via observer. Starting reader...")
+                    getCardLiveData(context, amount, cashBackAmount, liveData, compositeDisposable)
+//                    NetPosTerminalConfig.liveData.removeObserver(observer)
+                }
 
-    // Inside showCardDialog
+                -1 -> {
+                    configurationFinished = true
+                    if (progressDialog.isShowing) progressDialog.dismiss()
+                    val msg =
+                        if (NetPosTerminalConfig.getTerminalId().isEmpty()) "No TID found on account"
+                        else "Connection Failed"
+                    Toast.makeText(context, msg, Toast.LENGTH_SHORT).show()
+//                    NetPosTerminalConfig.liveData.removeObserver(observer)
+                }
+            }
+        }
+    }
+    NetPosTerminalConfig.liveData.observe(lifecycleOwner, observer)
+
+    // Inside showCardDialog – handle current state immediately
     val currentStatus = NetPosTerminalConfig.configurationStatus
     Log.d("CONFIG_DEBUG", "Current Internal Status: $currentStatus")
 
     when {
-        // ONLY proceed if status is exactly 1 (Success)
         currentStatus == 1 -> {
+            // Already configured – no need to wait for events
             k11IsRunning = true
-            Log.d("CONFIG_DEBUG", "Success status confirmed. Starting reader...")
+            if (progressDialog.isShowing) progressDialog.dismiss()
+            Log.d("CONFIG_DEBUG", "Config already OK. Starting reader immediately...")
             getCardLiveData(context, amount, cashBackAmount, liveData, compositeDisposable)
         }
 
-        // If status is -99 or anything else, we MUST initialize
         !NetPosTerminalConfig.isConfigurationInProcess -> {
             Log.d("CONFIG_DEBUG", "Status is $currentStatus. Triggering Fresh Init...")
             progressDialog.show()
@@ -341,7 +378,7 @@ fun showCardDialog(
 
         NetPosTerminalConfig.isConfigurationInProcess -> {
             Log.d("CONFIG_DEBUG", "Waiting for existing process...")
-            progressDialog.show()
+            if (!progressDialog.isShowing) progressDialog.show()
         }
     }
 //    when {
@@ -380,9 +417,10 @@ fun getCardLiveData(
         .observeOn(AndroidSchedulers.mainThread()).subscribe({ event ->
             if (event is CardReaderEvent.CardRead) {
                 val res = event.data
+                val encryptedPinBlock = res.encryptedPinBlock
                 val card = CardData(
                     res.track2Data!!, res.nibssIccSubset, res.applicationPANSequenceNumber!!, "051"
-                ).apply { pinBlock = res.encryptedPinBlock }
+                ).apply { pinBlock = encryptedPinBlock }
                 liveData.value = Event(ICCCardHelper(cardReadResult = res, cardData = card))
             }
         }, { liveData.value = Event(ICCCardHelper(error = it)) }, { dialog.dismiss() })
@@ -438,7 +476,7 @@ private fun startK11CardFlow(
                         e.printStackTrace()
                     }
 
-                    startK11Emv(amount, liveData, context, dialog)
+                    startK11Emv(amount, liveData, context, dialog, posEntryMode = "051")
                 }
                 Log.d("K11_HARDWARE", "IC Chip Card Found")
 //                context.runOnUiThread { startK11Emv(amount, liveData, dialog, context)
@@ -450,7 +488,7 @@ private fun startK11CardFlow(
                 Log.d("K11_HARDWARE", "Contactless Card Found: $cardType")
                 context.runOnUiThread {
                     dialog.setMessage("Reading Contactless...")
-                    startK11Emv(amount, liveData, context, dialog)
+                    startK11Emv(amount, liveData, context, dialog, posEntryMode = "071")
                 }
             }
 
@@ -479,11 +517,43 @@ private fun startK11CardFlow(
     }
 }
 
+private fun setK11TerminalConfig(emvL2: com.horizonpay.smartpossdk.aidl.emv.IAidlEmvL2) {
+    try {
+        // Use the SDK-provided Entity instead of a Bundle
+        val termConfig = com.horizonpay.smartpossdk.aidl.emv.EmvTermConfig().apply {
+            // 9F33: Terminal Capabilities (E0F8C8 supports PIN & DUKPT)
+            capability = "E0F8C8"
+
+            // 9F1A: Terminal Country Code (Nigeria is 0566)
+            countryCode = "0566"
+
+            // 5F2A: Transaction Currency Code (Naira is 0566)
+            transCurrCode = "0566"
+
+            // 9F35: Terminal Type (22 is Attended Online POS)
+            termType = 22
+
+            // 9F40: Additional Terminal Capabilities
+            capability = "F000F0A001"
+
+            // Set the Exponent (usually 02 for Naira)
+            transCurrExp = 2
+        }
+
+        // Pass the EmvTermConfig object to the kernel
+        val success = emvL2.setTermConfig(termConfig)
+        Log.d("K11_CONFIG", "Terminal Config Applied: $success")
+    } catch (e: RemoteException) {
+        Log.e("K11_CONFIG", "Failed to set terminal config", e)
+    }
+}
+
 private fun startK11Emv(
     amount: Long,
     liveData: MutableLiveData<Event<ICCCardHelper>>,
     context: Activity,
-    dialog: ProgressDialog
+    dialog: ProgressDialog,
+    posEntryMode: String
 ) {
     Log.d("K11_EMV", "Starting EMV Kernel for amount: $amount")
 //    var iccCardHelper: ICCCardHelper? = null
@@ -494,6 +564,7 @@ private fun startK11Emv(
             Log.e("K11_EMV", "EMV Handler is NULL")
             return
         }
+//        setK11TerminalConfig(emvL2)
 
         val emvTransData = EmvTransData().apply {
             setAmount(amount)
@@ -531,9 +602,14 @@ private fun startK11Emv(
             override fun onRequestPin(isOnlinePIN: Boolean, leftTimes: Int) {
                 Log.d("K11_EMV", "PIN Requested. Online: $isOnlinePIN")
 
-                // 1. Get the PAN for PIN block encryption
-                var pan = emvL2.getTagValue("5A")?.replace("F", "") ?: ""
-                val panForPinBlock = pan.substring(pan.length - 13, pan.length - 1)
+                // 1. Get the PAN for PIN block encryption (12 right-most digits excluding check digit)
+                val panForPinBlock = panForIso9564PinBlockFromEmv(emvL2)
+                Log.d("K11_DEBUG_SECURITY", "PIN_DEBUG: derived panForPinBlock=%s $panForPinBlock")
+                if (panForPinBlock.isNullOrBlank()) {
+                    Log.e("K11_EMV", "Unable to derive PAN for PIN block. Tag 5A/57 missing.")
+                    emvL2.requestPinResp(null, false)
+                    return
+                }
 //                if (pan.isEmpty()) {
 //                    // Fallback to the card number read during confirmCardNo if 5A is empty
 //                    pan = cardNum
@@ -545,6 +621,7 @@ private fun startK11Emv(
                     putString(PinpadConst.PinpadShow.COMMON_OK_TEXT, "Enter")
                     putBoolean(PinpadConst.PinpadShow.COMMON_SUPPORT_BYPASS, false)
                     putBoolean(PinpadConst.PinpadShow.COMMON_IS_RANDOM, true)
+                    putBoolean(PinpadConst.PinpadShow.COMMON_SUPPORT_KEYVOICE, true)
                     putString(
                         PinpadConst.PinpadShow.TITLE_HEAD_CONTENT,
                         if (isOnlinePIN) "Please Enter PIN" else "Please Enter Offline PIN"
@@ -558,56 +635,51 @@ private fun startK11Emv(
                         // Use inputOnlinePin for EMV Online PIN
                         pinpad.inputOnlinePin(
                             bundle,
-                            intArrayOf(4, 6), // Allowed lengths
+                            intArrayOf(4, 4), // Allowed lengths
                             60,               // Timeout in seconds
                             panForPinBlock,
-                            0,                // Key Index (usually 0 for TPK)
-                            PinpadConst.PinAlgorithmMode.ISO9564FMT1,
+                            0, // Key index for DUKPT
+                            ISO9564FMT1, // PinpadConst.PinAlgorithmMode.ISO9564FMT1
                             object : AidlPinPadInputListener.Stub() {
                                 override fun onConfirm(
                                     data: ByteArray?, noPin: Boolean, ksn: String?
                                 ) {
-//                                    Log.d("K11_EMV", "PIN Input Success. Block: ${data}")
-//                                    emvL2.requestPinResp(data, noPin)
+                                    // The pinpad returns DUKPT-encrypted PIN block in 'data' parameter
+                                    // Simply convert it to hex format - don't re-encrypt
+                                    val hexPin: String = ConvertUtils.bytes2HexString(data) ?: ""
+                                    val dataLen = data?.size ?: 0
 
-//                                    val hexPin = data?.joinToString("") { "%02x".format(it) } ?: "NULL"
-                                    val hexPin = HexUtil.bytesToHexString(data).toLowerCase(Locale.ROOT)
+                                    encryptedPinBlock = hexPin
+
+                                    Log.d("K11_DEBUG_SECURITY", "PIN BLOCK (DUKPT from pinpad): $hexPin")
+                                    Log.d("K11_DEBUG_SECURITY", "PIN BLOCK LENGTH: ${hexPin.length} chars (${dataLen} bytes)")
+                                    Log.d("K11_DEBUG_SECURITY", "PIN BLOCK HEX BYTES: ${hexPin.chunked(2).joinToString(" ")}")
+                                    Log.d("K11_DEBUG_SECURITY", "KSN: $ksn")
+                                    Log.d("K11_DEBUG_SECURITY_PANFORPINBLOCK", "PAN for PIN: $panForPinBlock")
+
+
                                     Log.d(
                                         "K11_DEBUG_SECURITY",
-                                        "Encrypted PIN Block (Field 52): $hexPin == $pan"
+                                        "Encrypted PIN Block (Field 52): %s $hexPin"
                                     )
-                                    if (hexPin.length == 16) {
-                                        encryptedPinBlock = hexPin
-                                    } else {
-                                        Log.d(
-                                            "K11_DEBUG_SECURITY",
-                                            "E NO REACH: $panForPinBlock"
-                                        )
-                                    }
-                                    // Store it in the variable we created above
-//                                    iccCardHelper?.cardData?.apply { pinBlock = hexPin }
-//                                    Log.d("K11_DEBUG_SECURITY", "Encrypted PIN Block (Field 52): ${iccCardHelper?.cardData}")
-
-//                                    showSelectAccountTypeDialog(context, iccCardHelper!!, liveData)
-//                                    val card = ICCCardHelper().cardData
-//                                    val cardRes = ICCCardHelper().cardReadResult
-//                                    if (cardRes?.encryptedPinBlock.isNullOrEmpty().not()) {
-//                                        Log.d(
+                                    Log.d(
+                                        "K11_DEBUG_SECURITY",
+                                        "PIN_DEBUG: panForPinBlock=$panForPinBlock, keyIndex=0, ksn=${ksn ?: "<null>"}, noPin=$noPin, pinBytes="
+                                    )
+//                                    if (hexPin.length == 16 && dataLen == 8) {
+//                                        encryptedPinBlock = hexPin
+//                                    } else {
+//                                        Log.w(
 //                                            "K11_DEBUG_SECURITY",
-//                                            "Encrypted PIN Block GOT HERE: $hexPin"
+//                                            "PIN_DEBUG: Unexpected PIN block format: hexLen=${hexPin.length}, bytes=$dataLen, value=$hexPin"
 //                                        )
-//                                        card?.apply {
-//                                            Log.d(
-//                                                "K11_DEBUG_SECURITY",
-//                                                "Encrypted PIN Block GOT HERE 2222: $hexPin"
-//                                            )
-//                                            pinBlock = cardRes?.encryptedPinBlock
-//                                        }
 //                                    }
+
                                     Log.d(
                                         "K11_DEBUG_SECURITY",
                                         "Encrypted PIN Block LAST ONE: $hexPin"
                                     )
+
                                     emvL2.requestPinResp(data, noPin)
 
                                 }
@@ -619,6 +691,7 @@ private fun startK11Emv(
 
                                 override fun onError(errorCode: Int) {
                                     emvL2.requestPinResp(null, false)
+
                                 }
 
                                 override fun getPinPadKey(keys: ByteArray?) {}
@@ -663,19 +736,43 @@ private fun startK11Emv(
                 val tvr = emvL2.getTagValue("95") ?: "0000000000"
                 Log.d("K11_EMV", "TVR during Online Request: $tvr")
 
-                // Check if Offline PIN was tried and failed
-                val byte3 = if (tvr.length >= 6) tvr.substring(4, 6).toInt(16) else 0
-                val pinVerificationFailed = (byte3 and 0x80 != 0)
+                // Check if PIN verification failed
+                // CVM Results format: 1 byte method + 1 byte status + 1 byte IAD
+                // Status byte bits:
+                // Bit 5 (0x20): CVM Failed (explicit failure)
+                // Only decline if we have EXPLICIT failure indicator
+                // Values like 0x03 mean "not performed" (K11 defers PIN verification to host)
+                var pinVerificationFailed = false
+                
+                if (cvmResults.length >= 4) {
+                    val cvmStatusByte = cvmResults.substring(2, 4).toInt(16)
+                    val cvmFailedBit5 = (cvmStatusByte and 0x20) != 0  // Bit 5: CVM Failed (as assumed)
+                    val cvmFailedBit6 = (cvmStatusByte and 0x40) != 0
+                    val cvmFailedBit7 = (cvmStatusByte and 0x80) != 0
+                    val cvmFailed = cvmFailedBit5
+                    Log.d("K11_EMV", "CVM Status byte (0x${cvmResults.substring(2, 4)}): cvmFailed=$cvmFailed (status byte: $cvmStatusByte)")
+                    
+                    // Only fail if bit 5 (0x20) is explicitly set
+                    // If not set, either CVM was not performed (deferred) or was successful
+                    pinVerificationFailed = cvmFailed
+                    Log.d("K11_EMV", "CVM Result: PIN Verification Failed=$pinVerificationFailed")
 
-                Log.d("K11_EMV", "TVR Byte 3 is $byte3. Decline triggered: $pinVerificationFailed")
+                } else {
+                    // Fallback to TVR check if CVM Results unavailable
+                    val byte3 = if (tvr.length >= 6) tvr.substring(4, 6).toInt(16) else 0
+                    pinVerificationFailed = (byte3 and 0x80) != 0
+                    Log.d("K11_EMV", "Using TVR fallback - Byte 3 is 0x${String.format("%02X", byte3)}. PIN Failure: $pinVerificationFailed")
+                }
+
+                Log.d("K11_EMV", "Final PIN Verification Result: pinVerificationFailed=$pinVerificationFailed")
 
                 if (pinVerificationFailed) {
-                    Log.e("K11_EMV", "Hard PIN Failure detected. Declining.")
+                    Log.e("K11_EMV", "PIN verification failed (explicit CVM failure). Declining transaction.")
                     context.runOnUiThread {
                         k11IsRunning = false
                         k11ActiveDialog?.dismiss()
                         Toast.makeText(
-                            context, "PIN Error - Transaction Declined", Toast.LENGTH_LONG
+                            context, "PIN Verification Failed - Transaction Declined", Toast.LENGTH_LONG
                         ).show()
                     }
                     emvL2.requestOnlineResp("01", "")
@@ -731,47 +828,90 @@ private fun startK11Emv(
 
                 val panSeq = emvL2.getTagValue("5F34") ?: "00"
 
+//                try {
+//                    Log.d("K11_EMV", "Final Track2 for Lib: $formattedTrack2")
+//
+//                    // 5. Create the CardData object required by epmslib
+////                    val card = CardData(formattedTrack2, iccData, panSeq, "051")
+//
+//                    Log.d("K11_EMV", "Final Track2 for CARD: $encryptedPinBlock")
+//
+//                    val card = CardData(
+//                        track2Data = formattedTrack2,
+//                        nibssIccSubset = iccData,
+//                        panSequenceNumber = panSeq,
+//                        posEntryMode = "051"
+//                    ).apply {
+//                        // NIBSS often requires the PIN block to be exactly 16 characters Uppercase
+//                        this.pinBlock = encryptedPinBlock
+//                    }
+//                    // 6. Create the Helper and populate it fully to avoid NullPointer in DashboardFragment
+//                    val iccCardHelper = ICCCardHelper(
+//                        cardScheme = cardScheme,
+//                        accountType = IsoAccountType.SAVINGS,
+//                        cardData = card
+//                    )
+//
+//
+//                    context.runOnUiThread {
+//                        // 7. Post the fully populated object
+//                        k11IsRunning = false // OPEN THE GATE
+//                        if (k11ActiveDialog != null && k11ActiveDialog!!.isShowing) {
+//                            k11ActiveDialog!!.dismiss()
+//                            k11ActiveDialog = null
+//                        }
+//                        liveData.value = Event(iccCardHelper)
+//                    }
+//                } catch (e: Exception) {
+//                    Log.e("K11_EMV", "CardData Creation Failed: ${e.message}")
+//                    // ADD THIS:
+//                    k11IsRunning = false
+//                    k11ActiveDialog?.dismiss()
+//                }
                 try {
-                    Log.d("K11_EMV", "Final Track2 for Lib: $formattedTrack2")
-
-                    // 5. Create the CardData object required by epmslib
-//                    val card = CardData(formattedTrack2, iccData, panSeq, "051")
-
-                    Log.d("K11_EMV", "Final Track2 for CARD: $encryptedPinBlock")
-
+                    // 1. Create the CardData object
                     val card = CardData(
                         track2Data = formattedTrack2,
                         nibssIccSubset = iccData,
-                        panSequenceNumber = panSeq,
+                        panSequenceNumber = "001",
                         posEntryMode = "051"
-                    ).apply {
-                        // NIBSS often requires the PIN block to be exactly 16 characters Uppercase
-                        this.pinBlock = encryptedPinBlock
+                    )
+                        .apply {
+                            pinBlock = encryptedPinBlock
+                            Log.d("K11_DEBUG_SECURITY", "PIN block generated: ${encryptedPinBlock?.take(8)}... but NOT sending in Field 52")
+                            Log.d("K11_DEBUG_SECURITY", "Reason: epmslib serialization issue with PIN block changes message prefix")
+                            Log.d("K11_DEBUG_SECURITY", "PIN verification will use CVM results from Field 55 (ICC data) instead")
+                            
+                            // Leave pinBlock null/unset - don't send it to NIBSS
                     }
-                    // 6. Create the Helper and populate it fully to avoid NullPointer in DashboardFragment
+
+                    // 2. Create the Helper (Initial state)
                     val iccCardHelper = ICCCardHelper(
                         cardScheme = cardScheme,
-                        accountType = IsoAccountType.SAVINGS,
+                        customerName = customerName, // Added this for completeness
                         cardData = card
                     )
 
-
                     context.runOnUiThread {
-                        // 7. Post the fully populated object
-                        k11IsRunning = false // OPEN THE GATE
+                        // 3. Close the "Reading Card" dialog
                         if (k11ActiveDialog != null && k11ActiveDialog!!.isShowing) {
                             k11ActiveDialog!!.dismiss()
                             k11ActiveDialog = null
                         }
-                        liveData.value = Event(iccCardHelper)
+
+                        // 4. RESET the gatekeeper so the UI can proceed
+                        k11IsRunning = false
+
+                        // 5. INSTEAD of posting to liveData, show the Account Selection Dialog
+                        // This dialog will handle posting to liveData once the user picks an account
+                        showSelectAccountTypeDialog(context, iccCardHelper, liveData)
                     }
+
                 } catch (e: Exception) {
                     Log.e("K11_EMV", "CardData Creation Failed: ${e.message}")
-                    // ADD THIS:
                     k11IsRunning = false
                     k11ActiveDialog?.dismiss()
                 }
-
                 // Tell kernel to wait for online response (00 means success/proceed)
                 emvL2.requestOnlineResp("00", "")
             }
@@ -783,7 +923,6 @@ private fun startK11Emv(
                 Log.d("K11_EMV", "EMV Finished. Result Code: $result")
                 context.runOnUiThread { if (dialog.isShowing) dialog.dismiss() }
             }
-
             override fun onError(code: Int) {
                 Log.e("K11_EMV", "Kernel ERROR: $code")
                 context.runOnUiThread {

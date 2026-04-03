@@ -3,10 +3,14 @@ package com.woleapp.netpos.util
 import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
+import android.graphics.Paint
 import android.os.Build
+import android.os.Bundle
 import com.danbamitale.epmslib.entities.TransactionResponse
 import com.danbamitale.epmslib.entities.responseMessage
 import com.danbamitale.epmslib.extensions.formatCurrencyAmount
+import com.horizonpay.smartpossdk.aidl.printer.AidlPrinterListener
+import com.horizonpay.smartpossdk.aidl.printer.IAidlPrinter
 import com.netpluspay.netpossdk.NetPosSdk
 import com.netpluspay.netpossdk.printer.PrinterResponse
 import com.netpluspay.netpossdk.printer.ReceiptBuilder
@@ -17,9 +21,11 @@ import com.pos.sdk.printer.models.PrintLine
 import com.pos.sdk.printer.models.TextPrintLine
 import com.woleapp.netpos.BuildConfig
 import com.woleapp.netpos.R
+import com.woleapp.netpos.app.DeviceHelper
 import com.woleapp.netpos.model.NipNotification
 import com.woleapp.netpos.util.DateTimeUtil.getDateFromMilliseconds
 import com.woleapp.netpos.util.RandomNumUtil.formatCurrencyAmountUsingCurrentModule
+import com.woleapp.netpos.util.horizonpay.K11ReceiptPrinter
 import io.reactivex.Observable
 import io.reactivex.ObservableEmitter
 import io.reactivex.Single
@@ -98,9 +104,19 @@ fun previousEndOfDayPrintImplementation(
 fun List<TransactionResponse>.printEndOfDay(
     context: Context
 ): Single<PrinterResponse> {
+
     if (Build.MODEL.equals("mini", true) || Build.MODEL.equals("p5", true)) {
         return Single.error(Throwable("Device cannot print"))
     }
+
+    // 2. BRANCHING LOGIC FOR K11
+    if (Build.MODEL.contains("K11", ignoreCase = true)) {
+        return printEndOfDayK11(context, this)
+    }
+
+//    if (Build.MODEL.equals("mini", true) || Build.MODEL.equals("p5", true)) {
+//        return Single.error(Throwable("Device cannot print"))
+//    }
 
     val printerManager = NetPosSdk.getPrinterManager(context).apply {
         if (DeviceConfig.Device == DeviceConfig.DEVICE_PRO) {
@@ -235,6 +251,72 @@ fun List<TransactionResponse>.printEndOfDay(
     }
 }
 
+private fun printEndOfDayK11(
+    context: Context,
+    transactions: List<TransactionResponse>
+): Single<PrinterResponse> {
+    return Single.create { emitter ->
+        try {
+            // Use the IAidlPrinter interface as defined in your DeviceHelper
+            val printer: IAidlPrinter? = DeviceHelper.getPrinter()
+
+            if (printer == null) {
+                emitter.onError(Throwable("K11 Printer Service not initialized"))
+                return@create
+            }
+
+            // 1. Initialize
+//            printer.init()
+
+            // 2. Add Image (Logo)
+            val bitmap = BitmapFactory.decodeResource(context.resources, R.drawable.ic_print_logo)
+            val scaledBitmap = Bitmap.createScaledBitmap(bitmap, 180, 120, false)
+            // IAidlPrinter usually takes (align, bitmap)
+//            printer.addImage(1, scaledBitmap) // 1 is usually CENTER
+
+            // 3. Add Text (Header)
+            // IAidlPrinter.addText takes a Bundle for formatting and the String
+            val format = Bundle().apply {
+                putInt("font", 2) // 0: small, 1: normal, 2: large
+                putBoolean("bold", true)
+                putInt("align", 1) // 0: left, 1: center, 2: right
+            }
+
+//            printer.addText(format, "END OF DAY\n")
+
+            format.putInt("font", 1)
+            format.putBoolean("bold", false)
+            format.putInt("align", 0)
+
+//            printer.addText(format, "--------------------------------\n")
+
+            // 4. Loop Transactions
+            transactions.forEach { trans ->
+                val status = if (trans.responseCode == "00") "A" else "D"
+                val line = "${trans.RRN}  $status  ${trans.amount}\n"
+//                printer.addText(format, line)
+            }
+
+            // 5. Feed paper (pixels)
+//            printer.paperSkip(100)
+
+            // 6. Execute Print
+//            printer.print(object : AidlPrinterListener.Stub() {
+//                override fun onPrintFinish() {
+//                    emitter.onSuccess(PrinterResponse())
+//                }
+//
+//                override fun onError(code: Int) {
+//                    emitter.onError(Throwable("Print Error: $code"))
+//                }
+//            })
+
+        } catch (e: Exception) {
+            emitter.onError(e)
+        }
+    }
+}
+
 fun POIPrinterManage.appendTextEntity(printLine: TextPrintLine) {
     addPrintLine(printLine)
 }
@@ -276,11 +358,46 @@ fun List<TransactionResponse>.printAll(
     }
 }
 
+//fun TransactionResponse.print(
+//    printerListener: POIPrinterManage.IPrinterListener,
+//    context: Context,
+//    isMerchantCopy: Boolean = true
+//) {
+//    buildReceipt(context, isMerchantCopy).print(printerListener)
+//}
+
+//fun TransactionResponse.print(
+//    context: Context,
+//    remark: String? = null,
+//    isMerchantCopy: Boolean = false,
+//    isReprint: Boolean = false
+//): Single<PrinterResponse> =
+//    buildReceipt(
+//        remark = remark,
+//        context = context,
+//        isMerchantCopy = isMerchantCopy,
+//        isReprint = isReprint
+//    ).print()
+
 fun TransactionResponse.print(
     printerListener: POIPrinterManage.IPrinterListener,
     context: Context,
     isMerchantCopy: Boolean = true
 ) {
+    // 1. Intercept K11 devices
+    if (Build.MODEL.contains("K11", ignoreCase = true)) {
+        printerListener.onStart()
+        K11ReceiptPrinter.printReceipt(context, this, isMerchantCopy) { success, message ->
+            if (success) {
+                printerListener.onFinish()
+            } else {
+                printerListener.onError(-1, message)
+            }
+        }
+        return
+    }
+
+    // 2. Fallback for old devices
     buildReceipt(context, isMerchantCopy).print(printerListener)
 }
 
@@ -289,13 +406,29 @@ fun TransactionResponse.print(
     remark: String? = null,
     isMerchantCopy: Boolean = false,
     isReprint: Boolean = false
-): Single<PrinterResponse> =
-    buildReceipt(
+): Single<PrinterResponse> {
+
+    // 1. Intercept K11 devices and wrap the callback in RxJava Single
+    if (Build.MODEL.contains("K11", ignoreCase = true)) {
+        return Single.create { emitter ->
+            K11ReceiptPrinter.printReceipt(context, this, isMerchantCopy) { success, message ->
+                if (success) {
+                    if (!emitter.isDisposed) emitter.onSuccess(PrinterResponse())
+                } else {
+                    if (!emitter.isDisposed) emitter.onError(Throwable(message))
+                }
+            }
+        }
+    }
+
+    // 2. Fallback for old devices
+    return buildReceipt(
         remark = remark,
         context = context,
         isMerchantCopy = isMerchantCopy,
         isReprint = isReprint
     ).print()
+}
 
 fun TransactionResponse.builder() = StringBuilder().apply {
     append("Merchant Name: ").append(Singletons.getCurrentlyLoggedInUser()!!.business_name)

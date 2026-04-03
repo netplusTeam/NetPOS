@@ -252,12 +252,14 @@ class SalesViewModel(
 
     fun makePayment(context: Context, transactionType: TransactionType = TransactionType.PURCHASE) {
         Timber.e(cardData.toString())
+        Timber.d("TRANSACTION_DEBUG: Card data details - pan=%s, pinBlock=%s, expiry=%s", cardData?.pan, cardData?.pinBlock, cardData?.expiryDate)
         val configData: ConfigData = NetPosTerminalConfig.getConfigData() ?: kotlin.run {
             _message.value =
                 Event("Terminal has not been configured, restart the application to configure")
             return
         }
         val keyHolder: KeyHolder = NetPosTerminalConfig.getKeyHolder()!!
+        Timber.d("TRANSACTION_DEBUG: Using keyHolder for transaction - sessionKeyLen=%s, pinKeyLen=%s", keyHolder.clearSessionKey.length, keyHolder.clearPinKey.length)
         Timber.e("terminal id for transaction ${NetPosTerminalConfig.getTerminalId()}")
         val hostConfig = HostConfig(
             NetPosTerminalConfig.getTerminalId(),
@@ -265,6 +267,7 @@ class SalesViewModel(
             keyHolder,
             configData,
         )
+        Timber.d("TRANSACTION_DEBUG: HostConfig created with terminalId=%s, keyHolder present=%s", NetPosTerminalConfig.getTerminalId(), keyHolder != null)
 
         val customStan = generateRandomRrn(6)
         val customRrn = generateRandomRrn(12)
@@ -280,6 +283,7 @@ class SalesViewModel(
                 0L,
                 accountType = isoAccountType!!,
             )
+        Timber.d("TRANSACTION_DEBUG: Transaction request - type=%s, amount=%s, accountType=%s", transactionType, amountLong, isoAccountType)
         val processor = TransactionProcessor(hostConfig)
         transactionState.value = STATE_PAYMENT_STARTED
 
@@ -443,9 +447,44 @@ class SalesViewModel(
             this.RRN = rrn
             this.STAN = stan
         }
+        val pinBlockAtRequest = cardData?.pinBlock
+        val pinBlockIsNullAtRequest = pinBlockAtRequest == null
+        val pinBlockIsBlankAtRequest = pinBlockAtRequest.isNullOrBlank()
+        val pinBlockIsEmptyStringAtRequest = pinBlockAtRequest == ""
+        val pinBlockLenAtRequest = pinBlockAtRequest?.length ?: 0
+        val pinBlockIsHexAtRequest = pinBlockAtRequest?.all { ch ->
+            ch.isDigit() || ch in 'A'..'F' || ch in 'a'..'f'
+        } ?: false
+        Timber.d("TRANSACTION_DEBUG: About to call processTransaction - RRN=%s, STAN=%s", rrn, stan)
+        Timber.d("TRANSACTION_DEBUG: NIBSS connection - IP=%s, Port=%s, SSL=%s", NetPosTerminalConfig.connectionData.ipAddress, NetPosTerminalConfig.connectionData.ipPort, NetPosTerminalConfig.connectionData.isSSL)
+
+        // Log payload data for debugging A3/06
+        Timber.d("TRANSACTION_DEBUG: Request payload: requestData=%s", gson.toJson(reqData))
+        Timber.d("TRANSACTION_DEBUG: Request payload: cardData={pan=%s, expiry=%s, pinBlockPresent=%s}",
+            cardData?.pan?.maskPan(),
+            cardData?.expiryDate ?: "<null>",
+            cardData?.pinBlock != null)
+
+        // Test basic network connectivity to NIBSS
+        try {
+            val socket = java.net.Socket()
+            socket.connect(java.net.InetSocketAddress(NetPosTerminalConfig.connectionData.ipAddress, NetPosTerminalConfig.connectionData.ipPort), 5000)
+            socket.close()
+            Timber.d("TRANSACTION_DEBUG: Network connectivity test PASSED - can reach NIBSS server")
+        } catch (e: Exception) {
+            Timber.d("TRANSACTION_DEBUG: Network connectivity test FAILED - ${e.javaClass.simpleName}: ${e.message}")
+        }
+
         processor.processTransaction(context, reqData, cardData!!)
+            .doOnError { error ->
+                Timber.d("TRANSACTION_DEBUG: Transaction processing error - ${error.javaClass.simpleName}: ${error.message}")
+                if (error is StringIndexOutOfBoundsException && error.message?.contains("length=0; index=-1") == true) {
+                    Timber.d("TRANSACTION_DEBUG: Empty response from NIBSS - likely network/connectivity issue")
+                }
+            }
             .flatMap labelCheckForReversal@{ transRes ->
                 Timber.d("ORIGINAL_TRANSACTION_RECEIVED=====>%s", gson.toJson(transRes))
+                Timber.d("TRANSACTION_DEBUG: Response received - code=%s, message=%s", transRes.responseCode, transRes.responseMessage)
                 return@labelCheckForReversal when {
                     isConnectionError(transRes.responseMessage) -> {
                         saveTransactionToDb(transRes)
@@ -469,7 +508,7 @@ class SalesViewModel(
             }
             .flatMap {
                 transResp = it.copy(transmissionDateTime = getDate(it.transactionTimeInMillis))
-                if (it.responseCode == "A3") {
+                if (it.responseCode == "22" || it.responseCode == "34" || it.responseCode == "59") {
                     Prefs.remove(PREF_CONFIG_DATA)
                     Prefs.remove(PREF_KEYHOLDER)
                     _shouldRefreshNibssKeys.postValue(Event(true))
@@ -479,8 +518,15 @@ class SalesViewModel(
                 it.amount = requestData.amount
                 it.transmissionDateTime = getDate(it.transactionTimeInMillis)
 
+                // Keep A3 as A3 for easier diagnosis; only convert known key-expiry codes to 06
                 val modifiedResponseCode =
-                    if (it.responseCode == "22" || it.responseCode == "34" || it.responseCode == "59" || it.responseCode == "A3") "06" else it.responseCode
+                    if (it.responseCode == "22" || it.responseCode == "34" || it.responseCode == "59") "06" else it.responseCode
+
+                Timber.d("TRANSACTION_DEBUG: Mapping response - original=%s, final=%s", it.responseCode, modifiedResponseCode)
+
+                if (it.responseCode == "A3") {
+                    _message.postValue(Event("NIBSS returned A3: Issuer/Switch not available or invalid request payload"))
+                }
 
                 val transRespons = it.copy(responseCode = modifiedResponseCode)
 
@@ -491,7 +537,7 @@ class SalesViewModel(
                 Single.just(lastTransaction)
             }.flatMap {
                 val modifiedResponseCode =
-                    if (it.responseCode == "22" || it.responseCode == "34" || it.responseCode == "59" || it.responseCode == "A3") "06" else it.responseCode
+                    if (it.responseCode == "22" || it.responseCode == "34" || it.responseCode == "59") "06" else it.responseCode
                 transactionResponseDao
                     .insertNewTransaction(it.copy(responseCode = modifiedResponseCode))
             }
@@ -513,7 +559,7 @@ class SalesViewModel(
                 )
 
                 val modifiedResponseCode =
-                    if (lastTransaction.responseCode == "22" || lastTransaction.responseCode == "34" || lastTransaction.responseCode == "59" || lastTransaction.responseCode == "A3") "06" else lastTransaction.responseCode
+                    if (lastTransaction.responseCode == "22" || lastTransaction.responseCode == "34" || lastTransaction.responseCode == "59") "06" else lastTransaction.responseCode
                 transactionResponseDao
                     .insertNewTransaction(lastTransaction.copy(responseCode = modifiedResponseCode))
                     .subscribeOn(Schedulers.io())
@@ -550,10 +596,10 @@ class SalesViewModel(
         makePaymentTransResult
             .flatMap {
                 transResp = it
-                if (it.responseCode == "A3") {
+                if (it.responseCode == "22" || it.responseCode == "34" || it.responseCode == "59") {
                     Prefs.remove(PREF_CONFIG_DATA)
                     Prefs.remove(PREF_KEYHOLDER)
-                    getIswToken(context)
+                    _shouldRefreshNibssKeys.postValue(Event(true))
                 }
                 it.cardHolder = customerName.value!!
                 it.cardLabel = cardScheme!!
@@ -607,7 +653,7 @@ class SalesViewModel(
 
     private fun saveTransactionToDb(transResponse: TransactionResponse) {
         val modifiedResponseCode =
-            if (transResponse.responseCode == "22" || transResponse.responseCode == "34" || transResponse.responseCode == "59" || transResponse.responseCode == "A3") "06" else transResponse.responseCode
+            if (transResponse.responseCode == "22" || transResponse.responseCode == "34" || transResponse.responseCode == "59") "06" else transResponse.responseCode
 
         transactionResponseDao
             .insertNewTransaction(transResponse.copy(responseCode = modifiedResponseCode))
@@ -662,7 +708,7 @@ class SalesViewModel(
             this.cardHolder = customerName.value ?: ""
         }
 
-        if (Build.MODEL.equals("Pro", true) || Build.MODEL.equals("P3", true)) {
+        if (Build.MODEL.equals("Pro", true) || Build.MODEL.equals("P3", true) || Build.MODEL.contains("K11", ignoreCase = true)) {
             when (Prefs.getString(PREF_PRINTER_SETTINGS, PREF_VALUE_PRINT_CUSTOMER_COPY_ONLY)) {
                 PREF_VALUE_PRINT_CUSTOMER_COPY_ONLY -> printReceipt(context, isMerchantCopy = false)
                 PREF_VALUE_PRINT_CUSTOMER_AND_MERCHANT_COPY -> printReceipt(

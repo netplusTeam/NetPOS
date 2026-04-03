@@ -96,8 +96,9 @@ class NetPosApp : Application() {
                     // Reset and Init devices for K11
                     DeviceHelper.reset()
                     DeviceHelper.initDevices(this@NetPosApp)
-
+                    BaseUtils.init(this@NetPosApp)
                     // Now that hardware is ready, initialize NetPos SDK
+
 
                 } catch (e: RemoteException) {
                     Timber.e("Horizon Driver Error: ${e.localizedMessage}")
