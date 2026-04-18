@@ -984,6 +984,45 @@ class DashboardFragment : BaseFragment() {
             }
         }
 
+
+        // 2. Update the observer
+//        viewModel.getCardData.observe(viewLifecycleOwner) { event ->
+//            event.getContentIfNotHandled()?.let { shouldGetCardData ->
+//                if (shouldGetCardData) {
+//                    viewModel.stopGettingCardData()
+//
+//                    // 3. CRITICAL: If a flow is already active, do NOT start a new one
+//                    if (cardFlowJob != null && cardFlowJob?.hasActiveObservers() == true) {
+//                        Log.d("K11_DEBUG", "Prevented a duplicate dialog from opening!")
+//                        return@let
+//                    }
+//                    Log.d("K11_DEBUG", "Starting fresh card flow...")
+//
+//                    // Store the reference so we can check it next time
+//                    cardFlowJob = showCardDialog(
+//                        requireActivity(),
+//                        viewLifecycleOwner,
+//                        viewModel.amountLong / 100,
+//                        0L,
+//                        compositeDisposable
+//                    )
+//
+//                    cardFlowJob?.observe(viewLifecycleOwner) { cardEvent ->
+//                        cardEvent.getContentIfNotHandled()?.let { result ->
+//                            // 4. Reset the job when finished
+//                            cardFlowJob = null
+//
+//                            // ... your existing logic for success/error ...
+//                            if (result.cardData != null) {
+//                                Log.d("K11_DEBUG", "Transaction logic complete")
+//                            }
+//                        }
+//                    }
+//                }
+//            }
+//        }
+
+
         zenithPbtViewModel.payMessage.observe(viewLifecycleOwner) { event ->
             event.getContentIfNotHandled()?.let {
                 binding.button.isEnabled = true

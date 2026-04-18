@@ -54,7 +54,7 @@ object K11ReceiptPrinter {
                             -13 -> "Battery too low to print"
                             else -> "Unknown error ($errorCode)"
                         }
-                        Log.e(TAG, "Print Error: $errorMsg")
+                        Log.e(TAG, "Print Error: $errorMsg==$errorCode")
                         CoroutineScope(Dispatchers.Main).launch { onComplete(false, errorMsg) }
                     }
 
@@ -79,14 +79,14 @@ object K11ReceiptPrinter {
         val combBitmap = CombBitmap()
         
         // --- 1. HEADER ---
-        combBitmap.addBitmap(GenerateBitmap.str2Bitmap("NIBSS POS RECEIPT", 26, GenerateBitmap.AlignEnum.CENTER, true, false))
+        combBitmap.addBitmap(GenerateBitmap.str2Bitmap("POS RECEIPT", 26, GenerateBitmap.AlignEnum.CENTER, true, false))
         
         val user = Singletons.getCurrentlyLoggedInUser()
         val merchantName = user?.business_name ?: "MERCHANT NAME"
         val merchantAddress = user?.business_address ?: "NIGERIA"
         
         combBitmap.addBitmap(GenerateBitmap.str2Bitmap(merchantName, 30, GenerateBitmap.AlignEnum.CENTER, true, false))
-        combBitmap.addBitmap(GenerateBitmap.str2Bitmap(merchantAddress, 22, GenerateBitmap.AlignEnum.CENTER, false, false))
+        combBitmap.addBitmap(GenerateBitmap.str2Bitmap(merchantAddress, 22, GenerateBitmap.AlignEnum.CENTER, true, false))
         
         combBitmap.addBitmap(GenerateBitmap.formatBitmap(GenerateBitmap.generateLine(1), GenerateBitmap.AlignEnum.CENTER))
 
@@ -145,6 +145,6 @@ object K11ReceiptPrinter {
         val spaceCount = maxChars - label.length - value.length
         val spaces = if (spaceCount > 0) " ".repeat(spaceCount) else " "
         val fullString = "$label$spaces$value"
-        return GenerateBitmap.str2Bitmap(fullString, size, GenerateBitmap.AlignEnum.LEFT, false, false)
+        return GenerateBitmap.str2Bitmap(fullString, size, GenerateBitmap.AlignEnum.LEFT, true, false)
     }
 }
