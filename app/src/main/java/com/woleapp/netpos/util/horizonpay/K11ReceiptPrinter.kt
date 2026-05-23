@@ -79,7 +79,7 @@ object K11ReceiptPrinter {
         val combBitmap = CombBitmap()
         
         // --- 1. HEADER ---
-        combBitmap.addBitmap(GenerateBitmap.str2Bitmap("POS RECEIPT", 26, GenerateBitmap.AlignEnum.CENTER, true, false))
+        combBitmap.addBitmap(GenerateBitmap.str2Bitmap("POS RECEIPT", 26, GenerateBitmap.AlignEnum.CENTER, true, true))
         
         val user = Singletons.getCurrentlyLoggedInUser()
         val merchantName = user?.business_name ?: "MERCHANT NAME"
@@ -91,6 +91,7 @@ object K11ReceiptPrinter {
         combBitmap.addBitmap(GenerateBitmap.formatBitmap(GenerateBitmap.generateLine(1), GenerateBitmap.AlignEnum.CENTER))
 
         // --- 2. TERMINAL INFO ---
+        combBitmap.addBitmap(buildRow("RRN:", trans.RRN, 24))
         combBitmap.addBitmap(buildRow("TERMINAL ID:", trans.terminalId, 24))
         combBitmap.addBitmap(buildRow("MERCHANT ID:", user?.merchantId ?: "N/A", 24))
         
